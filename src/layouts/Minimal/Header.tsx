@@ -17,10 +17,10 @@ export const Header = () => {
 				</Link>
 				<nav className='nav'>
 					<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>
-						{t('home')}
+						{t('sudoku')}
 					</NavLink>
-					<NavLink to='/demo' className={({ isActive }) => (isActive ? active : 'link')}>
-						{t('demo')}
+					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
+						{t('explication')}
 					</NavLink>
 				</nav>
 			</div>
