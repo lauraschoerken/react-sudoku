@@ -1,0 +1,61 @@
+@use '@/assets/styles/index' as *;
+
+.main-layout {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	background: var(--bg);
+	color: var(--fg);
+}
+
+.header {
+	border-bottom: 1px solid var(--border);
+	background: var(--bg);
+}
+.header__inner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding-block: 1rem;
+}
+
+.container {
+	max-width: 1000px;
+	margin-inline: auto;
+	padding-inline: 1rem;
+}
+
+.nav {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+.link {
+	text-decoration: none;
+	color: var(--fg);
+}
+
+.link-active {
+	text-decoration: underline;
+	font-weight: 600;
+	color: var(--fg);
+}
+
+.main {
+	flex: 1;
+	padding: 1rem;
+	background: var(--bg);
+	color: var(--fg);
+}
+
+.footer {
+	border-top: 1px solid var(--border);
+	background: var(--bg);
+	color: var(--fg);
+	text-align: center;
+	padding: 1rem;
+	font-size: 0.9rem;
+	opacity: 0.8;
+}

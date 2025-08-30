@@ -1,0 +1,41 @@
+{
+	"name": "react-archetype",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite --mode dev",
+		"build": "tsc -b && vite build --mode prod",
+		"lint": "eslint .",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"i18next": "^25.3.6",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"react-i18next": "^15.6.1",
+		"react-router-dom": "^7.8.0",
+		"sass": "^1.90.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.33.0",
+		"@types/node": "^24.3.0",
+		"@types/react": "^19.1.10",
+		"@types/react-dom": "^19.1.7",
+		"@typescript-eslint/eslint-plugin": "^8.39.1",
+		"@typescript-eslint/parser": "^8.39.1",
+		"@vitejs/plugin-react": "^5.0.0",
+		"eslint": "^9.33.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-import-resolver-typescript": "^4.4.4",
+		"eslint-plugin-import": "^2.32.0",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.20",
+		"eslint-plugin-simple-import-sort": "^12.1.1",
+		"globals": "^16.3.0",
+		"prettier": "^3.6.2",
+		"typescript": "~5.8.3",
+		"typescript-eslint": "^8.39.1",
+		"vite": "^7.1.2"
+	}
+}

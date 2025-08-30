@@ -1,0 +1,28 @@
+@use './_mixins' as *;
+
+:root {
+	@include theme-light();
+}
+:root.theme-dark {
+	@include theme-dark();
+}
+
+html,
+body,
+#root {
+	height: 100%;
+}
+body {
+	background: var(--bg);
+	color: var(--fg);
+	transition:
+		background 0.2s ease,
+		color 0.2s ease;
+}
+
+.theme-toggle {
+	border: 1px solid var(--border);
+	background: var(--btn-bg);
+	border-radius: 12px;
+	padding: 0.4rem 0.6rem;
+}

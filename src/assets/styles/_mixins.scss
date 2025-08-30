@@ -1,0 +1,47 @@
+@mixin theme-light {
+	--bg: #ffffff;
+	--fg: #0f172a;
+	--border: #e5e7eb;
+
+	--bg-hover: #e2e2e2;
+	--fg-hover: #273147;
+
+	--success-bg: #00ff22fb;
+
+	--btn-primary-bg: #2563eb;
+	--btn-primary-fg: #ffffff;
+	--btn-primary-bg-hover: #1d4ed8;
+
+	--btn-secondary-bg: #ff0000;
+	--btn-secondary-fg: #ffffff;
+	--btn-secondary-bg-hover: #df0000;
+
+	--card-radius: 12px;
+	--shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+	--spin-duration: 20s;
+}
+
+@mixin theme-dark {
+	--bg: #0f172a;
+	--fg: #e5e7eb;
+	--border: #1f2937;
+
+	--bg-hover: #273147;
+	--fg-hover: #e2e2e2;
+
+	--success-bg: #00ff22fb;
+
+	--btn-primary-bg: #3b83f6cb;
+	--btn-primary-fg: #ffffff;
+	--btn-primary-bg-hover: #60a5faa4;
+
+	--btn-secondary-bg: #ff00009f;
+	--btn-secondary-fg: #ffffff;
+	--btn-secondary-bg-hover: #df000091;
+
+	--card-radius: 12px;
+	--shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
+
+	--spin-duration: 12s;
+}
