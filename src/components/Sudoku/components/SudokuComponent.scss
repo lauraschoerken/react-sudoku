@@ -1,1 +1,87 @@
-//no hay estilos aun
+$cell-size: 3rem;
+$thin: 0.1rem;
+$thick: 0.15rem;
+
+@mixin subgrid-lines($n) {
+	tr:nth-child(#{$n}n) td {
+		border-bottom: $thick solid var(--fg);
+	}
+	td:nth-child(#{$n}n) {
+		border-right: $thick solid var(--fg);
+	}
+}
+
+.sudoku-wrap {
+	display: grid;
+	place-items: center;
+	padding: 16px;
+
+	.sudoku {
+		border-collapse: collapse;
+		background: var(--bg);
+		td {
+			width: $cell-size;
+			height: $cell-size;
+			text-align: center;
+			vertical-align: middle;
+			font-size: x-large;
+			color: var(--fg);
+			border: $thin solid var(--border-soft, color-mix(in oklch, var(--bg) 85%, var(--fg) 15%));
+		}
+
+		&[data-subgrid='3'] {
+			@include subgrid-lines(3);
+		}
+		&[data-subgrid='2'] {
+			@include subgrid-lines(2);
+		}
+
+		tr:first-child td {
+			border-top: $thick solid var(--fg);
+		}
+		td:first-child {
+			border-left: $thick solid var(--fg);
+		}
+	}
+}
+
+.sudoku-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 12px;
+	align-items: center;
+}
+
+.btn {
+	appearance: none;
+	border: $thin solid var(--border2);
+	background: var(--btn-primary-bg);
+	color: var(--fg);
+	border-radius: var(--card-radius);
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--btn-primary-bg-hover);
+		color: var(--fg-hover);
+	}
+	&:active {
+		transform: translateY(1px);
+	}
+	&:focus-visible {
+		outline: 2px solid var(--fg);
+		outline-offset: 2px;
+	}
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.btn {
+		transition: none;
+	}
+}
