@@ -1,7 +1,7 @@
 @use '@/assets/styles/index' as *;
 
 .main-layout {
-	min-height: 100dvh;
+	min-height: 100%;
 	display: flex;
 	flex-direction: column;
 	background: var(--bg);
@@ -21,9 +21,8 @@
 }
 
 .container {
-	max-width: 1000px;
-	margin-inline: auto;
-	padding-inline: 1rem;
+	width: 100%;
+	max-width: 100%;
 }
 
 .nav {
@@ -45,7 +44,6 @@
 
 .main {
 	flex: 1;
-	padding: 1rem;
 	background: var(--bg);
 	color: var(--fg);
 }
