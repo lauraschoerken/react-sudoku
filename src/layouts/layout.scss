@@ -10,12 +10,12 @@
 
 .header {
 	border-bottom: 1px solid var(--border);
-	background: var(--bg);
+	background: var(--header);
 }
 .header__inner {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: space-around;
 	gap: 1rem;
 	padding-block: 1rem;
 }
@@ -44,13 +44,13 @@
 
 .main {
 	flex: 1;
-	background: var(--bg);
+	background: var(--body-bg);
 	color: var(--fg);
 }
 
 .footer {
 	border-top: 1px solid var(--border);
-	background: var(--bg);
+	background: var(--footer);
 	color: var(--fg);
 	text-align: center;
 	padding: 1rem;

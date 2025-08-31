@@ -14,7 +14,6 @@ $thick: 0.15rem;
 .sudoku-wrap {
 	display: grid;
 	place-items: center;
-	padding: 16px;
 
 	.sudoku {
 		border-collapse: collapse;
@@ -46,11 +45,11 @@ $thick: 0.15rem;
 }
 
 .sudoku-toolbar {
+	margin: 1rem 0rem;
 	display: flex;
-	flex-wrap: wrap;
 	gap: 8px;
-	margin-bottom: 12px;
 	align-items: center;
+	justify-content: center;
 }
 
 .btn {

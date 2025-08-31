@@ -1,4 +1,8 @@
 @mixin theme-light {
+	--header: #e4e4e4;
+	--body-bg: #f7f7f7;
+	--footer: #e4e4e4;
+
 	--bg: #ffffff;
 	--fg: #0f172a;
 	--border: #e5e7eb;
@@ -24,6 +28,10 @@
 }
 
 @mixin theme-dark {
+	--header: #080f20;
+	--body-bg: #0c1322;
+	--footer: #080f20;
+
 	--bg: #0f172a;
 	--fg: #e5e7eb;
 	--border: #1f2937;
