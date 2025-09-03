@@ -86,13 +86,11 @@ export default function SudokuComponent() {
 		setGrid(generateCompletedSudoku(gridSize, subgridSize))
 	}
 
-	const handleChangeSize = (): void => {
-		setSubgridSize((prev) => {
-			const next = prev === 2 ? 3 : 2
-			const nextGridSize = next * next
-			setGrid(generateCompletedSudoku(nextGridSize, next))
-			return next
-		})
+	const handleChangeSize = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+		const next = parseInt(e.target.value, 10)
+		const nextGridSize = next * next
+		setSubgridSize(next)
+		setGrid(generateCompletedSudoku(nextGridSize, next))
 	}
 
 	return (
@@ -101,9 +99,14 @@ export default function SudokuComponent() {
 				<button className='btn primary' onClick={handleNew}>
 					Nuevo
 				</button>
-				<button className='btn primary' onClick={handleChangeSize}>
-					Cambiar tamaño (actual: {subgridSize}×{subgridSize})
-				</button>
+				<label className='sudoku-size'>
+					Tamaño:
+					<select value={subgridSize} onChange={handleChangeSize}>
+						<option value={2}>2×2</option>
+						<option value={3}>3×3</option>
+						<option value={4}>4×4</option>
+					</select>
+				</label>
 			</div>
 
 			<div className='sudoku-wrap'>

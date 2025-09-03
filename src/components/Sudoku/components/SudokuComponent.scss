@@ -18,6 +18,7 @@ $thick: 0.15rem;
 	.sudoku {
 		border-collapse: collapse;
 		background: var(--bg);
+		margin-bottom: 30px;
 		td {
 			width: $cell-size;
 			height: $cell-size;
@@ -33,6 +34,9 @@ $thick: 0.15rem;
 		}
 		&[data-subgrid='2'] {
 			@include subgrid-lines(2);
+		}
+		&[data-subgrid='4'] {
+			@include subgrid-lines(4);
 		}
 
 		tr:first-child td {
@@ -50,6 +54,37 @@ $thick: 0.15rem;
 	gap: 8px;
 	align-items: center;
 	justify-content: center;
+
+	.sudoku-size {
+		display: flex;
+		align-items: center;
+		font-weight: 500;
+		color: var(--fg);
+		border-radius: 6px;
+
+		select {
+			margin-left: 0.5rem;
+			padding: 0.3rem 0.6rem;
+			border: 1px solid var(--fg);
+			border-radius: 6px;
+			background: var(--fg);
+			font-size: 0.9rem;
+			cursor: pointer;
+			transition:
+				border-color 0.2s,
+				box-shadow 0.2s;
+
+			&:hover {
+				border-color: #888;
+			}
+
+			&:focus {
+				border-color: #007bff;
+				box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+				outline: none;
+			}
+		}
+	}
 }
 
 .btn {
