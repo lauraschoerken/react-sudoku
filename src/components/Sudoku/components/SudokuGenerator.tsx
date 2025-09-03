@@ -66,22 +66,18 @@ function generateCompletedSudoku(size: number, sub: number): Board {
 	return board
 }
 
-// --- ocultar celdas según porcentaje ---
 function hideCells(board: Board, subgridSize: number, percentHidden: number): Board {
 	const size = subgridSize * subgridSize
 	const totalCells = size * size
-	const p = Math.max(0, Math.min(95, percentHidden)) // acotar por seguridad
+	const p = Math.max(0, Math.min(95, percentHidden))
 	const cellsToHide = Math.floor(totalCells * (p / 100))
 
-	// lista de índices 0..totalCells-1 y barajar
 	const indices = Array.from({ length: totalCells }, (_, i) => i)
 	for (let i = indices.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1))
 		;[indices[i], indices[j]] = [indices[j], indices[i]]
 	}
 	const hidden = new Set(indices.slice(0, cellsToHide))
-
-	// aplanar, esconder y reconstruir
 	const flat = board.flat()
 	const newFlat = flat.map((v, i) => (hidden.has(i) ? 0 : v))
 	const newBoard: Board = []
@@ -91,10 +87,9 @@ function hideCells(board: Board, subgridSize: number, percentHidden: number): Bo
 	return newBoard
 }
 
-// --- hook público ---
-export function useSudoku(initialSubgridSize = 3, initialDifficulty = 70 /* % oculto */) {
+export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
 	const [subgridSize, setSubgridSize] = useState<number>(initialSubgridSize)
-	const [difficulty, setDifficulty] = useState<number>(initialDifficulty) // 0..95 (% de celdas ocultas)
+	const [difficulty, setDifficulty] = useState<number>(initialDifficulty)
 	const gridSize = useMemo(() => subgridSize * subgridSize, [subgridSize])
 
 	const makePuzzle = useCallback(() => {
@@ -114,7 +109,6 @@ export function useSudoku(initialSubgridSize = 3, initialDifficulty = 70 /* % oc
 		setGrid(makePuzzle())
 	}, [makePuzzle])
 
-	// Regenerar cuando cambie el tamaño o la dificultad
 	useEffect(() => {
 		setGrid(makePuzzle())
 	}, [makePuzzle])
@@ -126,6 +120,6 @@ export function useSudoku(initialSubgridSize = 3, initialDifficulty = 70 /* % oc
 		gridSize,
 		newGame,
 		difficulty,
-		setDifficulty, // expuesto para el selector
+		setDifficulty,
 	}
 }

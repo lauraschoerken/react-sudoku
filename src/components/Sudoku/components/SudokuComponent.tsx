@@ -11,8 +11,8 @@ export default function SudokuComponent() {
 	}
 
 	const handleDifficultyChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-		const next = parseInt(e.target.value, 10) // % oculto
-		setDifficulty(next) // el hook regenerará el puzzle automáticamente
+		const next = parseInt(e.target.value, 10)
+		setDifficulty(next)
 	}
 	return (
 		<div>
@@ -33,9 +33,10 @@ export default function SudokuComponent() {
 				<label className='sudoku-size'>
 					Dificultad:
 					<select value={difficulty} onChange={handleDifficultyChange}>
-						<option value={60}>Fácil (60% oculto)</option>
-						<option value={70}>Normal (70% oculto)</option>
-						<option value={80}>Difícil (80% oculto)</option>
+						<option value={52}>Fácil (52% oculto)</option>
+						<option value={60}>Normal (60% oculto)</option>
+						<option value={67}>Difícil (67% oculto)</option>
+						<option value={75}>Experto (75% oculto)</option>
 					</select>
 				</label>
 			</div>
