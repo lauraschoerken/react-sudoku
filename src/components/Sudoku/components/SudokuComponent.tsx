@@ -1,6 +1,6 @@
 import './SudokuComponent.scss'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 import { useSudoku } from './SudokuGenerator'
 
@@ -27,6 +27,19 @@ export default function SudokuComponent() {
 		const next = parseInt(e.target.value, 10)
 		setDifficulty(next)
 	}
+	// Estado para la selección
+	const [selected, setSelected] = useState<{ r: number | null; c: number | null }>({
+		r: null,
+		c: null,
+	})
+
+	// Valor actualmente seleccionado (número en la celda seleccionada)
+	const selectedValue =
+		selected.r !== null && selected.c !== null
+			? puzzle[selected.r][selected.c] !== 0
+				? puzzle[selected.r][selected.c]
+				: userGrid[selected.r][selected.c] || 0
+			: 0
 
 	const handleCellChange = useCallback(
 		(r: number, c: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,9 +106,27 @@ export default function SudokuComponent() {
 									const val = userGrid[r][c]
 									const hasError = errors[r][c]
 									return (
-										<td key={c} className={given ? 'given' : hasError ? 'error' : undefined}>
+										<td
+											key={c}
+											onClick={() => setSelected({ r, c })}
+											onFocus={() => setSelected({ r, c })} 
+											tabIndex={0}
+											className={[
+												given ? 'given' : '',
+												hasError ? 'error' : '',
+												selected.r !== null &&
+												selected.c !== null &&
+												(r === selected.r || c === selected.c)
+													? 'in-plus'
+													: '',
+												(() => {
+													const cellVal = given ? v : val
+													return selectedValue && cellVal === selectedValue ? 'same-number' : ''
+												})(),
+											]
+												.filter(Boolean)
+												.join(' ')}>
 											{given ? (
-												// Celda fija (no editable)
 												<span aria-label='celda dada'>{v}</span>
 											) : (
 												<input
