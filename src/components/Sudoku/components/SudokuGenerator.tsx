@@ -86,38 +86,75 @@ function hideCells(board: Board, subgridSize: number, percentHidden: number): Bo
 	}
 	return newBoard
 }
-
 export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
 	const [subgridSize, setSubgridSize] = useState<number>(initialSubgridSize)
 	const [difficulty, setDifficulty] = useState<number>(initialDifficulty)
 	const gridSize = useMemo(() => subgridSize * subgridSize, [subgridSize])
 
-	const makePuzzle = useCallback(() => {
+	const [solution, setSolution] = useState<Board>(() =>
+		generateCompletedSudoku(initialSubgridSize * initialSubgridSize, initialSubgridSize)
+	)
+	const [puzzle, setPuzzle] = useState<Board>(() =>
+		hideCells(solution, initialSubgridSize, initialDifficulty)
+	)
+	// Lo que escribe el usuario (arranca igual que el puzzle)
+	const [userGrid, setUserGrid] = useState<Board>(() => puzzle.map((row) => row.slice()))
+	// Errores por celda
+	const [errors, setErrors] = useState<boolean[][]>(() => puzzle.map((row) => row.map(() => false)))
+
+	const regenerate = useCallback(() => {
 		const full = generateCompletedSudoku(gridSize, subgridSize)
-		return hideCells(full, subgridSize, difficulty)
+		const hid = hideCells(full, subgridSize, difficulty)
+		setSolution(full)
+		setPuzzle(hid)
+		setUserGrid(hid.map((r) => r.slice()))
+		setErrors(hid.map((row) => row.map(() => false)))
 	}, [gridSize, subgridSize, difficulty])
 
-	const [grid, setGrid] = useState<Board>(() => {
-		const full = generateCompletedSudoku(
-			initialSubgridSize * initialSubgridSize,
-			initialSubgridSize
-		)
-		return hideCells(full, initialSubgridSize, initialDifficulty)
-	})
-
 	const newGame = useCallback(() => {
-		setGrid(makePuzzle())
-	}, [makePuzzle])
+		regenerate()
+	}, [regenerate])
 
 	useEffect(() => {
-		setGrid(makePuzzle())
-	}, [makePuzzle])
+		regenerate()
+	}, [regenerate])
+
+	const setCell = useCallback(
+		(r: number, c: number, value: number | null) => {
+			// Si es celda dada, no permitir cambios
+			if (puzzle[r][c] !== 0) return
+
+			setUserGrid((prev) => {
+				const copy = prev.map((row) => row.slice())
+				copy[r][c] = value && value >= 1 ? value : 0
+				return copy
+			})
+
+			setErrors((prev) => {
+				const copy = prev.map((row) => row.slice())
+				if (!value || value < 1) {
+					copy[r][c] = false
+				} else {
+					copy[r][c] = value !== solution[r][c]
+				}
+				return copy
+			})
+		},
+		[puzzle, solution]
+	)
 
 	return {
-		grid,
+		// antes devolvías "grid"; ahora devolvemos puzzle y userGrid (para pintar)
+		puzzle,
+		solution,
+		userGrid,
+		errors,
+		setCell,
+
 		subgridSize,
 		setSubgridSize,
 		gridSize,
+
 		newGame,
 		difficulty,
 		setDifficulty,

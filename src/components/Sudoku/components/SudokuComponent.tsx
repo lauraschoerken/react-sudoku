@@ -1,9 +1,22 @@
 import './SudokuComponent.scss'
 
+import { useCallback } from 'react'
+
 import { useSudoku } from './SudokuGenerator'
 
 export default function SudokuComponent() {
-	const { grid, subgridSize, setSubgridSize, newGame, difficulty, setDifficulty } = useSudoku(3)
+	const {
+		puzzle,
+		userGrid,
+		errors,
+		setCell,
+		subgridSize,
+		setSubgridSize,
+		newGame,
+		difficulty,
+		setDifficulty,
+		gridSize,
+	} = useSudoku(3)
 
 	const handleChangeSize = (e: React.ChangeEvent<HTMLSelectElement>): void => {
 		const next = parseInt(e.target.value, 10)
@@ -14,6 +27,35 @@ export default function SudokuComponent() {
 		const next = parseInt(e.target.value, 10)
 		setDifficulty(next)
 	}
+
+	const handleCellChange = useCallback(
+		(r: number, c: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+			const raw = e.target.value
+			if (raw === '') {
+				setCell(r, c, null)
+				return
+			}
+			// solo números enteros válidos
+			const n = Number(raw)
+			if (!Number.isInteger(n)) return
+			if (n < 1 || n > gridSize) return
+			setCell(r, c, n)
+		},
+		[setCell, gridSize]
+	)
+
+	const handleKeyDown = useCallback(
+		(r: number, c: number) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+			// Permitir borrar rápido
+			if (e.key === 'Backspace' || e.key === 'Delete') {
+				setCell(r, c, null)
+				return
+			}
+			// Enter no hace nada especial
+		},
+		[setCell]
+	)
+
 	return (
 		<div>
 			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
@@ -44,11 +86,33 @@ export default function SudokuComponent() {
 			<div className='sudoku-wrap'>
 				<table className='sudoku' data-subgrid={subgridSize}>
 					<tbody>
-						{grid.map((row, r) => (
+						{puzzle.map((row, r) => (
 							<tr key={r}>
-								{row.map((v, c) => (
-									<td key={c}>{v === 0 ? '' : v}</td>
-								))}
+								{row.map((v, c) => {
+									const given = v !== 0
+									const val = userGrid[r][c]
+									const hasError = errors[r][c]
+									return (
+										<td key={c} className={given ? 'given' : hasError ? 'error' : undefined}>
+											{given ? (
+												// Celda fija (no editable)
+												<span aria-label='celda dada'>{v}</span>
+											) : (
+												<input
+													aria-label={`fila ${r + 1}, columna ${c + 1}`}
+													inputMode='numeric'
+													type='number'
+													min={1}
+													max={gridSize}
+													value={val === 0 ? '' : val}
+													onChange={handleCellChange(r, c)}
+													onKeyDown={handleKeyDown(r, c)}
+													className={hasError ? 'input-error' : undefined}
+												/>
+											)}
+										</td>
+									)
+								})}
 							</tr>
 						))}
 					</tbody>
