@@ -86,23 +86,30 @@ $thick: 0.15rem;
 		select {
 			margin-left: 0.5rem;
 			padding: 0.3rem 0.6rem;
-			border: 1px solid var(--fg);
-			border-radius: 6px;
-			background: var(--fg);
-			font-size: 0.9rem;
+			border: $thin solid var(--border2);
+			background: var(--btn-primary-bg);
+			color: var(--fg);
+			border-radius: var(--card-radius);
+			padding: 0.5rem 1rem;
 			cursor: pointer;
 			transition:
 				border-color 0.2s,
 				box-shadow 0.2s;
 
 			&:hover {
-				border-color: #888;
+				background: var(--btn-primary-bg-hover);
+				color: var(--fg-hover);
 			}
-
-			&:focus {
-				border-color: #007bff;
-				box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-				outline: none;
+			&:active {
+				transform: translateY(1px);
+			}
+			&:focus-visible {
+				outline: 0;
+			}
+			&:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+				transform: none;
 			}
 		}
 	}
