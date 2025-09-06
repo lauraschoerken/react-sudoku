@@ -1,8 +1,9 @@
 import './SudokuComponent.scss'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useSudoku } from './SudokuGenerator'
+import { VictoryOverlay } from './VictoryOverlayComponent'
 
 export default function SudokuComponent() {
 	const {
@@ -27,13 +28,12 @@ export default function SudokuComponent() {
 		const next = parseInt(e.target.value, 10)
 		setDifficulty(next)
 	}
-	// Estado para la selección
+
 	const [selected, setSelected] = useState<{ r: number | null; c: number | null }>({
 		r: null,
 		c: null,
 	})
 
-	// Valor actualmente seleccionado (número en la celda seleccionada)
 	const selectedValue =
 		selected.r !== null && selected.c !== null
 			? puzzle[selected.r][selected.c] !== 0
@@ -48,7 +48,6 @@ export default function SudokuComponent() {
 				setCell(r, c, null)
 				return
 			}
-			// solo números enteros válidos
 			const n = Number(raw)
 			if (!Number.isInteger(n)) return
 			if (n < 1 || n > gridSize) return
@@ -56,19 +55,12 @@ export default function SudokuComponent() {
 		},
 		[setCell, gridSize]
 	)
-
-	const handleKeyDown = useCallback(
-		(r: number, c: number) => (e: React.KeyboardEvent<HTMLInputElement>) => {
-			// Permitir borrar rápido
-			if (e.key === 'Backspace' || e.key === 'Delete') {
-				setCell(r, c, null)
-				return
-			}
-			// Enter no hace nada especial
-		},
-		[setCell]
-	)
-
+	const [isComplete, setIsComplete] = useState(false)
+	useEffect(() => {
+		const filled = userGrid.every((row) => row.every((n) => n !== 0))
+		const anyError = errors.some((row) => row.some(Boolean))
+		setIsComplete(filled && !anyError)
+	}, [userGrid, errors])
 	return (
 		<div>
 			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
@@ -88,7 +80,7 @@ export default function SudokuComponent() {
 				<label className='sudoku-size'>
 					Dificultad:
 					<select value={difficulty} onChange={handleDifficultyChange}>
-						<option value={52}>Fácil (52% oculto)</option>
+						<option value={5}>Fácil (52% oculto)</option>
 						<option value={60}>Normal (60% oculto)</option>
 						<option value={67}>Difícil (67% oculto)</option>
 						<option value={75}>Experto (75% oculto)</option>
@@ -109,7 +101,7 @@ export default function SudokuComponent() {
 										<td
 											key={c}
 											onClick={() => setSelected({ r, c })}
-											onFocus={() => setSelected({ r, c })} 
+											onFocus={() => setSelected({ r, c })}
 											tabIndex={0}
 											className={[
 												given ? 'given' : '',
@@ -137,8 +129,8 @@ export default function SudokuComponent() {
 													max={gridSize}
 													value={val === 0 ? '' : val}
 													onChange={handleCellChange(r, c)}
-													onKeyDown={handleKeyDown(r, c)}
 													className={hasError ? 'input-error' : undefined}
+													disabled={isComplete}
 												/>
 											)}
 										</td>
@@ -149,6 +141,12 @@ export default function SudokuComponent() {
 					</tbody>
 				</table>
 			</div>
+
+			<VictoryOverlay
+				isOpen={isComplete}
+				onClose={() => setIsComplete(false)}
+				onNewGame={newGame}
+			/>
 		</div>
 	)
 }
