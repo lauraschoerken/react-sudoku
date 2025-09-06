@@ -2,9 +2,20 @@ import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useState } from 'react'
 
-import { useSudoku } from './SudokuGenerator'
-import { VictoryOverlay } from './VictoryOverlayComponent'
+import { useSudoku } from '@/hooks/useSudoku'
+import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
+import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
 
+import { VictoryOverlay } from '../../elements/Victory/VictoryOverlayComponent'
+
+/**
+ * SudokuComponent
+ *
+ * Componente de interfaz para jugar al Sudoku.
+ * - Usa el hook useSudoku para la lógica de juego.
+ * - Nombres explícitos (rowIndex/colIndex) en lugar de r/c.
+ * - Dificultad tipada y sin enum (compatible con erasableSyntaxOnly).
+ */
 export default function SudokuComponent() {
 	const {
 		puzzle,
@@ -19,48 +30,41 @@ export default function SudokuComponent() {
 		gridSize,
 	} = useSudoku(3)
 
-	const handleChangeSize = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-		const next = parseInt(e.target.value, 10)
-		setSubgridSize(next)
-	}
 
-	const handleDifficultyChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-		const next = parseInt(e.target.value, 10)
-		setDifficulty(next)
-	}
-
-	const [selected, setSelected] = useState<{ r: number | null; c: number | null }>({
-		r: null,
-		c: null,
-	})
+	const [selectedCell, setSelectedCell] = useState<{
+		rowIndex: number | null
+		colIndex: number | null
+	}>({ rowIndex: null, colIndex: null })
 
 	const selectedValue =
-		selected.r !== null && selected.c !== null
-			? puzzle[selected.r][selected.c] !== 0
-				? puzzle[selected.r][selected.c]
-				: userGrid[selected.r][selected.c] || 0
+		selectedCell.rowIndex !== null && selectedCell.colIndex !== null
+			? puzzle[selectedCell.rowIndex][selectedCell.colIndex] !== 0
+				? puzzle[selectedCell.rowIndex][selectedCell.colIndex]
+				: userGrid[selectedCell.rowIndex][selectedCell.colIndex] || 0
 			: 0
 
 	const handleCellChange = useCallback(
-		(r: number, c: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
+		(rowIndex: number, colIndex: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
 			const raw = e.target.value
 			if (raw === '') {
-				setCell(r, c, null)
+				setCell(rowIndex, colIndex, null)
 				return
 			}
 			const n = Number(raw)
 			if (!Number.isInteger(n)) return
 			if (n < 1 || n > gridSize) return
-			setCell(r, c, n)
+			setCell(rowIndex, colIndex, n)
 		},
 		[setCell, gridSize]
 	)
+
 	const [isComplete, setIsComplete] = useState(false)
 	useEffect(() => {
-		const filled = userGrid.every((row) => row.every((n) => n !== 0))
+		const allFilled = userGrid.every((row) => row.every((cell) => cell !== 0))
 		const anyError = errors.some((row) => row.some(Boolean))
-		setIsComplete(filled && !anyError)
+		setIsComplete(allFilled && !anyError)
 	}, [userGrid, errors])
+
 	return (
 		<div>
 			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
@@ -70,20 +74,29 @@ export default function SudokuComponent() {
 
 				<label className='sudoku-size'>
 					Tamaño:
-					<select value={subgridSize} onChange={handleChangeSize}>
-						<option value={2}>2×2</option>
-						<option value={3}>3×3</option>
-						<option value={4}>4×4</option>
+					<select
+						value={subgridSize}
+						onChange={(e) => setSubgridSize(parseInt(e.target.value, 10) as SubgridSize)}
+						aria-label='Tamaño de subcuadrícula'>
+						{SubgridSizeOptions.map(([name, value]) => (
+							<option key={name} value={value}>
+								{name} ({value}×{value})
+							</option>
+						))}
 					</select>
 				</label>
 
 				<label className='sudoku-size'>
 					Dificultad:
-					<select value={difficulty} onChange={handleDifficultyChange}>
-						<option value={5}>Fácil (52% oculto)</option>
-						<option value={60}>Normal (60% oculto)</option>
-						<option value={67}>Difícil (67% oculto)</option>
-						<option value={75}>Experto (75% oculto)</option>
+					<select
+						value={difficulty}
+						onChange={(e) => setDifficulty(parseInt(e.target.value, 10) as Difficulty)}
+						aria-label='Nivel de dificultad'>
+						{DifficultyOptions.map(([name, value]) => (
+							<option key={name} value={value}>
+								{name} ({value}% celdas ocultas)
+							</option>
+						))}
 					</select>
 				</label>
 			</div>
@@ -91,44 +104,46 @@ export default function SudokuComponent() {
 			<div className='sudoku-wrap'>
 				<table className='sudoku' data-subgrid={subgridSize}>
 					<tbody>
-						{puzzle.map((row, r) => (
-							<tr key={r}>
-								{row.map((v, c) => {
-									const given = v !== 0
-									const val = userGrid[r][c]
-									const hasError = errors[r][c]
+						{puzzle.map((row, rowIndex) => (
+							<tr key={rowIndex}>
+								{row.map((givenValue, colIndex) => {
+									const isGiven = givenValue !== 0
+									const playerValue = userGrid[rowIndex][colIndex]
+									const hasError = errors[rowIndex][colIndex]
+									const cellValue = isGiven ? givenValue : playerValue
+
+									const isInSameRowOrCol =
+										selectedCell.rowIndex !== null &&
+										selectedCell.colIndex !== null &&
+										(rowIndex === selectedCell.rowIndex || colIndex === selectedCell.colIndex)
+
+									const isSameNumberHighlighted = selectedValue && cellValue === selectedValue
+
 									return (
 										<td
-											key={c}
-											onClick={() => setSelected({ r, c })}
-											onFocus={() => setSelected({ r, c })}
+											key={colIndex}
+											onClick={() => setSelectedCell({ rowIndex, colIndex })}
+											onFocus={() => setSelectedCell({ rowIndex, colIndex })}
 											tabIndex={0}
 											className={[
-												given ? 'given' : '',
+												isGiven ? 'given' : '',
 												hasError ? 'error' : '',
-												selected.r !== null &&
-												selected.c !== null &&
-												(r === selected.r || c === selected.c)
-													? 'in-plus'
-													: '',
-												(() => {
-													const cellVal = given ? v : val
-													return selectedValue && cellVal === selectedValue ? 'same-number' : ''
-												})(),
+												isInSameRowOrCol ? 'in-plus' : '',
+												isSameNumberHighlighted ? 'same-number' : '',
 											]
 												.filter(Boolean)
 												.join(' ')}>
-											{given ? (
-												<span aria-label='celda dada'>{v}</span>
+											{isGiven ? (
+												<span aria-label='celda dada'>{givenValue}</span>
 											) : (
 												<input
-													aria-label={`fila ${r + 1}, columna ${c + 1}`}
+													aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
 													inputMode='numeric'
 													type='number'
 													min={1}
 													max={gridSize}
-													value={val === 0 ? '' : val}
-													onChange={handleCellChange(r, c)}
+													value={playerValue === 0 ? '' : playerValue}
+													onChange={handleCellChange(rowIndex, colIndex)}
 													className={hasError ? 'input-error' : undefined}
 													disabled={isComplete}
 												/>
