@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { Board, Cell } from '@/models/components/Sudoku'
 
-// --- lógica interna (igual que ya tenías) ---
 function createEmptyBoard(size: number): Board {
 	return Array.from({ length: size }, () => Array(size).fill(0))
 }
@@ -97,9 +96,7 @@ export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
 	const [puzzle, setPuzzle] = useState<Board>(() =>
 		hideCells(solution, initialSubgridSize, initialDifficulty)
 	)
-	// Lo que escribe el usuario (arranca igual que el puzzle)
 	const [userGrid, setUserGrid] = useState<Board>(() => puzzle.map((row) => row.slice()))
-	// Errores por celda
 	const [errors, setErrors] = useState<boolean[][]>(() => puzzle.map((row) => row.map(() => false)))
 
 	const regenerate = useCallback(() => {
@@ -121,7 +118,6 @@ export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
 
 	const setCell = useCallback(
 		(r: number, c: number, value: number | null) => {
-			// Si es celda dada, no permitir cambios
 			if (puzzle[r][c] !== 0) return
 
 			setUserGrid((prev) => {
@@ -144,17 +140,14 @@ export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
 	)
 
 	return {
-		// antes devolvías "grid"; ahora devolvemos puzzle y userGrid (para pintar)
 		puzzle,
 		solution,
 		userGrid,
 		errors,
 		setCell,
-
 		subgridSize,
 		setSubgridSize,
 		gridSize,
-
 		newGame,
 		difficulty,
 		setDifficulty,
