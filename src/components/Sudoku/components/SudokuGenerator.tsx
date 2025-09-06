@@ -1,12 +1,11 @@
-// ./SudokuGenerator.ts
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { Board, Cell } from '@/models/components/Sudoku'
 
-function createEmptyBoard(size: number): Board {
+const createEmptyBoard = (size: number): Board => {
 	return Array.from({ length: size }, () => Array(size).fill(0))
 }
-function shuffleArray(array: number[]): number[] {
+const shuffleArray = (array: number[]): number[] => {
 	const copy = array.slice()
 	for (let i = copy.length - 1; i > 0; i--) {
 		const j = Math.floor(Math.random() * (i + 1))
@@ -14,14 +13,14 @@ function shuffleArray(array: number[]): number[] {
 	}
 	return copy
 }
-function isPlacementSafe(
+const isPlacementSafe = (
 	board: Board,
 	rowIndex: number,
 	colIndex: number,
 	value: number,
 	size: number,
 	sub: number
-): boolean {
+): boolean => {
 	for (let k = 0; k < size; k++) {
 		if (board[rowIndex][k] === value) return false
 		if (board[k][colIndex] === value) return false
@@ -35,7 +34,7 @@ function isPlacementSafe(
 	}
 	return true
 }
-function findNextEmptyCell(board: Board, size: number): Cell | null {
+const findNextEmptyCell = (board: Board, size: number): Cell | null => {
 	for (let r = 0; r < size; r++) {
 		for (let c = 0; c < size; c++) {
 			if (board[r][c] === 0) return [r, c]
@@ -43,10 +42,10 @@ function findNextEmptyCell(board: Board, size: number): Cell | null {
 	}
 	return null
 }
-function makeCandidatesList(size: number): number[] {
+const makeCandidatesList = (size: number): number[] => {
 	return Array.from({ length: size }, (_, i) => i + 1)
 }
-function solveWithBacktracking(board: Board, size: number, sub: number): boolean {
+const solveWithBacktracking = (board: Board, size: number, sub: number): boolean => {
 	const cell = findNextEmptyCell(board, size)
 	if (!cell) return true
 	const [rowIndex, colIndex] = cell
@@ -59,13 +58,13 @@ function solveWithBacktracking(board: Board, size: number, sub: number): boolean
 	}
 	return false
 }
-function generateCompletedSudoku(size: number, sub: number): Board {
+const generateCompletedSudoku = (size: number, sub: number): Board => {
 	const board = createEmptyBoard(size)
 	solveWithBacktracking(board, size, sub)
 	return board
 }
 
-function hideCells(board: Board, subgridSize: number, percentHidden: number): Board {
+const hideCells = (board: Board, subgridSize: number, percentHidden: number): Board => {
 	const size = subgridSize * subgridSize
 	const totalCells = size * size
 	const p = Math.max(0, Math.min(95, percentHidden))
@@ -85,7 +84,7 @@ function hideCells(board: Board, subgridSize: number, percentHidden: number): Bo
 	}
 	return newBoard
 }
-export function useSudoku(initialSubgridSize = 3, initialDifficulty = 60) {
+export const useSudoku = (initialSubgridSize = 3, initialDifficulty = 60) => {
 	const [subgridSize, setSubgridSize] = useState<number>(initialSubgridSize)
 	const [difficulty, setDifficulty] = useState<number>(initialDifficulty)
 	const gridSize = useMemo(() => subgridSize * subgridSize, [subgridSize])
