@@ -1,0 +1,33 @@
+{
+	"loading": "Loading explanation...",
+	"title": "📖 How to Play Sudoku",
+	"intro": "Sudoku is a logic-and-numbers game. You don’t need advanced math—just your brain and some patience!",
+	"objectiveTitle": "🎯 Objective",
+	"objectiveText": "Fill the board by placing numbers in the empty cells without repeating them in any row, column, or 3×3 box.",
+	"boardImageAlt": "Sudoku board",
+	"boardTitle": "📐 How the board is structured",
+	"boardList": {
+		"item1": "The classic board has 9×9 cells.",
+		"item2": "It’s divided into 9 small 3×3 boxes.",
+		"item3": "Some cells already have numbers (these cannot be changed)."
+	},
+	"rulesTitle": "📝 Basic rules",
+	"rulesList": {
+		"item1": "Each row must contain the numbers 1 through 9 with no repeats.",
+		"item2": "Each column must contain the numbers 1 through 9 with no repeats.",
+		"item3": "Each 3×3 box must also contain the numbers 1 through 9 with no repeats."
+	},
+	"strategiesTitle": "🧩 Starter strategies",
+	"strategiesList": {
+		"item1": "Begin with rows, columns, and boxes that already have more numbers.",
+		"item2": "Use logic: if a row already has 1, 2, 3, 5, 6, 7, 8, and 9, the only missing cell must be 4!",
+		"item3": "Don’t guess randomly: Sudoku is solved with deductions, not luck."
+	},
+	"exampleTitle": "🌟 Simple example",
+	"exampleRowLabel": "Imagine this row:",
+	"exampleRowValue": "1 | 2 |  | 4 | 5 | 6 | 7 | 8 | 9",
+	"exampleAnswer": "Which number is missing? 👉 It’s 3.",
+	"funTitle": "🎉 And most importantly...",
+	"funText": "Have fun! Sudoku is a puzzle that trains your mind, makes you think, and you’ll get faster over time.",
+	"funImageAlt": "Fun Sudoku"
+}
