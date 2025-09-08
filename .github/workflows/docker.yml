@@ -2,8 +2,8 @@ name: Build & Push react-sudoku
 
 on:
   push:
-    branches: [ master, develop ]
-    tags: [ 'v*' ]
+    branches: [master]
+    tags: ['v*']
 
 jobs:
   build:
