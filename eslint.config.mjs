@@ -1,4 +1,3 @@
-// eslint.config.mjs
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import importPlugin from 'eslint-plugin-import'
@@ -9,15 +8,30 @@ export default [
 
 	js.configs.recommended,
 	...tseslint.configs.recommended,
+
 	{
-		files: ['**/*.{ts,tsx,js,jsx}'],
 		plugins: {
 			'import': importPlugin,
 			'simple-import-sort': simpleImportSort,
 		},
 		settings: {
-			'import/resolver': { typescript: { alwaysTryTypes: true } },
+			'import/parsers': {
+				'@typescript-eslint/parser': ['.ts', '.tsx', '.d.ts'],
+			},
+			'import/resolver': {
+				typescript: {
+					project: ['./tsconfig.app.json'],
+					alwaysTryTypes: true,
+				},
+				node: {
+					extensions: ['.js', '.jsx', '.ts', '.tsx'],
+				},
+			},
 		},
+	},
+
+	{
+		files: ['**/*.{ts,tsx,js,jsx}'],
 		rules: {
 			'simple-import-sort/imports': 'error',
 			'simple-import-sort/exports': 'error',

@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import Explanation from '@/components/Explanation/containers/Explanation'
+import { Settings } from '@/components/Settings/containers/Settings'
 import { Sudoku } from '@/components/Sudoku/containers/Sudoku'
 import { IndexLayout } from '@/layouts'
 
@@ -14,9 +15,9 @@ export const router = createBrowserRouter([
 			// { path: '*', element: <NotFound /> },
 		],
 	},
-	/*{
-		path: '/explication',
+	{
+		path: '/settings',
 		element: <IndexLayout layout='minimal' />,
-		children: [{ index: true, element: <Explanation /> }],
-	},*/
+		children: [{ index: true, element: <Settings /> }],
+	},
 ])

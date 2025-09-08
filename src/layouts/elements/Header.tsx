@@ -24,6 +24,9 @@ export const Header = () => {
 					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('explication')}
 					</NavLink>
+					<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
+						{t('settings')}
+					</NavLink>
 					<ThemeToggle />
 					<LanguageSelect />
 				</nav>
