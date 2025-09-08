@@ -1,0 +1,33 @@
+{
+	"loading": "Cargando explicación...",
+	"title": "📖 ¿Cómo se juega al Sudoku?",
+	"intro": "El Sudoku es un juego de lógica y números. No necesitas saber matemáticas complicadas: ¡solo usar tu cabeza y paciencia!",
+	"objectiveTitle": "🎯 Objetivo del juego",
+	"objectiveText": "Completar el tablero rellenando las casillas vacías con números, sin repetirlos en cada fila, columna ni cuadro pequeño.",
+	"boardImageAlt": "Tablero de Sudoku",
+	"boardTitle": "📐 Cómo está formado el tablero",
+	"boardList": {
+		"item1": "El tablero clásico es de 9×9 casillas.",
+		"item2": "Está dividido en 9 cuadros pequeños de 3×3 casillas.",
+		"item3": "Algunas casillas ya vienen con números (estas no se pueden cambiar)."
+	},
+	"rulesTitle": "📝 Reglas básicas",
+	"rulesList": {
+		"item1": "En cada fila deben estar todos los números del 1 al 9, sin repetir.",
+		"item2": "En cada columna deben estar todos los números del 1 al 9, sin repetir.",
+		"item3": "En cada cuadro pequeño de 3×3 también deben estar los números del 1 al 9, sin repetir."
+	},
+	"strategiesTitle": "🧩 Estrategias para empezar",
+	"strategiesList": {
+		"item1": "Empieza mirando las filas, columnas y cuadros donde ya hay más números.",
+		"item2": "Usa la lógica: si en una fila ya están los números 1, 2, 3, 5, 6, 7, 8 y 9, ¡la casilla que falta solo puede ser el 4!",
+		"item3": "No adivines al azar: el Sudoku se resuelve con deducciones, no con suerte."
+	},
+	"exampleTitle": "🌟 Ejemplo sencillo",
+	"exampleRowLabel": "Imagina esta fila:",
+	"exampleRowValue": "1 | 2 |  | 4 | 5 | 6 | 7 | 8 | 9",
+	"exampleAnswer": "¿Qué número falta? 👉 El 3.",
+	"funTitle": "🎉 Y lo más importante...",
+	"funText": "¡Diviértete! El Sudoku es como un rompecabezas que entrenará tu mente, te hará pensar y cada vez serás más rápido.",
+	"funImageAlt": "Sudoku divertido"
+}
