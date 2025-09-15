@@ -7,7 +7,7 @@ import { APP_NAME } from '@/utils/constants'
 
 export const Header = () => {
 	const active = 'link-active'
-	const { t } = useTranslation()
+	const { t } = useTranslation('layout')
 
 	return (
 		<header className='header'>
