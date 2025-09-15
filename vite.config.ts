@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { defineConfig, loadEnv } from 'vite'
+import svgr from 'vite-plugin-svgr'
 
 export default defineConfig(({ mode }) => {
 	const envRoot = path.resolve(__dirname, 'enviroments')
@@ -16,7 +17,15 @@ export default defineConfig(({ mode }) => {
 	const env = { ...common, ...byMode }
 
 	return {
-		plugins: [react()],
+		plugins: [
+			react(),
+			svgr({
+				svgrOptions: {
+					exportType: 'default',
+				},
+				include: '**/*.svg?react',
+			}),
+		],
 		envDir: envRoot,
 		resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
 
