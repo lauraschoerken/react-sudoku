@@ -25,10 +25,8 @@ export default function SettingsComponent() {
 					<ThemeToggle /* onChange={(t)=>dispatch(setTheme(t))} value={theme} */ />
 					<LanguageSelect /* onChange={(l)=>dispatch(setLanguage(l))} value={language} */ />
 				</div>
-
-				{/* Resto de opciones */}
-				<div className='setting-item'>
-					<label>
+				<div className='setting-item setting-row'>
+					<label className='inline'>
 						<input
 							type='checkbox'
 							checked={erroresActivos}
@@ -36,6 +34,29 @@ export default function SettingsComponent() {
 						/>
 						Errores activos
 					</label>
+
+					{erroresActivos && (
+						<div className='error-limit'>
+							<label className='inline'>
+								<input
+									type='checkbox'
+									checked={limitadorErrores}
+									onChange={() => dispatch(setLimitadorErroresEnabled(!limitadorErrores))}
+								/>
+								Limitar a
+							</label>
+
+							<select
+								value={limiteErrores}
+								disabled={!limitadorErrores}
+								onChange={(e) => dispatch(setLimiteErrores(Number(e.target.value) as 3 | 5 | 10))}>
+								<option value='3'>3</option>
+								<option value='5'>5</option>
+								<option value='10'>10</option>
+							</select>
+							<span className='suffix'>errores</span>
+						</div>
+					)}
 				</div>
 
 				<div className='setting-item'>
@@ -56,27 +77,6 @@ export default function SettingsComponent() {
 							}>
 							<option value='countdown'>Cuenta atrás</option>
 							<option value='normal'>Normal</option>
-						</select>
-					)}
-				</div>
-
-				<div className='setting-item'>
-					<label>
-						<input
-							type='checkbox'
-							checked={limitadorErrores}
-							onChange={() => dispatch(setLimitadorErroresEnabled(!limitadorErrores))}
-						/>
-						Limitador de errores
-					</label>
-
-					{limitadorErrores && (
-						<select
-							value={limiteErrores}
-							onChange={(e) => dispatch(setLimiteErrores(Number(e.target.value) as 3 | 5 | 10))}>
-							<option value='3'>3</option>
-							<option value='5'>5</option>
-							<option value='10'>10</option>
 						</select>
 					)}
 				</div>
