@@ -1,0 +1,16 @@
+{
+	"errors": {
+		"active": "Active errors",
+		"suffix": "errors",
+		"limit": {
+			"toggle": "Limit to",
+			"select": "Select error limit"
+		}
+	},
+	"timer": {
+		"title": "Timer",
+		"mode": "Timer mode",
+		"countdown": "Countdown",
+		"normal": "Normal"
+	}
+}

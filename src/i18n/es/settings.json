@@ -1,0 +1,16 @@
+{
+	"errors": {
+		"active": "Errores activos",
+		"suffix": "errores",
+		"limit": {
+			"toggle": "Limitar a",
+			"select": "Seleccionar límite de errores"
+		}
+	},
+	"timer": {
+		"title": "Cronómetro",
+		"mode": "Modo de cronómetro",
+		"countdown": "Cuenta atrás",
+		"normal": "Normal"
+	}
+}

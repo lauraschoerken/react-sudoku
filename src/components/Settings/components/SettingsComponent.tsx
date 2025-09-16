@@ -1,5 +1,6 @@
 import './SettingsComponent.scss'
 
+import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
@@ -14,6 +15,7 @@ import {
 } from '@/store/settingsSlice'
 
 export default function SettingsComponent() {
+	const { t } = useTranslation('settings') // 👈 namespace
 	const dispatch = useDispatch()
 	const { erroresActivos, cronometro, cronometroTipo, limitadorErrores, limiteErrores } =
 		useSelector((s: RootState) => s.settings)
@@ -22,17 +24,19 @@ export default function SettingsComponent() {
 		<div className='page-wrapper'>
 			<div className='settings-component'>
 				<div className='settings-top'>
-					<ThemeToggle /* onChange={(t)=>dispatch(setTheme(t))} value={theme} */ />
-					<LanguageSelect /* onChange={(l)=>dispatch(setLanguage(l))} value={language} */ />
+					<ThemeToggle />
+					<LanguageSelect />
 				</div>
+
 				<div className='setting-item setting-row'>
 					<label className='inline'>
 						<input
 							type='checkbox'
 							checked={erroresActivos}
 							onChange={() => dispatch(toggleErroresActivos())}
+							aria-label={t('errors.active')}
 						/>
-						Errores activos
+						{t('errors.active')}
 					</label>
 
 					{erroresActivos && (
@@ -42,19 +46,21 @@ export default function SettingsComponent() {
 									type='checkbox'
 									checked={limitadorErrores}
 									onChange={() => dispatch(setLimitadorErroresEnabled(!limitadorErrores))}
+									aria-label={t('errors.limit.toggle')}
 								/>
-								Limitar a
+								{t('errors.limit.toggle')}
 							</label>
 
 							<select
 								value={limiteErrores}
 								disabled={!limitadorErrores}
-								onChange={(e) => dispatch(setLimiteErrores(Number(e.target.value) as 3 | 5 | 10))}>
+								onChange={(e) => dispatch(setLimiteErrores(Number(e.target.value) as 3 | 5 | 10))}
+								aria-label={t('errors.limit.select')}>
 								<option value='3'>3</option>
 								<option value='5'>5</option>
 								<option value='10'>10</option>
 							</select>
-							<span className='suffix'>errores</span>
+							<span className='suffix'>{t('errors.suffix')}</span>
 						</div>
 					)}
 				</div>
@@ -65,8 +71,9 @@ export default function SettingsComponent() {
 							type='checkbox'
 							checked={cronometro}
 							onChange={() => dispatch(setCronometroEnabled(!cronometro))}
+							aria-label={t('timer.title')}
 						/>
-						Cronómetro
+						{t('timer.title')}
 					</label>
 
 					{cronometro && (
@@ -74,9 +81,10 @@ export default function SettingsComponent() {
 							value={cronometroTipo}
 							onChange={(e) =>
 								dispatch(setCronometroTipo(e.target.value as 'countdown' | 'normal'))
-							}>
-							<option value='countdown'>Cuenta atrás</option>
-							<option value='normal'>Normal</option>
+							}
+							aria-label={t('timer.mode')}>
+							<option value='countdown'>{t('timer.countdown')}</option>
+							<option value='normal'>{t('timer.normal')}</option>
 						</select>
 					)}
 				</div>
