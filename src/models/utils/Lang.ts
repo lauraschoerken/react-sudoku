@@ -1,4 +1,5 @@
 export interface Lang {
-	code: string
+	code: Language
 	label: string
 }
+export type Language = 'es' | 'en'

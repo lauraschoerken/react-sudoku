@@ -1,13 +1,18 @@
 import './ThemeToggle.scss'
 
-import { useContext } from 'react'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { setTheme } from '@/store/settingsSlice'
 
-import { ThemeContext } from '@/utils/Theme/theme-context'
-
-import { MoonIcon,SunIcon } from './icons'
+import { MoonIcon, SunIcon } from './icons'
 
 export const ThemeToggle = () => {
-	const { theme, toggle } = useContext(ThemeContext)
+	const dispatch = useAppDispatch()
+	const theme = useAppSelector((s) => s.settings.theme) 
+
+	const toggle = () => {
+		const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
+		dispatch(setTheme(next))
+	}
 
 	return (
 		<button className={`theme-toggle ${theme}`} onClick={toggle} aria-label='Cambiar tema'>

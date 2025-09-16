@@ -5,9 +5,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSudoku } from '@/hooks/useSudoku'
 import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
+import { useAppSelector } from '@/store/hooks'
 
 import { VictoryOverlay } from '../../elements/Victory/VictoryOverlayComponent'
-
 /**
  * SudokuComponent
  *
@@ -30,7 +30,11 @@ export default function SudokuComponent() {
 		gridSize,
 	} = useSudoku(3)
 
+	const { erroresActivos, limitadorErrores, limiteErrores, cronometro, cronometroTipo } =
+		useAppSelector((s) => s.settings)
 
+	console.log(erroresActivos, limitadorErrores, limiteErrores, cronometro, cronometroTipo)
+	
 	const [selectedCell, setSelectedCell] = useState<{
 		rowIndex: number | null
 		colIndex: number | null

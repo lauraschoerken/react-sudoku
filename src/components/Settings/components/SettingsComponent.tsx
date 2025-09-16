@@ -1,24 +1,38 @@
 import './SettingsComponent.scss'
 
-import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
 import { ThemeToggle } from '@/components/elements/Theme/ThemeToggle'
+import type { RootState } from '@/store'
+import {
+	setCronometroEnabled,
+	setCronometroTipo,
+	setLimitadorErroresEnabled,
+	setLimiteErrores,
+	toggleErroresActivos,
+} from '@/store/settingsSlice'
 
 export default function SettingsComponent() {
-	const [erroresActivos, setErroresActivos] = useState(false)
-	const [conometro, setConometro] = useState(false)
-	const [limitadorErrores, setLimitadorErrores] = useState(false)
+	const dispatch = useDispatch()
+	const { erroresActivos, cronometro, cronometroTipo, limitadorErrores, limiteErrores } =
+		useSelector((s: RootState) => s.settings)
 
 	return (
 		<div className='page-wrapper'>
 			<div className='settings-component'>
+				<div className='settings-top'>
+					<ThemeToggle /* onChange={(t)=>dispatch(setTheme(t))} value={theme} */ />
+					<LanguageSelect /* onChange={(l)=>dispatch(setLanguage(l))} value={language} */ />
+				</div>
+
+				{/* Resto de opciones */}
 				<div className='setting-item'>
 					<label>
 						<input
 							type='checkbox'
 							checked={erroresActivos}
-							onChange={() => setErroresActivos(!erroresActivos)}
+							onChange={() => dispatch(toggleErroresActivos())}
 						/>
 						Errores activos
 					</label>
@@ -26,13 +40,22 @@ export default function SettingsComponent() {
 
 				<div className='setting-item'>
 					<label>
-						<input type='checkbox' checked={conometro} onChange={() => setConometro(!conometro)} />
-						Conómetro
+						<input
+							type='checkbox'
+							checked={cronometro}
+							onChange={() => dispatch(setCronometroEnabled(!cronometro))}
+						/>
+						Cronómetro
 					</label>
-					{conometro && (
-						<select>
-							<option value='3'>Cuenta atras</option>
-							<option value='5'>Normal</option>
+
+					{cronometro && (
+						<select
+							value={cronometroTipo}
+							onChange={(e) =>
+								dispatch(setCronometroTipo(e.target.value as 'countdown' | 'normal'))
+							}>
+							<option value='countdown'>Cuenta atrás</option>
+							<option value='normal'>Normal</option>
 						</select>
 					)}
 				</div>
@@ -42,20 +65,21 @@ export default function SettingsComponent() {
 						<input
 							type='checkbox'
 							checked={limitadorErrores}
-							onChange={() => setLimitadorErrores(!limitadorErrores)}
+							onChange={() => dispatch(setLimitadorErroresEnabled(!limitadorErrores))}
 						/>
 						Limitador de errores
 					</label>
+
 					{limitadorErrores && (
-						<select>
+						<select
+							value={limiteErrores}
+							onChange={(e) => dispatch(setLimiteErrores(Number(e.target.value) as 3 | 5 | 10))}>
 							<option value='3'>3</option>
 							<option value='5'>5</option>
 							<option value='10'>10</option>
 						</select>
 					)}
 				</div>
-				<ThemeToggle />
-				<LanguageSelect />
 			</div>
 		</div>
 	)

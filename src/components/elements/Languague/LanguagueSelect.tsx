@@ -3,13 +3,17 @@ import './LanguageSelect.scss'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { Language } from '@/models/utils/Lang'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { setLanguage } from '@/store/settingsSlice'
 import { AVAILABLE_LANGS } from '@/utils/constants'
 
 const LanguageSelect = () => {
+	const dispatch = useAppDispatch()
 	const { i18n } = useTranslation()
-	const initial = i18n.language?.split('-')[0] || 'es'
+
+	const active = useAppSelector((s) => s.settings.language)
 	const [open, setOpen] = useState(false)
-	const [active, setActive] = useState(initial)
 	const wrapRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -20,8 +24,8 @@ const LanguageSelect = () => {
 		return () => document.removeEventListener('mousedown', onDoc)
 	}, [])
 
-	const apply = (code: string) => {
-		setActive(code)
+	const apply = (code: Language) => {
+		dispatch(setLanguage(code))
 		i18n.changeLanguage(code)
 		try {
 			localStorage.setItem('lang', code)
@@ -36,15 +40,14 @@ const LanguageSelect = () => {
 		if (e.key === 'ArrowDown') {
 			e.preventDefault()
 			const next = AVAILABLE_LANGS[(idx + 1) % AVAILABLE_LANGS.length].code
-			setActive(next)
+			apply(next)
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault()
 			const prev = AVAILABLE_LANGS[(idx - 1 + AVAILABLE_LANGS.length) % AVAILABLE_LANGS.length].code
-			setActive(prev)
+			apply(prev)
 		} else if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault()
-			if (!open) setOpen(true)
-			else apply(active)
+			setOpen((o) => !o)
 		} else if (e.key === 'Escape') {
 			setOpen(false)
 		}
