@@ -21,7 +21,7 @@ const fmt = (s: number) => {
 export default function CountdownDial({
 	total,
 	remaining,
-	size = 220,
+	size = 150,
 	showLabel = true,
 	className,
 }: CountdownDialProps) {
