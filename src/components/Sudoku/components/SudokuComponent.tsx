@@ -2,6 +2,7 @@ import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useState } from 'react'
 
+import DigitalTimer from '@/components/elements/Timer/Timer'
 import { useSudoku } from '@/hooks/useSudoku'
 import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
@@ -34,7 +35,7 @@ export default function SudokuComponent() {
 		useAppSelector((s) => s.settings)
 
 	console.log(erroresActivos, limitadorErrores, limiteErrores, cronometro, cronometroTipo)
-	
+
 	const [selectedCell, setSelectedCell] = useState<{
 		rowIndex: number | null
 		colIndex: number | null
@@ -160,6 +161,14 @@ export default function SudokuComponent() {
 					</tbody>
 				</table>
 			</div>
+			{cronometro && (
+				<DigitalTimer
+					mode={cronometroTipo}
+					seconds={10 * 60}
+					forceHours={cronometroTipo === 'normal'}
+					onFinish={() => console.log('¡Tiempo!')}
+				/>
+			)}
 
 			<VictoryOverlay
 				isOpen={isComplete}
