@@ -7,10 +7,10 @@ import { MoonIcon, SunIcon } from './icons'
 
 export const ThemeToggle = () => {
 	const dispatch = useAppDispatch()
-	const theme = useAppSelector((s) => s.settings.theme) 
+	const theme = useAppSelector((s) => s.settings.theme)
 
 	const toggle = () => {
-		const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
+		const next = theme === 'dark' ? 'light' : 'dark'
 		dispatch(setTheme(next))
 	}
 
