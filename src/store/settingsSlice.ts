@@ -1,8 +1,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 
-export type Theme = 'light' | 'dark' | 'system'
-export type Language = 'es' | 'en'
+import type { Language } from '@/models/utils/Lang'
+import type { Theme } from '@/models/utils/Theme'
 
 interface SettingsState {
 	theme: Theme
@@ -15,7 +15,7 @@ interface SettingsState {
 }
 
 const initialState: SettingsState = {
-	theme: 'system',
+	theme: 'dark',
 	language: 'es',
 	erroresActivos: false,
 	cronometro: false,
