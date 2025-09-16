@@ -160,3 +160,20 @@ $thick: 0.15rem;
 		transition: none;
 	}
 }
+/* ===== Cronómetro flotante a la derecha (no empuja el tablero) ===== */
+.sudoku-timer-float {
+	position: fixed;
+	right: 15%;
+	top: 15%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 100%;
+}
+
+@media (max-width: 900px) {
+	.sudoku-timer-float {
+		position: static;
+		margin: 1rem auto 0;
+	}
+}

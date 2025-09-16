@@ -162,12 +162,14 @@ export default function SudokuComponent() {
 				</table>
 			</div>
 			{cronometro && (
-				<DigitalTimer
-					mode={cronometroTipo}
-					seconds={10 * 60}
-					forceHours={cronometroTipo === 'normal'}
-					onFinish={() => console.log('¡Tiempo!')}
-				/>
+				<div className='sudoku-timer-float'>
+					<DigitalTimer
+						mode={cronometroTipo}
+						seconds={10 * 60}
+						forceHours={cronometroTipo === 'normal'}
+						onFinish={() => console.log('¡Tiempo!')}
+					/>
+				</div>
 			)}
 
 			<VictoryOverlay

@@ -26,7 +26,7 @@ export default function CountdownDial({
 	className,
 }: CountdownDialProps) {
 	const R = size / 2
-	const faceR = R - 10
+	const faceR = R - 6
 	const frac = useMemo(() => {
 		if (total <= 0) return 0
 		return Math.max(0, Math.min(1, remaining / total))
