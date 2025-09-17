@@ -105,72 +105,75 @@ export default function SudokuComponent() {
 					</select>
 				</label>
 			</div>
+			<div className='sudoku-stage'>
+				<div className='sudoku-boardbox'>
+					<div className='sudoku-wrap'>
+						<table className='sudoku' data-subgrid={subgridSize}>
+							<tbody>
+								{puzzle.map((row, rowIndex) => (
+									<tr key={rowIndex}>
+										{row.map((givenValue, colIndex) => {
+											const isGiven = givenValue !== 0
+											const playerValue = userGrid[rowIndex][colIndex]
+											const hasError = errors[rowIndex][colIndex]
+											const cellValue = isGiven ? givenValue : playerValue
 
-			<div className='sudoku-wrap'>
-				<table className='sudoku' data-subgrid={subgridSize}>
-					<tbody>
-						{puzzle.map((row, rowIndex) => (
-							<tr key={rowIndex}>
-								{row.map((givenValue, colIndex) => {
-									const isGiven = givenValue !== 0
-									const playerValue = userGrid[rowIndex][colIndex]
-									const hasError = errors[rowIndex][colIndex]
-									const cellValue = isGiven ? givenValue : playerValue
+											const isInSameRowOrCol =
+												selectedCell.rowIndex !== null &&
+												selectedCell.colIndex !== null &&
+												(rowIndex === selectedCell.rowIndex || colIndex === selectedCell.colIndex)
 
-									const isInSameRowOrCol =
-										selectedCell.rowIndex !== null &&
-										selectedCell.colIndex !== null &&
-										(rowIndex === selectedCell.rowIndex || colIndex === selectedCell.colIndex)
+											const isSameNumberHighlighted = selectedValue && cellValue === selectedValue
 
-									const isSameNumberHighlighted = selectedValue && cellValue === selectedValue
-
-									return (
-										<td
-											key={colIndex}
-											onClick={() => setSelectedCell({ rowIndex, colIndex })}
-											onFocus={() => setSelectedCell({ rowIndex, colIndex })}
-											tabIndex={0}
-											className={[
-												isGiven ? 'given' : '',
-												hasError ? 'error' : '',
-												isInSameRowOrCol ? 'in-plus' : '',
-												isSameNumberHighlighted ? 'same-number' : '',
-											]
-												.filter(Boolean)
-												.join(' ')}>
-											{isGiven ? (
-												<span aria-label='celda dada'>{givenValue}</span>
-											) : (
-												<input
-													aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
-													inputMode='numeric'
-													type='number'
-													min={1}
-													max={gridSize}
-													value={playerValue === 0 ? '' : playerValue}
-													onChange={handleCellChange(rowIndex, colIndex)}
-													className={hasError ? 'input-error' : undefined}
-													disabled={isComplete}
-												/>
-											)}
-										</td>
-									)
-								})}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-			{cronometro && (
-				<div className='sudoku-timer-float'>
-					<DigitalTimer
-						mode={cronometroTipo}
-						seconds={10 * 60}
-						forceHours={cronometroTipo === 'normal'}
-						onFinish={() => console.log('¡Tiempo!')}
-					/>
+											return (
+												<td
+													key={colIndex}
+													onClick={() => setSelectedCell({ rowIndex, colIndex })}
+													onFocus={() => setSelectedCell({ rowIndex, colIndex })}
+													tabIndex={0}
+													className={[
+														isGiven ? 'given' : '',
+														hasError ? 'error' : '',
+														isInSameRowOrCol ? 'in-plus' : '',
+														isSameNumberHighlighted ? 'same-number' : '',
+													]
+														.filter(Boolean)
+														.join(' ')}>
+													{isGiven ? (
+														<span aria-label='celda dada'>{givenValue}</span>
+													) : (
+														<input
+															aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
+															inputMode='numeric'
+															type='number'
+															min={1}
+															max={gridSize}
+															value={playerValue === 0 ? '' : playerValue}
+															onChange={handleCellChange(rowIndex, colIndex)}
+															className={hasError ? 'input-error' : undefined}
+															disabled={isComplete}
+														/>
+													)}
+												</td>
+											)
+										})}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+					{cronometro && (
+						<div className='sudoku-timer-stick'>
+							<DigitalTimer
+								mode={cronometroTipo}
+								seconds={10 * 60}
+								forceHours={cronometroTipo === 'normal'}
+								onFinish={() => console.log('¡Tiempo!')}
+							/>
+						</div>
+					)}
 				</div>
-			)}
+			</div>
 
 			<VictoryOverlay
 				isOpen={isComplete}

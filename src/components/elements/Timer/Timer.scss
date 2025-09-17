@@ -67,11 +67,11 @@ $border-radius: 0.5rem;
 }
 
 .lcd-screen {
-	min-width: 240px;
+	width: 13rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.35rem;
+	gap: 0rem;
 	padding: 0.6rem 0.9rem;
 	border-radius: 0.4rem;
 	background: var(--fg-clock);
@@ -81,7 +81,7 @@ $border-radius: 0.5rem;
 .lcd-colon {
 	font-family: 'Courier New', Courier, monospace;
 	font-weight: 800;
-	font-size: 3rem;
+	font-size: 2.5rem;
 	line-height: 1;
 	color: var(--bg-clock);
 	letter-spacing: 0.08em;
