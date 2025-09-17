@@ -1,4 +1,3 @@
-// src/components/elements/Timer/CountdownDial.tsx
 import './Timer.scss'
 
 import { useMemo } from 'react'
@@ -57,9 +56,9 @@ export default function CountdownDial({
 				viewBox={`0 0 ${size} ${size}`}
 				role='timer'
 				aria-label='countdown'>
-				<circle cx={R} cy={R} r={faceR + 6} fill='var(--dial-bezel, #1b1e21)' />
-				<circle cx={R} cy={R} r={faceR} fill='var(--dial-face, #ffffff)' />
-				{frac > 0 && <path d={path} fill='var(--dial-red, #e03131)' opacity={0.95} />}
+				<circle className='dial-bezel' cx={R} cy={R} r={faceR + 6} />
+				<circle className='dial-face' cx={R} cy={R} r={faceR} />
+				{frac > 0 && <path className='dial-warning' d={path} opacity={0.95} />}
 				{Array.from({ length: 12 }).map((_, i) => {
 					const a = (i * Math.PI) / 6
 					const r1 = faceR - 14
@@ -75,14 +74,14 @@ export default function CountdownDial({
 							y1={y1}
 							x2={x2}
 							y2={y2}
-							stroke='var(--dial-tick, #111)'
+							className='dial-tick'
 							strokeWidth={2.5}
 							strokeLinecap='round'
 							opacity={0.85}
 						/>
 					)
 				})}
-				<circle cx={R} cy={R} r={3} fill='var(--dial-center, #111)' />
+				<circle className='dial-center' cx={R} cy={R} r={3} />
 			</svg>
 
 			{showLabel && (

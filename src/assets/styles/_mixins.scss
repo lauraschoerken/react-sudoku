@@ -23,11 +23,14 @@
 
 	--card-radius: 12px;
 	--shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.1);
-
 	--spin-duration: 20s;
 
 	--color1: #1e98cc;
 	--color2: #6098ff;
+
+	--bg-clock: #c2c2c2;
+	--fg-clock: #363636;
+	--warning: #df3f3fde;
 }
 
 @mixin theme-dark {
@@ -58,7 +61,10 @@
 
 	--spin-duration: 12s;
 
-	
 	--color1: #277da1;
 	--color2: #1e5ccffd;
+	
+	--bg-clock: #2a2a2a;
+	--fg-clock: #e4e4e4;
+	--warning: #e63946;
 }

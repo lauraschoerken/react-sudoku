@@ -21,8 +21,30 @@ $border-radius: 0.5rem;
 	font-size: 1.1rem;
 	padding: 0.2rem 0.8rem;
 	border-radius: 0.4rem;
-	background: color-mix(in srgb, #000 6%, transparent);
-	color: #222;
+	color: var(--fg-clock);
+}
+/* ===== Countdown Dial SVG colors ===== */
+.dial-bezel {
+	fill: var(--fg-clock);
+}
+
+.dial-face {
+	fill: var(--bg-clock);
+}
+
+.dial-warning {
+	fill: var(--warning);
+}
+
+.dial-tick {
+	stroke: var(--fg-clock);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	opacity: 0.85;
+}
+
+.dial-center {
+	fill: var(--fg-clock);
 }
 
 /* ===== LCD (digital) ===== */
