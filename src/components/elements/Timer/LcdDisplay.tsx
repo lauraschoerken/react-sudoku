@@ -69,7 +69,7 @@ export default function LcdDisplay({
 						<button type='button' className='lcd-btn ghost' onClick={onAddSecond}>
 							S
 						</button>
-						<button type='button' className='lcd-btn solid' onClick={onToggleStartStop}>
+						<button type='button' className='lcd-btn ghost solid' onClick={onToggleStartStop}>
 							{running ? 'STOP' : 'START'}
 						</button>
 					</div>

@@ -57,7 +57,7 @@ $border-radius: 0.5rem;
 }
 
 .lcd-bezel {
-	background: #131516;
+	background: var(--bg-clock);
 	padding: 0.6rem 0.8rem 0.5rem;
 	border-radius: $border-radius;
 	box-shadow:
@@ -74,7 +74,7 @@ $border-radius: 0.5rem;
 	gap: 0.35rem;
 	padding: 0.6rem 0.9rem;
 	border-radius: 0.4rem;
-	background: #cfd9a6;
+	background: var(--fg-clock);
 }
 
 .lcd-digit,
@@ -83,12 +83,11 @@ $border-radius: 0.5rem;
 	font-weight: 800;
 	font-size: 3rem;
 	line-height: 1;
-	color: #1a1a1a; /* dígito oscuro */
+	color: var(--bg-clock);
 	letter-spacing: 0.08em;
 }
 
 .lcd-colon {
-	width: 0.9rem;
 	text-align: center;
 	transition: opacity 0.2s;
 }
@@ -101,23 +100,19 @@ $border-radius: 0.5rem;
 	margin-top: 0.45rem;
 	display: grid;
 	grid-template-columns: repeat(4, auto);
-	gap: 0.4rem;
+	gap: 01.5rem;
 	justify-content: center;
 }
 .lcd-btn {
 	font-size: 0.7rem;
 	padding: 0.25rem 0.45rem;
 	border-radius: 0.35rem;
-	border: 1px solid #2a2e32;
+	border: solid 1px color-mix(in oklch, var(--fg-clock) 20%, var(--bg-clock) 80%);
 	cursor: default;
 }
 .lcd-btn.ghost {
-	background: #2b2f33;
-	color: #e9ecef;
-}
-.lcd-btn.solid {
-	background: #3d4247;
-	color: #fff;
+	background: var(--bg-clock);
+	color: var(--fg-clock);
 }
 
 /* ===== Controles reales del componente ===== */
@@ -128,9 +123,7 @@ $border-radius: 0.5rem;
 	justify-content: center;
 }
 .dt-btn {
-	background: #222;
-	color: #fff;
-	border: 1px solid #333;
+	background: var(--fg-clock);
 	padding: 0.35rem 0.6rem;
 	border-radius: 0.5rem;
 	cursor: pointer;
