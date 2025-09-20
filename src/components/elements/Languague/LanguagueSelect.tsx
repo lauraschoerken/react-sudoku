@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 
 import type { Language } from '@/models/utils/Lang'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { setLanguage } from '@/store/settingsSlice'
+import { setLanguage } from '@/store/features/settings/settingsSlice'
 import { AVAILABLE_LANGS } from '@/utils/constants'
 
 const LanguageSelect = () => {
