@@ -3,7 +3,11 @@ import { createSlice } from '@reduxjs/toolkit'
 
 import type { Language } from '@/models/utils/Lang'
 import type { Theme } from '@/models/utils/Theme'
+import { AVAILABLE_LANGS } from '@/utils/constants'
 
+// ------------------------------
+// Types & State
+// ------------------------------
 interface SettingsState {
 	theme: Theme
 	language: Language
@@ -16,7 +20,7 @@ interface SettingsState {
 
 const DEFAULT_STATE: SettingsState = {
 	theme: 'dark',
-	language: 'es',
+	language: 'en',
 	errorsActive: false,
 	timerEnabled: false,
 	timerMode: 'countdown',
@@ -26,17 +30,40 @@ const DEFAULT_STATE: SettingsState = {
 
 const STORAGE_KEY = 'settings'
 
+// ------------------------------
+// Helpers
+// ------------------------------
+
 function isTheme(x: unknown): x is Theme {
 	return x === 'light' || x === 'dark' || x === 'system'
 }
-function isLanguage(x: unknown): x is Language {
-	return x === 'es' || x === 'en'
-}
+
 function isTimerMode(x: unknown): x is 'countdown' | 'normal' {
 	return x === 'countdown' || x === 'normal'
 }
+
 function isErrorsLimit(x: unknown): x is 3 | 5 | 10 {
 	return x === 3 || x === 5 || x === 10
+}
+
+const SUPPORTED_CODES: Set<Language> = new Set(AVAILABLE_LANGS.map((l) => l.code))
+
+function isLanguage(x: string | null): x is Language {
+	return !!x && SUPPORTED_CODES.has(x as Language)
+}
+
+function normalizeLang(input?: string | null): string | null {
+	if (!input) return null
+	return input.toLowerCase().split('-')[0] || null
+}
+
+function getDefaultLanguageFromAvailable(): Language {
+	if (typeof navigator === 'undefined') return 'en'
+
+	const preferredStr =
+		normalizeLang(navigator.languages?.[0]) ?? normalizeLang(navigator.language) ?? 'en'
+
+	return isLanguage(preferredStr) ? preferredStr : 'en'
 }
 
 function loadInitialState(): SettingsState {
@@ -44,20 +71,35 @@ function loadInitialState(): SettingsState {
 		if (typeof window === 'undefined') return DEFAULT_STATE
 
 		const raw = localStorage.getItem(STORAGE_KEY)
+
 		if (!raw) {
 			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+			let initialLanguage: Language = getDefaultLanguageFromAvailable()
+			try {
+				const legacy = localStorage.getItem('lang')
+				if (isLanguage(legacy)) {
+					initialLanguage = legacy
+				}
+			} catch {
+				// ignore
+			}
+
 			return {
 				...DEFAULT_STATE,
 				theme: prefersDark ? 'dark' : 'light',
+				language: initialLanguage,
 			}
 		}
 
 		const parsed = JSON.parse(raw) as Partial<SettingsState> | null
 		if (!parsed) return DEFAULT_STATE
 
+		const parsedLang = typeof parsed.language === 'string' ? parsed.language : null
+
 		return {
 			theme: isTheme(parsed.theme) ? parsed.theme : DEFAULT_STATE.theme,
-			language: isLanguage(parsed.language) ? parsed.language : DEFAULT_STATE.language,
+			language: isLanguage(parsedLang) ? parsedLang : getDefaultLanguageFromAvailable(),
 			errorsActive:
 				typeof parsed.errorsActive === 'boolean' ? parsed.errorsActive : DEFAULT_STATE.errorsActive,
 			timerEnabled:
@@ -76,6 +118,9 @@ function loadInitialState(): SettingsState {
 	}
 }
 
+// ------------------------------
+// Slice
+// ------------------------------
 const initialState: SettingsState = loadInitialState()
 
 const settingsSlice = createSlice({
