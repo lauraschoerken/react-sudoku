@@ -4,9 +4,7 @@ import { useTranslation } from 'react-i18next'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
 import { ThemeToggle } from '@/components/elements/Theme/ThemeToggle'
-import { useErrorLimit } from '@/hooks/settings/useErrorLimit'
-import { useErrors } from '@/hooks/settings/useErrors'
-import { useTimer } from '@/hooks/settings/useTimer'
+import { useErrorLimit, useErrors, useTimer } from '@/hooks/settings'
 
 export default function SettingsComponent() {
 	const { t } = useTranslation('settings')
