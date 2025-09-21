@@ -35,30 +35,28 @@ export default function SettingsComponent() {
 						{t('errors.active')}
 					</label>
 
-					{errorsActive && (
-						<div className='error-limit'>
-							<label className='inline'>
-								<input
-									type='checkbox'
-									checked={errorsLimiterEnabled}
-									onChange={() => setErrorsLimiterEnabled(!errorsLimiterEnabled)}
-									aria-label={t('errors.limit.toggle')}
-								/>
-								{t('errors.limit.toggle')}
-							</label>
+					<div className='error-limit'>
+						<label className='inline'>
+							<input
+								type='checkbox'
+								checked={errorsLimiterEnabled}
+								onChange={() => setErrorsLimiterEnabled(!errorsLimiterEnabled)}
+								aria-label={t('errors.limit.toggle')}
+							/>
+							{t('errors.limit.toggle')}
+						</label>
 
-							<select
-								value={errorsLimit}
-								disabled={!errorsLimiterEnabled}
-								onChange={(e) => setErrorsLimit(Number(e.target.value) as 3 | 5 | 10)}
-								aria-label={t('errors.limit.select')}>
-								<option value='3'>3</option>
-								<option value='5'>5</option>
-								<option value='10'>10</option>
-							</select>
-							<span className='suffix'>{t('errors.suffix')}</span>
-						</div>
-					)}
+						<select
+							value={errorsLimit}
+							disabled={!errorsLimiterEnabled}
+							onChange={(e) => setErrorsLimit(Number(e.target.value) as 3 | 5 | 10)}
+							aria-label={t('errors.limit.select')}>
+							<option value='3'>3</option>
+							<option value='5'>5</option>
+							<option value='10'>10</option>
+						</select>
+						<span className='suffix'>{t('errors.suffix')}</span>
+					</div>
 				</div>
 
 				<div className='setting-item'>
