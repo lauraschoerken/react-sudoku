@@ -1,0 +1,33 @@
+{
+	"loading": "Cargando explicación...",
+	"title": "📖 Como se xoga ao Sudoku?",
+	"intro": "O Sudoku é un xogo de lóxica e números. Non precisas saber matemáticas complicadas: só usar a cabeza e paciencia!",
+	"objectiveTitle": "🎯 Obxectivo do xogo",
+	"objectiveText": "Completar o taboleiro enchendo as casiñas baleiras con números, sen repetilos en cada fila, columna nin cadrado pequeno.",
+	"boardImageAlt": "Taboleiro de Sudoku",
+	"boardTitle": "📐 Como está formado o taboleiro",
+	"boardList": {
+		"item1": "O taboleiro clásico é de 9×9 casiñas.",
+		"item2": "Está dividido en 9 cadrados pequenos de 3×3 casiñas.",
+		"item3": "Algunhas casiñas xa veñen con números (estas non se poden cambiar)."
+	},
+	"rulesTitle": "📝 Regras básicas",
+	"rulesList": {
+		"item1": "En cada fila deben estar todos os números do 1 ao 9, sen repetir.",
+		"item2": "En cada columna deben estar todos os números do 1 ao 9, sen repetir.",
+		"item3": "En cada cadrado pequeno de 3×3 tamén deben estar os números do 1 ao 9, sen repetir."
+	},
+	"strategiesTitle": "🧩 Estratexias para comezar",
+	"strategiesList": {
+		"item1": "Comeza mirando as filas, columnas e cadrados onde xa hai máis números.",
+		"item2": "Usa a lóxica: se nunha fila xa están os números 1, 2, 3, 5, 6, 7, 8 e 9, a casiña que falta só pode ser o 4!",
+		"item3": "Non adiviñes ao azar: o Sudoku resólvese con deducións, non con sorte."
+	},
+	"exampleTitle": "🌟 Exemplo sinxelo",
+	"exampleRowLabel": "Imaxina esta fila:",
+	"exampleRowValue": "1 | 2 |  | 4 | 5 | 6 | 7 | 8 | 9",
+	"exampleAnswer": "Que número falta? 👉 O 3.",
+	"funTitle": "🎉 E o máis importante...",
+	"funText": "Divírtete! O Sudoku é como un crebacabezas que adestrará a túa mente, farate pensar e cada vez serás máis rápido.",
+	"funImageAlt": "Sudoku divertido"
+}
