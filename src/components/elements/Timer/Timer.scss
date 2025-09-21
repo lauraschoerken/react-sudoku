@@ -1,0 +1,133 @@
+$border-radius: 0.5rem;
+
+/* ===== Countdown (Time Timer) ===== */
+.timer-dial {
+	position: relative;
+	display: inline-block;
+	border-radius: 100%;
+	box-shadow:
+		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),
+		inset 0 0 0 1px color-mix(in oklch, var(--bg) 85%, black 15%);
+}
+.timer-dial__label {
+	position: absolute;
+	left: 50%;
+	top: 60%;
+	transform: translate(-50%, -35%);
+	font-family:
+		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+		monospace;
+	font-weight: 700;
+	font-size: 1.1rem;
+	padding: 0.2rem 0.8rem;
+	border-radius: 0.4rem;
+	color: var(--fg-clock);
+}
+/* ===== Countdown Dial SVG colors ===== */
+.dial-bezel {
+	fill: var(--fg-clock);
+}
+
+.dial-face {
+	fill: var(--bg-clock);
+}
+
+.dial-warning {
+	fill: var(--warning);
+}
+
+.dial-tick {
+	stroke: var(--fg-clock);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	opacity: 0.85;
+}
+
+.dial-center {
+	fill: var(--fg-clock);
+}
+
+/* ===== LCD (digital) ===== */
+.lcd-timer {
+	display: inline-block;
+	border-radius: $border-radius;
+	box-shadow:
+		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),
+		inset 0 0 0 1px color-mix(in oklch, var(--bg) 85%, black 15%);
+}
+
+.lcd-bezel {
+	background: var(--bg-clock);
+	padding: 0.6rem 0.8rem 0.5rem;
+	border-radius: $border-radius;
+	box-shadow:
+		0 4px 16px rgba(0, 0, 0, 0.25),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	display: inline-block;
+}
+
+.lcd-screen {
+	width: 13rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0rem;
+	padding: 0.6rem 0.9rem;
+	border-radius: 0.4rem;
+	background: var(--fg-clock);
+}
+
+.lcd-digit,
+.lcd-colon {
+	font-family: 'Courier New', Courier, monospace;
+	font-weight: 800;
+	font-size: 2.5rem;
+	line-height: 1;
+	color: var(--bg-clock);
+	letter-spacing: 0.08em;
+}
+
+.lcd-colon {
+	text-align: center;
+	transition: opacity 0.2s;
+}
+.lcd-colon.off {
+	opacity: 0.25;
+}
+
+/* Botones decorativos debajo de la pantalla */
+.lcd-buttons {
+	margin-top: 0.45rem;
+	display: grid;
+	grid-template-columns: repeat(4, auto);
+	gap: 01.5rem;
+	justify-content: center;
+}
+.lcd-btn {
+	font-size: 0.7rem;
+	padding: 0.25rem 0.45rem;
+	border-radius: 0.35rem;
+	border: solid 1px color-mix(in oklch, var(--fg-clock) 20%, var(--bg-clock) 80%);
+	cursor: default;
+}
+.lcd-btn.ghost {
+	background: var(--bg-clock);
+	color: var(--fg-clock);
+}
+
+/* ===== Controles reales del componente ===== */
+.dt-controls {
+	margin-top: 0.75rem;
+	display: flex;
+	gap: 0.5rem;
+	justify-content: center;
+}
+.dt-btn {
+	background: var(--fg-clock);
+	padding: 0.35rem 0.6rem;
+	border-radius: 0.5rem;
+	cursor: pointer;
+}
+.dt-btn:hover {
+	filter: brightness(1.08);
+}

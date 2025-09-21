@@ -1,38 +1,51 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 
-import en from './en' // <- objeto: { common: {...}, demo: {...}, ... }
-import es from './es'
+import type { Language } from '@/models/utils/Lang'
+import { AVAILABLE_LANGS } from '@/utils/constants'
 
-const LANGUAGE_KEY = 'lang'
-const detected =
-	(localStorage.getItem(LANGUAGE_KEY) as string | null) ??
-	(navigator.language?.startsWith('es') ? 'es' : 'en')
+import de from './de'
+import en from './en'
+import es from './es'
+import gl from './gl'
+
+const STORAGE_KEY = 'settings'
+const SUPPORTED = new Set(AVAILABLE_LANGS.map((l) => l.code))
+
+function normalize(lang?: string | null) {
+	return (lang || '').toLowerCase().split('-')[0]
+}
+
+function detectInitialLang(): Language {
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY)
+		if (raw) {
+			const parsed = JSON.parse(raw) as { language?: string } | null
+			const saved = normalize(parsed?.language) as Language | null
+			if (saved && SUPPORTED.has(saved)) return saved as Language
+		}
+
+		const legacy = normalize(localStorage.getItem('lang')) as Language
+		if (legacy && SUPPORTED.has(legacy)) return legacy as Language
+	} catch {
+		// ignore
+	}
+
+	const nav =
+		(normalize(navigator.languages?.[0]) as Language) || normalize(navigator.language) || 'en'
+	return (SUPPORTED.has(nav) ? nav : 'en') as Language
+}
+
+const detected = detectInitialLang()
 
 void i18n.use(initReactI18next).init({
-	resources: {
-		en,
-		es,
-	},
+	resources: { en, es, gl, de },
 	lng: detected,
-	fallbackLng: 'es',
-
-	// 👇 aquí pones varios
+	fallbackLng: 'en',
 	defaultNS: ['common', 'demo'],
-
-	// 👇 y aquí defines todos los namespaces disponibles
 	ns: Array.from(new Set([...Object.keys(en), ...Object.keys(es)])),
-
 	interpolation: { escapeValue: false },
 	returnEmptyString: false,
-})
-
-i18n.on('languageChanged', (lng) => {
-	try {
-		localStorage.setItem(LANGUAGE_KEY, lng)
-	} catch {
-		//
-	}
 })
 
 export default i18n

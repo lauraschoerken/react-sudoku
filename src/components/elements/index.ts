@@ -1,2 +1,2 @@
 export { Card } from './Card/Card'
-export { VictoryOverlay } from './Victory/VictoryOverlayComponent'
+export { VictoryOverlay } from './Victory/ResultOverlayComponent'

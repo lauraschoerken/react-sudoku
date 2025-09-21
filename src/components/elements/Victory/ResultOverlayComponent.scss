@@ -1,0 +1,97 @@
+.result-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.65);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+
+	.result-card {
+		background: var(--bg);
+		border-radius: 1rem;
+		padding: 2rem 2.5rem;
+		max-width: 400px;
+		width: 90%;
+		text-align: center;
+		box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.4);
+		animation: pop-in 0.3s ease;
+
+		&.is-win {
+			border: 3px solid #4caf50; // verde
+		}
+
+		&.is-lose {
+			border: 3px solid #e53935; // rojo
+		}
+
+		h2 {
+			margin: 0.5rem 0 1rem;
+			font-size: 1.6rem;
+			font-weight: 700;
+		}
+
+		p {
+			margin-bottom: 1.5rem;
+			font-size: 1.1rem;
+			color: var(--fg-color);
+		}
+	}
+
+	.result-emoji {
+		font-size: 3rem;
+		margin-bottom: 0.5rem;
+
+		.is-win & {
+			filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+		}
+
+		.is-lose & {
+			filter: drop-shadow(0 0 4px rgba(229, 57, 53, 0.6));
+		}
+	}
+
+	.result-actions {
+		display: flex;
+		justify-content: center;
+		gap: 1rem;
+
+		.btn {
+			padding: 0.6rem 1.2rem;
+			border-radius: 0.5rem;
+			font-size: 1rem;
+			cursor: pointer;
+			border: none;
+			transition: background 0.2s;
+
+			&.primary {
+				background: #47a3ff;
+				color: var(--bg);
+
+				&:hover {
+					background: #1565c0;
+				}
+			}
+
+			&:not(.primary) {
+				background: var(--bg);
+
+				&:hover {
+					background: var(--bg);
+				}
+			}
+		}
+	}
+}
+
+// Animación de entrada
+@keyframes pop-in {
+	from {
+		transform: scale(0.8);
+		opacity: 0;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}

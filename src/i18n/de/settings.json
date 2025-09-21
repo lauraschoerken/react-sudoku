@@ -1,0 +1,17 @@
+{
+	"errors": {
+		"active": "Fehler aktiv",
+		"suffix": "Fehler",
+		"limit": {
+			"toggle": "Begrenzen auf",
+			"select": "Fehlerlimit auswählen"
+		}
+	},
+	"timer": {
+		"title": "Stoppuhr",
+		"mode": "Stoppuhr-Modus",
+		"countdown": "Countdown",
+		"normal": "Normal",
+		"seconds": "Sekunden"
+	}
+}

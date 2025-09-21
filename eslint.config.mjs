@@ -10,6 +10,7 @@ export default [
 	...tseslint.configs.recommended,
 
 	{
+		files: ['**/*.{ts,tsx,js,jsx}'],
 		plugins: {
 			'import': importPlugin,
 			'simple-import-sort': simpleImportSort,
@@ -23,15 +24,12 @@ export default [
 					project: ['./tsconfig.app.json'],
 					alwaysTryTypes: true,
 				},
-				node: {
-					extensions: ['.js', '.jsx', '.ts', '.tsx'],
+				alias: {
+					map: [['@', './src']],
+					extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
 				},
 			},
 		},
-	},
-
-	{
-		files: ['**/*.{ts,tsx,js,jsx}'],
 		rules: {
 			'simple-import-sort/imports': 'error',
 			'simple-import-sort/exports': 'error',

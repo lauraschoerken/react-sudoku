@@ -1,15 +1,15 @@
 import './LanguageSelect.scss'
 
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
+import { useLanguage } from '@/hooks/settings/useLanguage'
+import type { Language } from '@/models/utils/Lang'
 import { AVAILABLE_LANGS } from '@/utils/constants'
 
 const LanguageSelect = () => {
-	const { i18n } = useTranslation()
-	const initial = i18n.language?.split('-')[0] || 'es'
+	const { language: active, setLanguage } = useLanguage() // syncI18n = true por defecto
+
 	const [open, setOpen] = useState(false)
-	const [active, setActive] = useState(initial)
 	const wrapRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -20,14 +20,8 @@ const LanguageSelect = () => {
 		return () => document.removeEventListener('mousedown', onDoc)
 	}, [])
 
-	const apply = (code: string) => {
-		setActive(code)
-		i18n.changeLanguage(code)
-		try {
-			localStorage.setItem('lang', code)
-		} catch {
-			//
-		}
+	const apply = (code: Language) => {
+		setLanguage(code)
 		setOpen(false)
 	}
 
@@ -35,16 +29,16 @@ const LanguageSelect = () => {
 		const idx = AVAILABLE_LANGS.findIndex((l) => l.code === active)
 		if (e.key === 'ArrowDown') {
 			e.preventDefault()
-			const next = AVAILABLE_LANGS[(idx + 1) % AVAILABLE_LANGS.length].code
-			setActive(next)
+			const next = AVAILABLE_LANGS[(idx + 1) % AVAILABLE_LANGS.length].code as Language
+			apply(next)
 		} else if (e.key === 'ArrowUp') {
 			e.preventDefault()
-			const prev = AVAILABLE_LANGS[(idx - 1 + AVAILABLE_LANGS.length) % AVAILABLE_LANGS.length].code
-			setActive(prev)
+			const prev = AVAILABLE_LANGS[(idx - 1 + AVAILABLE_LANGS.length) % AVAILABLE_LANGS.length]
+				.code as Language
+			apply(prev)
 		} else if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault()
-			if (!open) setOpen(true)
-			else apply(active)
+			setOpen((o) => !o)
 		} else if (e.key === 'Escape') {
 			setOpen(false)
 		}
@@ -64,7 +58,7 @@ const LanguageSelect = () => {
 			<button
 				type='button'
 				className='cselect__button'
-				aria-label='Seleccionar idioma'
+				aria-label='Select language'
 				aria-controls='lang-listbox'
 				aria-expanded={open}
 				onClick={() => setOpen((o) => !o)}>
@@ -82,7 +76,7 @@ const LanguageSelect = () => {
 							aria-selected={l.code === active}
 							className={`cselect__option ${l.code === active ? 'is-active' : ''}`}
 							onMouseDown={(e) => e.preventDefault()}
-							onClick={() => apply(l.code)}>
+							onClick={() => apply(l.code as Language)}>
 							{l.label}
 						</li>
 					))}
@@ -91,4 +85,5 @@ const LanguageSelect = () => {
 		</div>
 	)
 }
+
 export default LanguageSelect

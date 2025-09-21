@@ -83,27 +83,30 @@ $thick: 0.15rem;
 }
 
 .sudoku-toolbar {
-	margin: 1rem 0rem;
+	margin: 1rem 0;
 	display: flex;
-	gap: 8px;
 	align-items: center;
 	justify-content: center;
+	gap: 0.75rem 1rem;
+	flex-wrap: wrap;
+	padding: 0 0.75rem;
 
 	.sudoku-size {
 		display: flex;
 		align-items: center;
+		gap: 0.5rem;
 		font-weight: 500;
 		color: var(--fg);
 		border-radius: 6px;
 
 		select {
-			margin-left: 0.5rem;
-			padding: 0.3rem 0.6rem;
+			min-width: 10rem;
+			max-width: 100%;
+			padding: 0.5rem 1rem;
 			border: $thin solid var(--border2);
 			background: var(--btn-primary-bg);
 			color: var(--fg);
 			border-radius: var(--card-radius);
-			padding: 0.5rem 1rem;
 			cursor: pointer;
 			transition:
 				border-color 0.2s,
@@ -136,6 +139,7 @@ $thick: 0.15rem;
 	border-radius: var(--card-radius);
 	padding: 0.5rem 1rem;
 	cursor: pointer;
+	line-height: 1;
 
 	&:hover {
 		background: var(--btn-primary-bg-hover);
@@ -155,8 +159,77 @@ $thick: 0.15rem;
 	}
 }
 
+@media (max-width: 900px) {
+	.sudoku-toolbar {
+		gap: 0.6rem 0.8rem;
+		justify-content: center;
+
+		.sudoku-size select {
+			min-width: 9.5rem;
+		}
+	}
+	.btn {
+		padding: 0.5rem 0.9rem;
+		font-size: 0.95rem;
+	}
+}
+
+@media (max-width: 520px) {
+	.sudoku-toolbar {
+		gap: 0.5rem;
+	}
+
+	.sudoku-toolbar > * {
+		flex: 1 1 100%;
+	}
+
+	.btn {
+		width: 50%;
+	}
+	.sudoku-size select {
+		width: 100%; /* botones y selects full width */
+	}
+
+	.sudoku-size {
+		justify-content: space-between;
+	}
+}
+
+/* Respetar usuarios con reduce motion (ya lo tenías) */
 @media (prefers-reduced-motion: reduce) {
 	.btn {
 		transition: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.btn {
+		transition: none;
+	}
+}
+.sudoku-stage {
+	display: block;
+	text-align: center;
+}
+
+.sudoku-boardbox {
+	display: inline-block;
+	position: relative;
+}
+
+.sudoku-timer-stick {
+	position: absolute;
+	left: 100%;
+	top: 0;
+	margin-left: 1.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+@media (max-width: 900px) {
+	.sudoku-timer-stick {
+		position: static;
+		margin: 0.75rem auto 0;
 	}
 }

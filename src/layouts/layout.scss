@@ -58,3 +58,21 @@
 	font-size: 0.9rem;
 	opacity: 0.8;
 }
+
+//TODO hay que hacer un bocadillo para móvil
+@media (max-width: 520px) {
+	.nav {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		gap: 0.75rem;
+		padding-bottom: 0.25rem;
+		-webkit-overflow-scrolling: touch;
+	}
+	.nav::-webkit-scrollbar {
+		height: 6px;
+	}
+	.nav::-webkit-scrollbar-thumb {
+		background: color-mix(in oklch, var(--fg) 25%, transparent);
+		border-radius: 999px;
+	}
+}

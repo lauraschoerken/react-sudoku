@@ -1,16 +1,14 @@
 import './ThemeToggle.scss'
 
-import { useContext } from 'react'
+import { useTheme } from '@/hooks/settings/useTheme'
 
-import { ThemeContext } from '@/utils/Theme/theme-context'
-
-import { MoonIcon,SunIcon } from './icons'
+import { MoonIcon, SunIcon } from './icons'
 
 export const ThemeToggle = () => {
-	const { theme, toggle } = useContext(ThemeContext)
+	const { theme, toggleTheme } = useTheme()
 
 	return (
-		<button className={`theme-toggle ${theme}`} onClick={toggle} aria-label='Cambiar tema'>
+		<button className={`theme-toggle ${theme}`} onClick={toggleTheme} aria-label='Cambiar tema'>
 			<span className='icon'>{theme === 'light' ? <SunIcon /> : <MoonIcon />}</span>
 		</button>
 	)

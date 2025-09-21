@@ -1,0 +1,33 @@
+{
+	"loading": "Erklärung wird geladen...",
+	"title": "📖 Wie spielt man Sudoku?",
+	"intro": "Sudoku ist ein Logik- und Zahlenspiel. Du brauchst keine komplizierte Mathematik: nur deinen Kopf und Geduld!",
+	"objectiveTitle": "🎯 Spielziel",
+	"objectiveText": "Fülle das Spielfeld, indem du die leeren Kästchen mit Zahlen ergänzt, ohne Wiederholungen in jeder Zeile, Spalte oder jedem kleinen Block.",
+	"boardImageAlt": "Sudoku-Spielfeld",
+	"boardTitle": "📐 Aufbau des Spielfelds",
+	"boardList": {
+		"item1": "Das klassische Spielfeld besteht aus 9×9 Kästchen.",
+		"item2": "Es ist in 9 kleine Blöcke von 3×3 Kästchen unterteilt.",
+		"item3": "Einige Kästchen sind bereits mit Zahlen gefüllt (diese können nicht geändert werden)."
+	},
+	"rulesTitle": "📝 Grundregeln",
+	"rulesList": {
+		"item1": "In jeder Zeile müssen die Zahlen von 1 bis 9 vorkommen, ohne Wiederholung.",
+		"item2": "In jeder Spalte müssen die Zahlen von 1 bis 9 vorkommen, ohne Wiederholung.",
+		"item3": "Auch in jedem kleinen 3×3-Block müssen die Zahlen von 1 bis 9 vorkommen, ohne Wiederholung."
+	},
+	"strategiesTitle": "🧩 Einstiegsstrategien",
+	"strategiesList": {
+		"item1": "Beginne mit den Zeilen, Spalten und Blöcken, in denen schon viele Zahlen stehen.",
+		"item2": "Nutze Logik: Wenn in einer Zeile bereits die Zahlen 1, 2, 3, 5, 6, 7, 8 und 9 stehen, dann kann das fehlende Kästchen nur die 4 sein!",
+		"item3": "Rate nicht zufällig: Sudoku wird mit logischen Schlussfolgerungen gelöst, nicht mit Glück."
+	},
+	"exampleTitle": "🌟 Einfaches Beispiel",
+	"exampleRowLabel": "Stell dir diese Zeile vor:",
+	"exampleRowValue": "1 | 2 |  | 4 | 5 | 6 | 7 | 8 | 9",
+	"exampleAnswer": "Welche Zahl fehlt? 👉 Die 3.",
+	"funTitle": "🎉 Und das Wichtigste...",
+	"funText": "Hab Spaß! Sudoku ist wie ein Puzzle, das dein Gehirn trainiert, dich zum Denken bringt und dich immer schneller werden lässt.",
+	"funImageAlt": "Lustiges Sudoku"
+}
