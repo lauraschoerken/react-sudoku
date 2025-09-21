@@ -6,11 +6,11 @@ const modules = import.meta.glob<Record<string, unknown>>('./*.json', {
 type Namespace = string
 type LocaleResources = Record<Namespace, Record<string, unknown>>
 
-const es: LocaleResources = {}
+const de: LocaleResources = {}
 
 for (const path in modules) {
 	const ns = path.replace('./', '').replace('.json', '')
-	es[ns] = modules[path]
+	de[ns] = modules[path]
 }
 
-export default es
+export default de
