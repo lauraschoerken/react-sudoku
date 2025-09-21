@@ -31,10 +31,16 @@ export default function SudokuComponent() {
 		gridSize,
 	} = useSudoku(3)
 
-	const { erroresActivos, limitadorErrores, limiteErrores, cronometro, cronometroTipo } =
+	const { errorsActive, errorsLimit, errorsLimiterEnabled, timerEnabled, timerMode } =
 		useAppSelector((s) => s.settings)
 
-	console.log(erroresActivos, limitadorErrores, limiteErrores, cronometro, cronometroTipo)
+	console.log(
+		'errorActive: ' + errorsActive,
+		'errorsLimit: ' + errorsLimit,
+		'errorsLimiterEnabled: ' + errorsLimiterEnabled,
+		'timerEnabled: ' + timerEnabled,
+		'timerMode: ' + timerMode
+	)
 
 	const [selectedCell, setSelectedCell] = useState<{
 		rowIndex: number | null
@@ -162,12 +168,12 @@ export default function SudokuComponent() {
 							</tbody>
 						</table>
 					</div>
-					{cronometro && (
+					{timerEnabled && (
 						<div className='sudoku-timer-stick'>
 							<DigitalTimer
-								mode={cronometroTipo}
+								mode={timerMode}
 								seconds={10 * 60}
-								forceHours={cronometroTipo === 'normal'}
+								forceHours={timerMode === 'normal'}
 								onFinish={() => console.log('¡Tiempo!')}
 							/>
 						</div>
