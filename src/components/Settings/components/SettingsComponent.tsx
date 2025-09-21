@@ -1,5 +1,6 @@
 import './SettingsComponent.scss'
 
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
@@ -14,11 +15,53 @@ export default function SettingsComponent() {
 		useErrorLimit()
 	const { timerEnabled, timerMode, setTimerEnabled, setTimerMode } = useTimer()
 
-	const onLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const val = Number(e.target.value)
-		if (Number.isNaN(val)) return
-		// opcional: clamp mínimo 1
-		setErrorsLimit(Math.max(1, Math.floor(val)))
+	const [draft, setDraft] = useState<string>('')
+	const pristineSinceEnableRef = useRef<boolean>(true)
+
+	useEffect(() => {
+		if (errorsLimiterEnabled) {
+			pristineSinceEnableRef.current = true
+			setDraft(String(Math.max(1, Math.floor(errorsLimit || 1))))
+		}
+	}, [errorsLimiterEnabled, errorsLimit])
+
+	const onToggleLimiter = () => {
+		setErrorsLimiterEnabled(!errorsLimiterEnabled)
+	}
+
+	const onFocusLimit = () => {
+		if (!errorsLimiterEnabled) return
+		if (pristineSinceEnableRef.current) {
+			setDraft('')
+		}
+	}
+
+	const onChangeLimit = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const raw = e.target.value
+		setDraft(raw)
+		if (!errorsLimiterEnabled) return
+		pristineSinceEnableRef.current = false
+
+		if (raw.trim() === '') return
+
+		const n = Number(raw)
+		if (Number.isFinite(n)) {
+			const clamped = Math.max(1, Math.floor(n))
+			setErrorsLimit(clamped)
+		}
+	}
+
+	const onBlurLimit = () => {
+		if (!errorsLimiterEnabled) return
+		const n = Number(draft)
+		if (draft.trim() === '' || !Number.isFinite(n) || n < 1) {
+			setDraft('1')
+			setErrorsLimit(1)
+		} else {
+			const clamped = Math.max(1, Math.floor(n))
+			setDraft(String(clamped))
+			setErrorsLimit(clamped)
+		}
 	}
 
 	return (
@@ -45,22 +88,23 @@ export default function SettingsComponent() {
 							<input
 								type='checkbox'
 								checked={errorsLimiterEnabled}
-								onChange={() => setErrorsLimiterEnabled(!errorsLimiterEnabled)}
+								onChange={onToggleLimiter}
 								aria-label={t('errors.limit.toggle')}
 							/>
 							{t('errors.limit.toggle')}
 						</label>
 
-						{/* AHORA: input libre */}
 						<input
 							type='number'
 							min={1}
 							step={1}
 							inputMode='numeric'
-							value={errorsLimit}
+							value={errorsLimiterEnabled ? draft : draft /* mantiene valor visible */}
 							disabled={!errorsLimiterEnabled}
-							onChange={onLimitChange}
-							aria-label={t('errors.limit.input') /* añade esta key si quieres */}
+							onFocus={onFocusLimit}
+							onChange={onChangeLimit}
+							onBlur={onBlurLimit}
+							aria-label={t('errors.limit.input')}
 							className='error-limit-input'
 						/>
 						<span className='suffix'>{t('errors.suffix')}</span>
