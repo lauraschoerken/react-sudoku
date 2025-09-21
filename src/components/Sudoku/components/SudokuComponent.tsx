@@ -8,7 +8,7 @@ import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
 import { useAppSelector } from '@/store/hooks'
 
-import { ResultOverlay } from '../../elements/Victory/ResultOverlayComponent'
+import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
 export default function SudokuComponent() {
 	const {
