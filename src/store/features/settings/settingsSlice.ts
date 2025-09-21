@@ -14,6 +14,7 @@ interface SettingsState {
 	errorsActive: boolean
 	timerEnabled: boolean
 	timerMode: 'countdown' | 'normal'
+	timerSeconds: number
 	errorsLimiterEnabled: boolean
 	errorsLimit: number
 }
@@ -24,6 +25,7 @@ const DEFAULT_STATE: SettingsState = {
 	errorsActive: false,
 	timerEnabled: false,
 	timerMode: 'countdown',
+	timerSeconds: 600,
 	errorsLimiterEnabled: false,
 	errorsLimit: 5,
 }
@@ -37,13 +39,11 @@ const STORAGE_KEY = 'settings'
 function isTheme(x: unknown): x is Theme {
 	return x === 'light' || x === 'dark' || x === 'system'
 }
-
 function isTimerMode(x: unknown): x is 'countdown' | 'normal' {
 	return x === 'countdown' || x === 'normal'
 }
-
-function isErrorsLimit(x: unknown): x is 3 | 5 | 10 {
-	return x === 3 || x === 5 || x === 10
+function isPositiveInt(x: unknown): x is number {
+	return typeof x === 'number' && Number.isInteger(x) && x >= 1
 }
 
 const SUPPORTED_CODES: Set<Language> = new Set(AVAILABLE_LANGS.map((l) => l.code))
@@ -59,10 +59,8 @@ function normalizeLang(input?: string | null): string | null {
 
 function getDefaultLanguageFromAvailable(): Language {
 	if (typeof navigator === 'undefined') return 'en'
-
 	const preferredStr =
 		normalizeLang(navigator.languages?.[0]) ?? normalizeLang(navigator.language) ?? 'en'
-
 	return isLanguage(preferredStr) ? preferredStr : 'en'
 }
 
@@ -105,11 +103,14 @@ function loadInitialState(): SettingsState {
 			timerEnabled:
 				typeof parsed.timerEnabled === 'boolean' ? parsed.timerEnabled : DEFAULT_STATE.timerEnabled,
 			timerMode: isTimerMode(parsed.timerMode) ? parsed.timerMode : DEFAULT_STATE.timerMode,
+			timerSeconds: isPositiveInt(parsed.timerSeconds)
+				? parsed.timerSeconds
+				: DEFAULT_STATE.timerSeconds,
 			errorsLimiterEnabled:
 				typeof parsed.errorsLimiterEnabled === 'boolean'
 					? parsed.errorsLimiterEnabled
 					: DEFAULT_STATE.errorsLimiterEnabled,
-			errorsLimit: isErrorsLimit(parsed.errorsLimit)
+			errorsLimit: isPositiveInt(parsed.errorsLimit)
 				? parsed.errorsLimit
 				: DEFAULT_STATE.errorsLimit,
 		}
@@ -144,12 +145,18 @@ const settingsSlice = createSlice({
 		setTimerMode: (s, a: PayloadAction<'countdown' | 'normal'>) => {
 			s.timerMode = a.payload
 		},
+		setTimerSeconds: (s, a: PayloadAction<number>) => {
+			// 👈 nuevo reducer
+			const v = Math.max(1, Math.floor(a.payload || 1))
+			s.timerSeconds = v
+		},
 
 		setErrorsLimiterEnabled: (s, a: PayloadAction<boolean>) => {
 			s.errorsLimiterEnabled = a.payload
 		},
 		setErrorsLimit: (s, a: PayloadAction<number>) => {
-			s.errorsLimit = a.payload
+			const v = Math.max(1, Math.floor(a.payload || 1))
+			s.errorsLimit = v
 		},
 	},
 })
@@ -160,6 +167,7 @@ export const {
 	toggleErrorsActive,
 	setTimerEnabled,
 	setTimerMode,
+	setTimerSeconds, // 👈 export
 	setErrorsLimiterEnabled,
 	setErrorsLimit,
 } = settingsSlice.actions

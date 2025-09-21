@@ -24,8 +24,14 @@ export default function SudokuComponent() {
 		gridSize,
 	} = useSudoku(3)
 
-	const { errorsActive, errorsLimit, errorsLimiterEnabled, timerEnabled, timerMode } =
-		useAppSelector((s) => s.settings)
+	const {
+		errorsActive,
+		errorsLimit,
+		errorsLimiterEnabled,
+		timerEnabled,
+		timerMode,
+		timerSeconds, // 👈 segundos del countdown desde Redux
+	} = useAppSelector((s) => s.settings)
 
 	const [mistakes, setMistakes] = useState(0)
 	const prevUserGridRef = useRef<number[][] | null>(null)
@@ -292,7 +298,7 @@ export default function SudokuComponent() {
 															value={playerValue === 0 ? '' : playerValue}
 															onChange={handleCellChange(rowIndex, colIndex)}
 															className={hasError ? 'input-error' : undefined}
-															disabled={isEnded} // ← bloqueado si la partida terminó
+															disabled={isEnded} // bloqueado si la partida terminó
 														/>
 													)}
 												</td>
@@ -309,9 +315,9 @@ export default function SudokuComponent() {
 							<DigitalTimer
 								key={resetSignal}
 								mode={timerMode}
-								seconds={10}
+								seconds={timerSeconds} // 👈 usa los segundos desde Redux
 								forceHours={timerMode === 'normal'}
-								running={runFlag && !isEnded} // ← el reloj se para al terminar la partida, aunque cierres el popup
+								running={runFlag && !isEnded} // se para al terminar la partida
 								resetSignal={resetSignal}
 								onFinish={() => {
 									if (!isEnded) {
@@ -330,7 +336,7 @@ export default function SudokuComponent() {
 			<ResultOverlay
 				isOpen={showWin}
 				variant='win'
-				onClose={() => setShowWin(false)} // ← solo oculta el popup, la partida sigue terminada
+				onClose={() => setShowWin(false)}
 				onPrimary={handleNewGame}
 			/>
 
@@ -339,7 +345,7 @@ export default function SudokuComponent() {
 				isOpen={showLose}
 				variant='lose'
 				loseReason={loseReason ?? undefined}
-				onClose={() => setShowLose(false)} // ← solo oculta el popup
+				onClose={() => setShowLose(false)}
 				onPrimary={handleRetrySame}
 			/>
 		</div>

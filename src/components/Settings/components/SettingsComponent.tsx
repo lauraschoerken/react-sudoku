@@ -13,8 +13,16 @@ export default function SettingsComponent() {
 	const { errorsActive, toggleErrorsActive } = useErrors()
 	const { errorsLimiterEnabled, errorsLimit, setErrorsLimiterEnabled, setErrorsLimit } =
 		useErrorLimit()
-	const { timerEnabled, timerMode, setTimerEnabled, setTimerMode } = useTimer()
+	const {
+		timerEnabled,
+		timerMode,
+		timerSeconds, // segundos actuales (countdown)
+		setTimerEnabled,
+		setTimerMode,
+		setTimerSeconds,
+	} = useTimer()
 
+	// ====== Error limit input ======
 	const [draft, setDraft] = useState<string>('')
 	const pristineSinceEnableRef = useRef<boolean>(true)
 
@@ -64,6 +72,46 @@ export default function SettingsComponent() {
 		}
 	}
 
+	// ====== Countdown seconds input (mínimo 10) ======
+	const [secondsDraft, setSecondsDraft] = useState<string>('')
+	const pristineSinceCountdownRef = useRef<boolean>(true) // como “primera edición” tras activar countdown
+
+	// Cuando se entra en countdown, sincronizamos draft y marcamos como "prístino"
+	useEffect(() => {
+		if (timerMode === 'countdown') {
+			pristineSinceCountdownRef.current = true
+			const safe = Math.max(10, Math.floor((timerSeconds ?? 10) as number))
+			setSecondsDraft(String(safe))
+		}
+	}, [timerMode, timerSeconds])
+
+	const onFocusSeconds = () => {
+		if (timerMode !== 'countdown') return
+		if (pristineSinceCountdownRef.current) {
+			setSecondsDraft('') // limpiar al primer click para escribir directo
+		}
+	}
+
+	const onChangeSeconds = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const raw = e.target.value
+		setSecondsDraft(raw)
+		// NO despachamos aquí → evitamos que Redux reescriba mientras tecleas
+		pristineSinceCountdownRef.current = false
+	}
+
+	const onBlurSeconds = () => {
+		if (timerMode !== 'countdown') return
+		const n = Number(secondsDraft)
+		if (secondsDraft.trim() === '' || !Number.isFinite(n) || n < 10) {
+			setSecondsDraft('10')
+			setTimerSeconds(10)
+		} else {
+			const clamped = Math.max(10, Math.floor(n))
+			setSecondsDraft(String(clamped))
+			setTimerSeconds(clamped)
+		}
+	}
+
 	return (
 		<div className='page-wrapper'>
 			<div className='settings-component'>
@@ -72,6 +120,7 @@ export default function SettingsComponent() {
 					<LanguageSelect />
 				</div>
 
+				{/* ===== Errores ===== */}
 				<div className='setting-item setting-row'>
 					<label className='inline'>
 						<input
@@ -99,7 +148,7 @@ export default function SettingsComponent() {
 							min={1}
 							step={1}
 							inputMode='numeric'
-							value={errorsLimiterEnabled ? draft : draft /* mantiene valor visible */}
+							value={errorsLimiterEnabled ? draft : draft}
 							disabled={!errorsLimiterEnabled}
 							onFocus={onFocusLimit}
 							onChange={onChangeLimit}
@@ -111,6 +160,7 @@ export default function SettingsComponent() {
 					</div>
 				</div>
 
+				{/* ===== Timer ===== */}
 				<div className='setting-item'>
 					<label>
 						<input
@@ -123,13 +173,36 @@ export default function SettingsComponent() {
 					</label>
 
 					{timerEnabled && (
-						<select
-							value={timerMode}
-							onChange={(e) => setTimerMode(e.target.value as 'countdown' | 'normal')}
-							aria-label={t('timer.mode')}>
-							<option value='countdown'>{t('timer.countdown')}</option>
-							<option value='normal'>{t('timer.normal')}</option>
-						</select>
+						<>
+							<select
+								value={timerMode}
+								onChange={(e) => setTimerMode(e.target.value as 'countdown' | 'normal')}
+								aria-label={t('timer.mode')}>
+								<option value='countdown'>{t('timer.countdown')}</option>
+								<option value='normal'>{t('timer.normal')}</option>
+							</select>
+
+							{timerMode === 'countdown' && (
+								<div className='timer-seconds'>
+									{/* Igual UX que errores: limpia en primer focus y mínimo 10 en blur */}
+									<label className='inline'>
+										<span className='label'>{t('timer.seconds') ?? 'Seconds'}</span>
+										<input
+											type='number'
+											min={10}
+											step={1}
+											inputMode='numeric'
+											value={secondsDraft}
+											onFocus={onFocusSeconds}
+											onChange={onChangeSeconds}
+											onBlur={onBlurSeconds}
+											aria-label={t('timer.seconds')}
+											className='timer-seconds-input'
+										/>
+									</label>
+								</div>
+							)}
+						</>
 					)}
 				</div>
 			</div>
