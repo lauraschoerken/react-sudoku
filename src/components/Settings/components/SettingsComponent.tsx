@@ -13,14 +13,8 @@ export default function SettingsComponent() {
 	const { errorsActive, toggleErrorsActive } = useErrors()
 	const { errorsLimiterEnabled, errorsLimit, setErrorsLimiterEnabled, setErrorsLimit } =
 		useErrorLimit()
-	const {
-		timerEnabled,
-		timerMode,
-		timerSeconds, // segundos actuales (countdown)
-		setTimerEnabled,
-		setTimerMode,
-		setTimerSeconds,
-	} = useTimer()
+	const { timerEnabled, timerMode, timerSeconds, setTimerEnabled, setTimerMode, setTimerSeconds } =
+		useTimer()
 
 	// ====== Error limit input ======
 	const [draft, setDraft] = useState<string>('')
@@ -74,9 +68,8 @@ export default function SettingsComponent() {
 
 	// ====== Countdown seconds input (mínimo 10) ======
 	const [secondsDraft, setSecondsDraft] = useState<string>('')
-	const pristineSinceCountdownRef = useRef<boolean>(true) // como “primera edición” tras activar countdown
+	const pristineSinceCountdownRef = useRef<boolean>(true)
 
-	// Cuando se entra en countdown, sincronizamos draft y marcamos como "prístino"
 	useEffect(() => {
 		if (timerMode === 'countdown') {
 			pristineSinceCountdownRef.current = true
@@ -88,14 +81,13 @@ export default function SettingsComponent() {
 	const onFocusSeconds = () => {
 		if (timerMode !== 'countdown') return
 		if (pristineSinceCountdownRef.current) {
-			setSecondsDraft('') // limpiar al primer click para escribir directo
+			setSecondsDraft('')
 		}
 	}
 
 	const onChangeSeconds = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const raw = e.target.value
 		setSecondsDraft(raw)
-		// NO despachamos aquí → evitamos que Redux reescriba mientras tecleas
 		pristineSinceCountdownRef.current = false
 	}
 
@@ -184,7 +176,6 @@ export default function SettingsComponent() {
 
 							{timerMode === 'countdown' && (
 								<div className='timer-seconds'>
-									{/* Igual UX que errores: limpia en primer focus y mínimo 10 en blur */}
 									<label className='inline'>
 										<span className='label'>{t('timer.seconds') ?? 'Seconds'}</span>
 										<input
