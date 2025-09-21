@@ -10,11 +10,16 @@ export default function SettingsComponent() {
 	const { t } = useTranslation('settings')
 
 	const { errorsActive, toggleErrorsActive } = useErrors()
-
 	const { errorsLimiterEnabled, errorsLimit, setErrorsLimiterEnabled, setErrorsLimit } =
 		useErrorLimit()
-
 	const { timerEnabled, timerMode, setTimerEnabled, setTimerMode } = useTimer()
+
+	const onLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const val = Number(e.target.value)
+		if (Number.isNaN(val)) return
+		// opcional: clamp mínimo 1
+		setErrorsLimit(Math.max(1, Math.floor(val)))
+	}
 
 	return (
 		<div className='page-wrapper'>
@@ -46,15 +51,18 @@ export default function SettingsComponent() {
 							{t('errors.limit.toggle')}
 						</label>
 
-						<select
+						{/* AHORA: input libre */}
+						<input
+							type='number'
+							min={1}
+							step={1}
+							inputMode='numeric'
 							value={errorsLimit}
 							disabled={!errorsLimiterEnabled}
-							onChange={(e) => setErrorsLimit(Number(e.target.value) as 3 | 5 | 10)}
-							aria-label={t('errors.limit.select')}>
-							<option value='3'>3</option>
-							<option value='5'>5</option>
-							<option value='10'>10</option>
-						</select>
+							onChange={onLimitChange}
+							aria-label={t('errors.limit.input') /* añade esta key si quieres */}
+							className='error-limit-input'
+						/>
 						<span className='suffix'>{t('errors.suffix')}</span>
 					</div>
 				</div>

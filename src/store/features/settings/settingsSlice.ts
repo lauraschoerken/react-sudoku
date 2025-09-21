@@ -15,7 +15,7 @@ interface SettingsState {
 	timerEnabled: boolean
 	timerMode: 'countdown' | 'normal'
 	errorsLimiterEnabled: boolean
-	errorsLimit: 3 | 5 | 10
+	errorsLimit: number
 }
 
 const DEFAULT_STATE: SettingsState = {
@@ -148,7 +148,7 @@ const settingsSlice = createSlice({
 		setErrorsLimiterEnabled: (s, a: PayloadAction<boolean>) => {
 			s.errorsLimiterEnabled = a.payload
 		},
-		setErrorsLimit: (s, a: PayloadAction<3 | 5 | 10>) => {
+		setErrorsLimit: (s, a: PayloadAction<number>) => {
 			s.errorsLimit = a.payload
 		},
 	},

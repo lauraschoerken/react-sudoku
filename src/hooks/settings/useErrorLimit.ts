@@ -16,7 +16,7 @@ export function useErrorLimit() {
 	)
 
 	const setLimit = useCallback(
-		(limit: 3 | 5 | 10) => {
+		(limit: number) => {
 			dispatch(setErrorsLimit(limit))
 		},
 		[dispatch]
