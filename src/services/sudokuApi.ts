@@ -2,6 +2,7 @@ import type { Board } from '@/models/components/Sudoku'
 import type { Difficulty } from '@/models/utils/Difficulty'
 
 type TimerMode = 'NORMAL' | 'COUNTDOWN'
+export type GameStatus = 'IN_PROGRESS' | 'PAUSED' | 'WON' | 'LOST' | 'ABANDONED'
 
 export interface GameSessionResponse {
 	id: number
@@ -11,7 +12,7 @@ export interface GameSessionResponse {
 	difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT'
 	initialBoard: Board
 	currentBoard: Board
-	status: 'IN_PROGRESS' | 'PAUSED' | 'WON' | 'LOST' | 'ABANDONED'
+	status: GameStatus
 	notes: Record<string, number[]>
 	mistakes: number
 	hintsUsed: number
@@ -140,6 +141,12 @@ export const updateNotes = (
 	request<GameSessionResponse>(`/games/${gameId}/notes`, {
 		method: 'PATCH',
 		body: JSON.stringify({ rowIndex, colIndex, notes }),
+	})
+
+export const finishGame = (gameId: number, status: GameStatus, elapsedSeconds?: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/finish`, {
+		method: 'POST',
+		body: JSON.stringify({ status, elapsedSeconds }),
 	})
 
 export const register = (username: string, email: string, password: string) =>

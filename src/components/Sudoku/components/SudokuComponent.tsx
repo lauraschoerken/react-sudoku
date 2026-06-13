@@ -47,6 +47,7 @@ export default function SudokuComponent() {
 		backendMistakes,
 		hintsUsed,
 		requestHint,
+		finishGame,
 		usingBackend,
 	} = useSudoku(3, undefined, sudokuOptions)
 
@@ -118,8 +119,9 @@ export default function SudokuComponent() {
 			setIsEnded(true)
 			setShowLose(true)
 			setLoseReason('errors')
+			finishGame('LOST')
 		}
-	}, [limitReached, isEnded])
+	}, [finishGame, limitReached, isEnded])
 
 	const [selectedCell, setSelectedCell] = useState<{
 		rowIndex: number | null
@@ -166,11 +168,13 @@ export default function SudokuComponent() {
 		if (allFilled && !anyError && !isEnded) {
 			setIsEnded(true)
 			setShowWin(true)
+			finishGame('WON')
 		}
-	}, [userGrid, errors, isEnded])
+	}, [userGrid, errors, isEnded, finishGame])
 
 	// Nuevo puzzle (distinto) + reiniciar reloj
 	const handleNewGame = () => {
+		if (!isEnded) finishGame('ABANDONED')
 		setMistakes(0)
 		setSelectedCell({ rowIndex: null, colIndex: null })
 		setIsEnded(false)
@@ -183,6 +187,7 @@ export default function SudokuComponent() {
 
 	// Reintentar el mismo puzzle + reiniciar reloj
 	const handleRetrySame = () => {
+		if (!isEnded) finishGame('ABANDONED')
 		const size = userGrid.length
 		for (let r = 0; r < size; r++) {
 			for (let c = 0; c < size; c++) {
@@ -200,6 +205,7 @@ export default function SudokuComponent() {
 
 	// Cambiar tamaño → reinicia reloj
 	const handleChangeSize = (value: SubgridSize) => {
+		if (!isEnded) finishGame('ABANDONED')
 		setSubgridSize(value)
 		setMistakes(0)
 		setIsEnded(false)
@@ -211,6 +217,7 @@ export default function SudokuComponent() {
 
 	// Cambiar dificultad → reinicia reloj
 	const handleChangeDifficulty = (value: Difficulty) => {
+		if (!isEnded) finishGame('ABANDONED')
 		setDifficulty(value)
 		setMistakes(0)
 		setIsEnded(false)
@@ -375,6 +382,7 @@ export default function SudokuComponent() {
 										setIsEnded(true)
 										setShowLose(true)
 										setLoseReason('time')
+										finishGame('LOST', timerSeconds)
 									}
 								}}
 							/>

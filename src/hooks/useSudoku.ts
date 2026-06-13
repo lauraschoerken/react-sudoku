@@ -10,7 +10,8 @@ import {
 	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
-import { createGame, requestHint, updateCell, updateNotes } from '@/services/sudokuApi'
+import { createGame, finishGame, requestHint, updateCell, updateNotes } from '@/services/sudokuApi'
+import type { GameStatus } from '@/services/sudokuApi'
 
 interface UseSudokuOptions {
 	userId?: number
@@ -227,6 +228,24 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 			})
 	}, [gameId, usingBackend])
 
+	const finishGameValue = useCallback(
+		(status: Exclude<GameStatus, 'IN_PROGRESS' | 'PAUSED'>, elapsedSeconds?: number) => {
+			if (!usingBackend || gameId === null) return
+
+			void finishGame(gameId, status, elapsedSeconds)
+				.then((game) => {
+					setPlayerGrid(game.currentBoard)
+					setBackendMistakes(game.mistakes)
+					setHintsUsed(game.hintsUsed)
+					setNotes(game.notes ?? {})
+				})
+				.catch(() => {
+					// Finishing is retried by user actions later; keep local end state responsive.
+				})
+		},
+		[gameId, usingBackend]
+	)
+
 	return {
 		puzzle: puzzleGrid,
 		solution: solutionGrid,
@@ -247,5 +266,6 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 		backendMistakes,
 		hintsUsed,
 		requestHint: requestHintValue,
+		finishGame: finishGameValue,
 	}
 }
