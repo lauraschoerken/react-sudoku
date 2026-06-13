@@ -184,6 +184,9 @@ export const startDailySudoku = (date: string, userId?: number) => {
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, { method: 'POST' })
 }
 
+export const getDailySudokuResult = (date: string, userId: number) =>
+	request<GameSessionResponse>(`/daily-sudoku/${date}/result?userId=${userId}`)
+
 export const getUserStats = (userId: number) =>
 	request<UserStatsResponse>(`/users/${userId}/stats`)
 
