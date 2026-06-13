@@ -35,7 +35,9 @@ export default function SudokuComponent() {
 		puzzle,
 		userGrid,
 		errors,
+		notes,
 		setCell,
+		toggleNote,
 		subgridSize,
 		setSubgridSize,
 		newGame,
@@ -50,6 +52,7 @@ export default function SudokuComponent() {
 
 
 	const [mistakes, setMistakes] = useState(0)
+	const [notesMode, setNotesMode] = useState(false)
 	const prevUserGridRef = useRef<number[][] | null>(null)
 
 	// Estado de final de partida (bloquea inputs y pausa reloj)
@@ -146,9 +149,14 @@ export default function SudokuComponent() {
 			const n = Number(raw)
 			if (!Number.isInteger(n)) return
 			if (n < 1 || n > gridSize) return
+			if (notesMode) {
+				toggleNote(rowIndex, colIndex, n)
+				e.currentTarget.value = ''
+				return
+			}
 			setCell(rowIndex, colIndex, n)
 		},
-		[setCell, gridSize, limitReached, isEnded]
+		[setCell, gridSize, limitReached, isEnded, notesMode, toggleNote]
 	)
 
 	// Detectar victoria → finalizar partida y abrir overlay
@@ -223,6 +231,13 @@ export default function SudokuComponent() {
 					Pista{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
 				</button>
 
+				<button
+					className={`btn ${notesMode ? 'active' : ''}`}
+					onClick={() => setNotesMode((value) => !value)}
+					aria-pressed={notesMode}>
+					Notas
+				</button>
+
 				<label className='sudoku-size'>
 					Tamaño:
 					<select
@@ -281,6 +296,7 @@ export default function SudokuComponent() {
 										{row.map((givenValue, colIndex) => {
 											const isGiven = givenValue !== 0
 											const playerValue = userGrid[rowIndex][colIndex]
+											const cellNotes = notes[`${rowIndex}:${colIndex}`] ?? []
 											const hasError = errorsActive ? errors[rowIndex][colIndex] : false
 											const cellValue = isGiven ? givenValue : playerValue
 
@@ -294,6 +310,7 @@ export default function SudokuComponent() {
 											const cellClass = [
 												isGiven ? 'given' : '',
 												hasError ? 'error' : '',
+												notesMode ? 'notes-mode' : '',
 												isInSameRowOrCol ? 'in-plus' : '',
 												isSameNumberHighlighted ? 'same-number' : '',
 											]
@@ -310,17 +327,30 @@ export default function SudokuComponent() {
 													{isGiven ? (
 														<span aria-label='celda dada'>{givenValue}</span>
 													) : (
+														<>
+															{playerValue === 0 && cellNotes.length > 0 && (
+																<div
+																	className='notes-grid'
+																	style={{ gridTemplateColumns: `repeat(${subgridSize}, 1fr)` }}
+																	aria-hidden='true'>
+																	{Array.from({ length: gridSize }, (_, noteIndex) => {
+																		const note = noteIndex + 1
+																		return <span key={note}>{cellNotes.includes(note) ? note : ''}</span>
+																	})}
+																</div>
+															)}
 														<input
 															aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
 															inputMode='numeric'
 															type='number'
 															min={1}
 															max={gridSize}
-															value={playerValue === 0 ? '' : playerValue}
+															value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
 															onChange={handleCellChange(rowIndex, colIndex)}
 															className={hasError ? 'input-error' : undefined}
 															disabled={isEnded} // bloqueado si la partida terminó
 														/>
+														</>
 													)}
 												</td>
 											)

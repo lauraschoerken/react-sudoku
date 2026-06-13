@@ -10,7 +10,7 @@ import {
 	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
-import { createGame, requestHint, updateCell } from '@/services/sudokuApi'
+import { createGame, requestHint, updateCell, updateNotes } from '@/services/sudokuApi'
 
 interface UseSudokuOptions {
 	userId?: number
@@ -19,6 +19,8 @@ interface UseSudokuOptions {
 	timerMode?: 'normal' | 'countdown'
 	countdownSeconds?: number
 }
+
+const noteKey = (rowIndex: number, colIndex: number) => `${rowIndex}:${colIndex}`
 
 /**
  * Custom React hook para manejar la lógica principal de un Sudoku:
@@ -63,8 +65,9 @@ export const useSudoku = (
 	const [errorGrid, setErrorGrid] = useState<boolean[][]>(() => createEmptyErrorGrid(puzzleGrid))
 	const [gameId, setGameId] = useState<number | null>(null)
 	const [usingBackend, setUsingBackend] = useState(false)
-	const [backendMistakes, setBackendMistakes] = useState(0)
+const [backendMistakes, setBackendMistakes] = useState(0)
 	const [hintsUsed, setHintsUsed] = useState(0)
+	const [notes, setNotes] = useState<Record<string, number[]>>({})
 
 	const regenerateGrids = useCallback(() => {
 		const fullSolution = generateCompletedSudoku(gridSize, subgridSize)
@@ -78,6 +81,7 @@ export const useSudoku = (
 		setUsingBackend(false)
 		setBackendMistakes(0)
 		setHintsUsed(0)
+		setNotes({})
 
 		void createGame(subgridSize, difficulty, {
 			userId: options.userId,
@@ -94,6 +98,7 @@ export const useSudoku = (
 				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
 				setBackendMistakes(game.mistakes)
 				setHintsUsed(game.hintsUsed)
+				setNotes(game.notes ?? {})
 			})
 			.catch(() => {
 				setUsingBackend(false)
@@ -143,6 +148,15 @@ export const useSudoku = (
 	const setCellValue = useCallback(
 		(rowIndex: number, colIndex: number, value: number | null | undefined) => {
 			const nextValue = value && value >= 1 ? value : 0
+			if (nextValue !== 0) {
+				setNotes((prev) => {
+					const key = noteKey(rowIndex, colIndex)
+					if (!prev[key]) return prev
+					const copy = { ...prev }
+					delete copy[key]
+					return copy
+				})
+			}
 			if (!usingBackend || gameId === null) {
 				applyLocalCellValue(rowIndex, colIndex, nextValue)
 				return
@@ -153,6 +167,7 @@ export const useSudoku = (
 					setPlayerGrid(game.currentBoard)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
+					setNotes(game.notes ?? {})
 					setErrorGrid((prev) => {
 						const copy = prev.map((row) => row.slice())
 						copy[rowIndex][colIndex] = nextValue !== 0 ? !correct : false
@@ -166,6 +181,36 @@ export const useSudoku = (
 		[applyLocalCellValue, gameId, solutionGrid, usingBackend]
 	)
 
+	const toggleNote = useCallback(
+		(rowIndex: number, colIndex: number, value: number) => {
+			if (isGivenCell(rowIndex, colIndex)) return
+			if (playerGrid[rowIndex][colIndex] !== 0) return
+			if (value < 1 || value > gridSize) return
+
+			const key = noteKey(rowIndex, colIndex)
+			const current = notes[key] ?? []
+			const next = current.includes(value)
+				? current.filter((note) => note !== value)
+				: [...current, value].sort((a, b) => a - b)
+
+			setNotes((prev) => {
+				const copy = { ...prev }
+				if (next.length === 0) delete copy[key]
+				else copy[key] = next
+				return copy
+			})
+
+			if (!usingBackend || gameId === null) return
+
+			void updateNotes(gameId, rowIndex, colIndex, next)
+				.then((game) => setNotes(game.notes ?? {}))
+				.catch(() => {
+					// Keep optimistic local notes if the backend is temporarily unavailable.
+				})
+		},
+		[gameId, gridSize, isGivenCell, notes, playerGrid, usingBackend]
+	)
+
 	const requestHintValue = useCallback(() => {
 		if (!usingBackend || gameId === null) return
 
@@ -174,6 +219,7 @@ export const useSudoku = (
 				setPlayerGrid(game.currentBoard)
 				setBackendMistakes(game.mistakes)
 				setHintsUsed(game.hintsUsed)
+				setNotes(game.notes ?? {})
 				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
 			})
 			.catch(() => {
@@ -186,7 +232,9 @@ export const useSudoku = (
 		solution: solutionGrid,
 		userGrid: playerGrid,
 		errors: errorGrid,
+		notes,
 		setCell: setCellValue,
+		toggleNote,
 		newGame: regenerateGrids,
 		subgridSize,
 		setSubgridSize,

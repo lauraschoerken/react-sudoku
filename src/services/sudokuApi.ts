@@ -12,6 +12,7 @@ export interface GameSessionResponse {
 	initialBoard: Board
 	currentBoard: Board
 	status: 'IN_PROGRESS' | 'PAUSED' | 'WON' | 'LOST' | 'ABANDONED'
+	notes: Record<string, number[]>
 	mistakes: number
 	hintsUsed: number
 }
@@ -128,6 +129,17 @@ export const updateCell = (
 export const requestHint = (gameId: number) =>
 	request<HintResponse>(`/games/${gameId}/hint`, {
 		method: 'POST',
+	})
+
+export const updateNotes = (
+	gameId: number,
+	rowIndex: number,
+	colIndex: number,
+	notes: number[]
+) =>
+	request<GameSessionResponse>(`/games/${gameId}/notes`, {
+		method: 'PATCH',
+		body: JSON.stringify({ rowIndex, colIndex, notes }),
 	})
 
 export const register = (username: string, email: string, password: string) =>

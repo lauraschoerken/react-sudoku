@@ -61,6 +61,8 @@ $thick: 0.15rem;
 		}
 	}
 	td input {
+		position: relative;
+		z-index: 1;
 		width: 100%;
 		height: 100%;
 		border: none;
@@ -80,6 +82,23 @@ $thick: 0.15rem;
 			color: var(--fg);
 		}
 	}
+}
+
+.notes-grid {
+	position: absolute;
+	inset: 0.2rem;
+	display: grid;
+	z-index: 0;
+	pointer-events: none;
+	font-size: 0.62rem;
+	line-height: 1;
+	color: color-mix(in oklch, var(--fg) 72%, var(--bg) 28%);
+}
+
+.notes-grid span {
+	display: grid;
+	place-items: center;
+	min-width: 0;
 }
 
 .sudoku-toolbar {
@@ -156,6 +175,11 @@ $thick: 0.15rem;
 		opacity: 0.6;
 		cursor: not-allowed;
 		transform: none;
+	}
+
+	&.active {
+		box-shadow: inset 0 0 0 2px var(--fg);
+		font-weight: 700;
 	}
 }
 
