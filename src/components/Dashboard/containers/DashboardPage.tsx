@@ -3,8 +3,8 @@ import '@/components/Auth/containers/AuthPage.scss'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import type { CalendarDayResponse, UserStatsResponse } from '@/services/sudokuApi'
-import { getUserCalendar, getUserStats } from '@/services/sudokuApi'
+import type { CalendarDayResponse, GameSessionResponse, UserStatsResponse } from '@/services/sudokuApi'
+import { getUserCalendar, getUserGames, getUserStats } from '@/services/sudokuApi'
 import { useAppSelector } from '@/store/hooks'
 
 export const DashboardPage = () => {
@@ -12,6 +12,7 @@ export const DashboardPage = () => {
 	const now = useMemo(() => new Date(), [])
 	const [stats, setStats] = useState<UserStatsResponse | null>(null)
 	const [calendar, setCalendar] = useState<CalendarDayResponse[]>([])
+	const [games, setGames] = useState<GameSessionResponse[]>([])
 	const [error, setError] = useState<string | null>(null)
 
 	useEffect(() => {
@@ -20,10 +21,12 @@ export const DashboardPage = () => {
 		void Promise.all([
 			getUserStats(user.id),
 			getUserCalendar(user.id, now.getFullYear(), now.getMonth() + 1),
+			getUserGames(user.id),
 		])
-			.then(([nextStats, nextCalendar]) => {
+			.then(([nextStats, nextCalendar, nextGames]) => {
 				setStats(nextStats)
 				setCalendar(nextCalendar)
+				setGames(nextGames)
 			})
 			.catch(() => setError('No se pudieron cargar tus estadisticas.'))
 	}, [now, user])
@@ -80,6 +83,23 @@ export const DashboardPage = () => {
 							</div>
 						)
 					})}
+				</div>
+			</div>
+			<div className='panel' style={{ marginTop: '1rem' }}>
+				<h2>Partidas recientes</h2>
+				<div className='history-list'>
+					{games.slice(0, 8).map((game) => (
+						<div className='history-row' key={game.id}>
+							<strong>#{game.id}</strong>
+							<span>{game.difficulty}</span>
+							<span>
+								{game.gridSize}x{game.gridSize}
+							</span>
+							<span>{game.status}</span>
+							<span className='muted'>{new Date(game.startedAt).toLocaleDateString()}</span>
+						</div>
+					))}
+					{games.length === 0 && <p className='muted'>Todavia no hay partidas guardadas.</p>}
 				</div>
 			</div>
 			{error && <p className='error-text'>{error}</p>}

@@ -48,6 +48,9 @@ export default function SudokuComponent() {
 		hintsUsed,
 		requestHint,
 		finishGame,
+		pauseGame,
+		resumeGame,
+		gameStatus,
 		usingBackend,
 	} = useSudoku(3, undefined, sudokuOptions)
 
@@ -88,6 +91,7 @@ export default function SudokuComponent() {
 
 	const displayMistakes = usingBackend ? backendMistakes : mistakes
 	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
+	const isPaused = gameStatus === 'PAUSED'
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -140,7 +144,7 @@ export default function SudokuComponent() {
 
 	const handleCellChange = useCallback(
 		(rowIndex: number, colIndex: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-			if (isEnded) return
+			if (isEnded || isPaused) return
 			if (limitReached) return
 
 			const raw = e.target.value
@@ -158,7 +162,7 @@ export default function SudokuComponent() {
 			}
 			setCell(rowIndex, colIndex, n)
 		},
-		[setCell, gridSize, limitReached, isEnded, notesMode, toggleNote]
+		[setCell, gridSize, limitReached, isEnded, isPaused, notesMode, toggleNote]
 	)
 
 	// Detectar victoria → finalizar partida y abrir overlay
@@ -243,6 +247,13 @@ export default function SudokuComponent() {
 					onClick={() => setNotesMode((value) => !value)}
 					aria-pressed={notesMode}>
 					Notas
+				</button>
+
+				<button
+					className={`btn ${isPaused ? 'active' : ''}`}
+					onClick={isPaused ? resumeGame : pauseGame}
+					disabled={isEnded || !usingBackend}>
+					{isPaused ? 'Reanudar' : 'Pausar'}
 				</button>
 
 				<label className='sudoku-size'>
@@ -355,7 +366,7 @@ export default function SudokuComponent() {
 															value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
 															onChange={handleCellChange(rowIndex, colIndex)}
 															className={hasError ? 'input-error' : undefined}
-															disabled={isEnded} // bloqueado si la partida terminó
+															disabled={isEnded || isPaused} // bloqueado si la partida terminó
 														/>
 														</>
 													)}
@@ -375,7 +386,7 @@ export default function SudokuComponent() {
 								mode={timerMode}
 								seconds={timerSeconds} // 👈 usa los segundos desde Redux
 								forceHours={timerMode === 'normal'}
-								running={runFlag && !isEnded} // se para al terminar la partida
+								running={runFlag && !isEnded && !isPaused} // se para al terminar la partida
 								resetSignal={resetSignal}
 								onFinish={() => {
 									if (!isEnded) {

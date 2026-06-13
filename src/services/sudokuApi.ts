@@ -16,6 +16,10 @@ export interface GameSessionResponse {
 	notes: Record<string, number[]>
 	mistakes: number
 	hintsUsed: number
+	elapsedSeconds: number
+	startedAt: string
+	finishedAt: string | null
+	dailyGame: boolean
 }
 
 export interface UserResponse {
@@ -149,6 +153,16 @@ export const finishGame = (gameId: number, status: GameStatus, elapsedSeconds?: 
 		body: JSON.stringify({ status, elapsedSeconds }),
 	})
 
+export const pauseGame = (gameId: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/pause`, {
+		method: 'POST',
+	})
+
+export const resumeGame = (gameId: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/resume`, {
+		method: 'POST',
+	})
+
 export const register = (username: string, email: string, password: string) =>
 	request<AuthResponse>('/auth/register', {
 		method: 'POST',
@@ -173,3 +187,6 @@ export const getUserStats = (userId: number) =>
 
 export const getUserCalendar = (userId: number, year: number, month: number) =>
 	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`)
+
+export const getUserGames = (userId: number) =>
+	request<GameSessionResponse[]>(`/users/${userId}/games`)

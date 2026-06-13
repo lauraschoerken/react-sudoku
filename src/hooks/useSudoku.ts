@@ -10,7 +10,7 @@ import {
 	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
-import { createGame, finishGame, requestHint, updateCell, updateNotes } from '@/services/sudokuApi'
+import { createGame, finishGame, pauseGame, requestHint, resumeGame, updateCell, updateNotes } from '@/services/sudokuApi'
 import type { GameStatus } from '@/services/sudokuApi'
 
 interface UseSudokuOptions {
@@ -66,9 +66,10 @@ export const useSudoku = (
 	const [errorGrid, setErrorGrid] = useState<boolean[][]>(() => createEmptyErrorGrid(puzzleGrid))
 	const [gameId, setGameId] = useState<number | null>(null)
 	const [usingBackend, setUsingBackend] = useState(false)
-const [backendMistakes, setBackendMistakes] = useState(0)
+	const [backendMistakes, setBackendMistakes] = useState(0)
 	const [hintsUsed, setHintsUsed] = useState(0)
 	const [notes, setNotes] = useState<Record<string, number[]>>({})
+	const [gameStatus, setGameStatus] = useState<GameStatus>('IN_PROGRESS')
 
 	const regenerateGrids = useCallback(() => {
 		const fullSolution = generateCompletedSudoku(gridSize, subgridSize)
@@ -83,6 +84,7 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 		setBackendMistakes(0)
 		setHintsUsed(0)
 		setNotes({})
+		setGameStatus('IN_PROGRESS')
 
 		void createGame(subgridSize, difficulty, {
 			userId: options.userId,
@@ -100,6 +102,7 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 				setBackendMistakes(game.mistakes)
 				setHintsUsed(game.hintsUsed)
 				setNotes(game.notes ?? {})
+				setGameStatus(game.status)
 			})
 			.catch(() => {
 				setUsingBackend(false)
@@ -169,6 +172,7 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
 					setNotes(game.notes ?? {})
+					setGameStatus(game.status)
 					setErrorGrid((prev) => {
 						const copy = prev.map((row) => row.slice())
 						copy[rowIndex][colIndex] = nextValue !== 0 ? !correct : false
@@ -221,6 +225,7 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 				setBackendMistakes(game.mistakes)
 				setHintsUsed(game.hintsUsed)
 				setNotes(game.notes ?? {})
+				setGameStatus(game.status)
 				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
 			})
 			.catch(() => {
@@ -238,6 +243,7 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
 					setNotes(game.notes ?? {})
+					setGameStatus(game.status)
 				})
 				.catch(() => {
 					// Finishing is retried by user actions later; keep local end state responsive.
@@ -245,6 +251,26 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 		},
 		[gameId, usingBackend]
 	)
+
+	const pauseGameValue = useCallback(() => {
+		if (!usingBackend || gameId === null) return
+
+		void pauseGame(gameId)
+			.then((game) => setGameStatus(game.status))
+			.catch(() => {
+				// Keep current local status if the backend rejects the transition.
+			})
+	}, [gameId, usingBackend])
+
+	const resumeGameValue = useCallback(() => {
+		if (!usingBackend || gameId === null) return
+
+		void resumeGame(gameId)
+			.then((game) => setGameStatus(game.status))
+			.catch(() => {
+				// Keep current local status if the backend rejects the transition.
+			})
+	}, [gameId, usingBackend])
 
 	return {
 		puzzle: puzzleGrid,
@@ -263,9 +289,12 @@ const [backendMistakes, setBackendMistakes] = useState(0)
 		isGivenCell,
 		gameId,
 		usingBackend,
+		gameStatus,
 		backendMistakes,
 		hintsUsed,
 		requestHint: requestHintValue,
 		finishGame: finishGameValue,
+		pauseGame: pauseGameValue,
+		resumeGame: resumeGameValue,
 	}
 }

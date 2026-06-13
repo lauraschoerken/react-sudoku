@@ -93,6 +93,20 @@
 	border-color: var(--fg);
 }
 
+.history-list {
+	display: grid;
+	gap: 0.4rem;
+}
+
+.history-row {
+	display: grid;
+	grid-template-columns: 4rem repeat(4, minmax(0, 1fr));
+	gap: 0.5rem;
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+	padding: 0.5rem 0;
+}
+
 .daily-board {
 	display: grid;
 	grid-template-columns: repeat(9, minmax(1.75rem, 2.25rem));
