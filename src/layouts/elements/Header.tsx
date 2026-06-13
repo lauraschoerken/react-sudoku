@@ -5,11 +5,13 @@ import { Link, NavLink } from 'react-router-dom'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
 import { ThemeToggle } from '@/components/elements/Theme/ThemeToggle'
+import { useAppSelector } from '@/store/hooks'
 import { APP_NAME } from '@/utils/constants'
 
 export const Header = () => {
 	const active = 'link-active'
 	const { t } = useTranslation(['layout'])
+	const user = useAppSelector((s) => s.auth.user)
 
 	return (
 		<header className='header'>
@@ -24,8 +26,17 @@ export const Header = () => {
 					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('explication')}
 					</NavLink>
+					<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>
+						Diario
+					</NavLink>
+					<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
+						Stats
+					</NavLink>
 					<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('settings')}
+					</NavLink>
+					<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>
+						{user?.username ?? 'Cuenta'}
 					</NavLink>
 					<ThemeToggle />
 					<LanguageSelect />

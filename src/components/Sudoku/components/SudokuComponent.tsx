@@ -12,6 +12,26 @@ import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
 export default function SudokuComponent() {
 	const {
+		errorsActive,
+		errorsLimit,
+		errorsLimiterEnabled,
+		timerEnabled,
+		timerMode,
+		timerSeconds,
+	} = useAppSelector((s) => s.settings)
+	const authUser = useAppSelector((s) => s.auth.user)
+	const sudokuOptions = useMemo(
+		() => ({
+			userId: authUser?.id,
+			errorWarningsEnabled: errorsActive,
+			maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
+			timerMode,
+			countdownSeconds: timerSeconds,
+		}),
+		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, timerMode, timerSeconds]
+	)
+
+	const {
 		puzzle,
 		userGrid,
 		errors,
@@ -22,16 +42,12 @@ export default function SudokuComponent() {
 		difficulty,
 		setDifficulty,
 		gridSize,
-	} = useSudoku(3)
+		backendMistakes,
+		hintsUsed,
+		requestHint,
+		usingBackend,
+	} = useSudoku(3, undefined, sudokuOptions)
 
-	const {
-		errorsActive,
-		errorsLimit,
-		errorsLimiterEnabled,
-		timerEnabled,
-		timerMode,
-		timerSeconds, // 👈 segundos del countdown desde Redux
-	} = useAppSelector((s) => s.settings)
 
 	const [mistakes, setMistakes] = useState(0)
 	const prevUserGridRef = useRef<number[][] | null>(null)
@@ -66,7 +82,8 @@ export default function SudokuComponent() {
 		setLoseReason(null)
 	}, [puzzle])
 
-	const limitReached = errorsLimiterEnabled && mistakes >= errorsLimit
+	const displayMistakes = usingBackend ? backendMistakes : mistakes
+	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -202,6 +219,10 @@ export default function SudokuComponent() {
 					Nuevo
 				</button>
 
+				<button className='btn' onClick={requestHint} disabled={isEnded || !usingBackend}>
+					Pista{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
+				</button>
+
 				<label className='sudoku-size'>
 					Tamaño:
 					<select
@@ -236,15 +257,15 @@ export default function SudokuComponent() {
 						aria-live='polite'
 						title={
 							errorsLimiterEnabled
-								? `Errores cometidos: ${mistakes} / ${errorsLimit}`
-								: `Errores cometidos: ${mistakes}`
+								? `Errores cometidos: ${displayMistakes} / ${errorsLimit}`
+								: `Errores cometidos: ${displayMistakes}`
 						}>
 						{errorsLimiterEnabled ? (
 							<span>
-								Errores: {mistakes} / {errorsLimit}
+								Errores: {displayMistakes} / {errorsLimit}
 							</span>
 						) : (
-							<span>Errores: {mistakes}</span>
+							<span>Errores: {displayMistakes}</span>
 						)}
 					</div>
 				)}

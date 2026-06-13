@@ -1,0 +1,116 @@
+.auth-page,
+.dashboard-page,
+.daily-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1.5rem;
+}
+
+.panel {
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	background: var(--bg);
+	padding: 1rem;
+}
+
+.auth-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.form-stack {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.form-stack label {
+	display: grid;
+	gap: 0.35rem;
+	font-weight: 600;
+}
+
+.form-stack input,
+.form-stack select {
+	border: 1px solid var(--border2);
+	border-radius: var(--card-radius);
+	background: var(--body-bg);
+	color: var(--fg);
+	padding: 0.65rem 0.75rem;
+}
+
+.page-title {
+	margin: 0 0 1rem;
+	font-size: 1.5rem;
+}
+
+.muted {
+	opacity: 0.75;
+}
+
+.error-text {
+	color: #c62828;
+	font-weight: 600;
+}
+
+.metric-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.metric {
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	padding: 0.75rem;
+	background: var(--bg);
+}
+
+.metric strong {
+	display: block;
+	font-size: 1.35rem;
+	margin-top: 0.25rem;
+}
+
+.calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 0.35rem;
+	margin-top: 1rem;
+}
+
+.calendar-day {
+	min-height: 4rem;
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	background: var(--bg);
+	padding: 0.5rem;
+	display: grid;
+	align-content: space-between;
+}
+
+.calendar-day.has-activity {
+	border-color: var(--fg);
+}
+
+.daily-board {
+	display: grid;
+	grid-template-columns: repeat(9, minmax(1.75rem, 2.25rem));
+	justify-content: start;
+	margin: 1rem 0;
+}
+
+.daily-cell {
+	aspect-ratio: 1;
+	display: grid;
+	place-items: center;
+	border: 1px solid var(--border);
+	background: var(--bg);
+}
+
+@media (max-width: 760px) {
+	.auth-grid,
+	.metric-grid {
+		grid-template-columns: 1fr;
+	}
+}

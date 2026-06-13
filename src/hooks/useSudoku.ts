@@ -10,6 +10,15 @@ import {
 	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
+import { createGame, requestHint, updateCell } from '@/services/sudokuApi'
+
+interface UseSudokuOptions {
+	userId?: number
+	errorWarningsEnabled?: boolean
+	maxErrors?: number
+	timerMode?: 'normal' | 'countdown'
+	countdownSeconds?: number
+}
 
 /**
  * Custom React hook para manejar la lógica principal de un Sudoku:
@@ -37,7 +46,8 @@ import {
  */
 export const useSudoku = (
 	initialSubgridSize: SubgridSize = SubgridSizes.Classic,
-	initialDifficulty: Difficulty = DifficultyLevels.Medium
+	initialDifficulty: Difficulty = DifficultyLevels.Medium,
+	options: UseSudokuOptions = {}
 ) => {
 	const [subgridSize, setSubgridSize] = useState(initialSubgridSize)
 	const [difficulty, setDifficulty] = useState(initialDifficulty)
@@ -51,6 +61,10 @@ export const useSudoku = (
 	)
 	const [playerGrid, setPlayerGrid] = useState<Board>(() => puzzleGrid.map((row) => row.slice()))
 	const [errorGrid, setErrorGrid] = useState<boolean[][]>(() => createEmptyErrorGrid(puzzleGrid))
+	const [gameId, setGameId] = useState<number | null>(null)
+	const [usingBackend, setUsingBackend] = useState(false)
+	const [backendMistakes, setBackendMistakes] = useState(0)
+	const [hintsUsed, setHintsUsed] = useState(0)
 
 	const regenerateGrids = useCallback(() => {
 		const fullSolution = generateCompletedSudoku(gridSize, subgridSize)
@@ -60,7 +74,40 @@ export const useSudoku = (
 		setPuzzleGrid(puzzle)
 		setPlayerGrid(puzzle.map((r) => r.slice()))
 		setErrorGrid(createEmptyErrorGrid(puzzle))
-	}, [gridSize, subgridSize, difficulty])
+		setGameId(null)
+		setUsingBackend(false)
+		setBackendMistakes(0)
+		setHintsUsed(0)
+
+		void createGame(subgridSize, difficulty, {
+			userId: options.userId,
+			timerMode: options.timerMode === 'countdown' ? 'COUNTDOWN' : 'NORMAL',
+			countdownSeconds: options.timerMode === 'countdown' ? options.countdownSeconds : undefined,
+			maxErrors: options.maxErrors,
+			errorWarningsEnabled: options.errorWarningsEnabled,
+		})
+			.then((game) => {
+				setGameId(game.id)
+				setUsingBackend(true)
+				setPuzzleGrid(game.initialBoard)
+				setPlayerGrid(game.currentBoard)
+				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
+				setBackendMistakes(game.mistakes)
+				setHintsUsed(game.hintsUsed)
+			})
+			.catch(() => {
+				setUsingBackend(false)
+			})
+	}, [
+		gridSize,
+		subgridSize,
+		difficulty,
+		options.timerMode,
+		options.countdownSeconds,
+		options.maxErrors,
+		options.errorWarningsEnabled,
+		options.userId,
+	])
 
 	useEffect(() => {
 		regenerateGrids()
@@ -71,7 +118,7 @@ export const useSudoku = (
 		[puzzleGrid]
 	)
 
-	const setCellValue = useCallback(
+	const applyLocalCellValue = useCallback(
 		(rowIndex: number, colIndex: number, value: number | null | undefined) => {
 			if (isGivenCell(rowIndex, colIndex)) return
 
@@ -93,6 +140,47 @@ export const useSudoku = (
 		[isGivenCell, solutionGrid]
 	)
 
+	const setCellValue = useCallback(
+		(rowIndex: number, colIndex: number, value: number | null | undefined) => {
+			const nextValue = value && value >= 1 ? value : 0
+			if (!usingBackend || gameId === null) {
+				applyLocalCellValue(rowIndex, colIndex, nextValue)
+				return
+			}
+
+			void updateCell(gameId, rowIndex, colIndex, nextValue)
+				.then(({ game, correct }) => {
+					setPlayerGrid(game.currentBoard)
+					setBackendMistakes(game.mistakes)
+					setHintsUsed(game.hintsUsed)
+					setErrorGrid((prev) => {
+						const copy = prev.map((row) => row.slice())
+						copy[rowIndex][colIndex] = nextValue !== 0 ? !correct : false
+						return copy
+					})
+				})
+				.catch(() => {
+					applyLocalCellValue(rowIndex, colIndex, nextValue)
+				})
+		},
+		[applyLocalCellValue, gameId, solutionGrid, usingBackend]
+	)
+
+	const requestHintValue = useCallback(() => {
+		if (!usingBackend || gameId === null) return
+
+		void requestHint(gameId)
+			.then(({ game }) => {
+				setPlayerGrid(game.currentBoard)
+				setBackendMistakes(game.mistakes)
+				setHintsUsed(game.hintsUsed)
+				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
+			})
+			.catch(() => {
+				// Hint fallback is intentionally skipped; local mode has no persisted hint accounting.
+			})
+	}, [gameId, usingBackend])
+
 	return {
 		puzzle: puzzleGrid,
 		solution: solutionGrid,
@@ -106,5 +194,10 @@ export const useSudoku = (
 		difficulty,
 		setDifficulty,
 		isGivenCell,
+		gameId,
+		usingBackend,
+		backendMistakes,
+		hintsUsed,
+		requestHint: requestHintValue,
 	}
 }
