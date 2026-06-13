@@ -96,7 +96,13 @@ export const DashboardPage = () => {
 								{game.gridSize}x{game.gridSize}
 							</span>
 							<span>{game.status}</span>
-							<span className='muted'>{new Date(game.startedAt).toLocaleDateString()}</span>
+							{game.status === 'IN_PROGRESS' || game.status === 'PAUSED' ? (
+								<Link className='btn compact' to={`/?gameId=${game.id}`}>
+									Continuar
+								</Link>
+							) : (
+								<span className='muted'>{new Date(game.startedAt).toLocaleDateString()}</span>
+							)}
 						</div>
 					))}
 					{games.length === 0 && <p className='muted'>Todavia no hay partidas guardadas.</p>}

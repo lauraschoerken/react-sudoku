@@ -119,6 +119,8 @@ export const createGame = (
 		}),
 	})
 
+export const getGame = (gameId: number) => request<GameSessionResponse>(`/games/${gameId}`)
+
 export const updateCell = (
 	gameId: number,
 	rowIndex: number,

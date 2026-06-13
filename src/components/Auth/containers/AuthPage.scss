@@ -107,6 +107,12 @@
 	padding: 0.5rem 0;
 }
 
+.btn.compact {
+	justify-self: start;
+	padding: 0.4rem 0.65rem;
+	text-decoration: none;
+}
+
 .daily-board {
 	display: grid;
 	grid-template-columns: repeat(9, minmax(1.75rem, 2.25rem));

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Board } from '@/models/components/Sudoku'
 import { type Difficulty, DifficultyLevels } from '@/models/utils/Difficulty'
@@ -10,10 +10,11 @@ import {
 	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
-import { createGame, finishGame, pauseGame, requestHint, resumeGame, updateCell, updateNotes } from '@/services/sudokuApi'
+import { createGame, finishGame, getGame, pauseGame, requestHint, resumeGame, updateCell, updateNotes } from '@/services/sudokuApi'
 import type { GameStatus } from '@/services/sudokuApi'
 
 interface UseSudokuOptions {
+	initialGameId?: number
 	userId?: number
 	errorWarningsEnabled?: boolean
 	maxErrors?: number
@@ -70,8 +71,44 @@ export const useSudoku = (
 	const [hintsUsed, setHintsUsed] = useState(0)
 	const [notes, setNotes] = useState<Record<string, number[]>>({})
 	const [gameStatus, setGameStatus] = useState<GameStatus>('IN_PROGRESS')
+	const suppressNextRegenerateRef = useRef(false)
+	const loadedInitialGameIdRef = useRef<number | null>(null)
+
+	const applyBackendGame = useCallback((game: Awaited<ReturnType<typeof getGame>>) => {
+		suppressNextRegenerateRef.current = true
+		setGameId(game.id)
+		setUsingBackend(true)
+		setSubgridSize(game.subgridSize as SubgridSize)
+		setDifficulty(difficultyFromApi(game.difficulty))
+		setPuzzleGrid(game.initialBoard)
+		setPlayerGrid(game.currentBoard)
+		setErrorGrid(createEmptyErrorGrid(game.currentBoard))
+		setBackendMistakes(game.mistakes)
+		setHintsUsed(game.hintsUsed)
+		setNotes(game.notes ?? {})
+		setGameStatus(game.status)
+	}, [])
 
 	const regenerateGrids = useCallback(() => {
+		if (suppressNextRegenerateRef.current) {
+			suppressNextRegenerateRef.current = false
+			return
+		}
+
+		if (
+			options.initialGameId !== undefined &&
+			loadedInitialGameIdRef.current !== options.initialGameId
+		) {
+			loadedInitialGameIdRef.current = options.initialGameId
+			void getGame(options.initialGameId)
+				.then(applyBackendGame)
+				.catch(() => {
+					loadedInitialGameIdRef.current = null
+					setUsingBackend(false)
+				})
+			return
+		}
+
 		const fullSolution = generateCompletedSudoku(gridSize, subgridSize)
 		const puzzle = hideCells(fullSolution, subgridSize, getCellsToHide(difficulty))
 
@@ -94,15 +131,7 @@ export const useSudoku = (
 			errorWarningsEnabled: options.errorWarningsEnabled,
 		})
 			.then((game) => {
-				setGameId(game.id)
-				setUsingBackend(true)
-				setPuzzleGrid(game.initialBoard)
-				setPlayerGrid(game.currentBoard)
-				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
-				setBackendMistakes(game.mistakes)
-				setHintsUsed(game.hintsUsed)
-				setNotes(game.notes ?? {})
-				setGameStatus(game.status)
+				applyBackendGame(game)
 			})
 			.catch(() => {
 				setUsingBackend(false)
@@ -116,6 +145,8 @@ export const useSudoku = (
 		options.maxErrors,
 		options.errorWarningsEnabled,
 		options.userId,
+		options.initialGameId,
+		applyBackendGame,
 	])
 
 	useEffect(() => {
@@ -147,6 +178,17 @@ export const useSudoku = (
 			})
 		},
 		[isGivenCell, solutionGrid]
+	)
+
+	const loadGame = useCallback(
+		(id: number) => {
+			void getGame(id)
+				.then(applyBackendGame)
+				.catch(() => {
+					setUsingBackend(false)
+				})
+		},
+		[applyBackendGame]
 	)
 
 	const setCellValue = useCallback(
@@ -296,5 +338,20 @@ export const useSudoku = (
 		finishGame: finishGameValue,
 		pauseGame: pauseGameValue,
 		resumeGame: resumeGameValue,
+		loadGame,
+	}
+}
+
+const difficultyFromApi = (difficulty: 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT'): Difficulty => {
+	switch (difficulty) {
+		case 'EASY':
+			return 8 as Difficulty
+		case 'HARD':
+			return 65 as Difficulty
+		case 'EXPERT':
+			return 70 as Difficulty
+		case 'MEDIUM':
+		default:
+			return 57 as Difficulty
 	}
 }

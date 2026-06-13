@@ -1,6 +1,7 @@
 import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import DigitalTimer from '@/components/elements/Timer/Timer'
 import { useSudoku } from '@/hooks/useSudoku'
@@ -11,6 +12,7 @@ import { useAppSelector } from '@/store/hooks'
 import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
 export default function SudokuComponent() {
+	const [searchParams] = useSearchParams()
 	const {
 		errorsActive,
 		errorsLimit,
@@ -20,15 +22,22 @@ export default function SudokuComponent() {
 		timerSeconds,
 	} = useAppSelector((s) => s.settings)
 	const authUser = useAppSelector((s) => s.auth.user)
+	const initialGameId = useMemo(() => {
+		const raw = searchParams.get('gameId')
+		if (!raw) return undefined
+		const parsed = Number(raw)
+		return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+	}, [searchParams])
 	const sudokuOptions = useMemo(
 		() => ({
+			initialGameId,
 			userId: authUser?.id,
 			errorWarningsEnabled: errorsActive,
 			maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
 			timerMode,
 			countdownSeconds: timerSeconds,
 		}),
-		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, timerMode, timerSeconds]
+		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, initialGameId, timerMode, timerSeconds]
 	)
 
 	const {
