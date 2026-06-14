@@ -42,6 +42,18 @@ export interface UserStatsResponse {
 	averageTimeSeconds: number
 	totalMistakes: number
 	totalHints: number
+	byDifficulty: Record<string, StatsBreakdownResponse>
+	byGridSize: Record<string, StatsBreakdownResponse>
+}
+
+export interface StatsBreakdownResponse {
+	playedGames: number
+	wonGames: number
+	lostGames: number
+	bestTimeSeconds: number
+	averageTimeSeconds: number
+	totalMistakes: number
+	totalHints: number
 }
 
 export interface CalendarDayResponse {
@@ -71,6 +83,11 @@ export interface HintResponse {
 	rowIndex: number
 	colIndex: number
 	value: number
+}
+
+export interface ValidateCellResponse {
+	correct: boolean
+	expectedValue: number
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
@@ -162,6 +179,12 @@ export const updateNotes = (
 	request<GameSessionResponse>(`/games/${gameId}/notes`, {
 		method: 'PATCH',
 		body: JSON.stringify({ rowIndex, colIndex, notes }),
+	})
+
+export const validateCell = (gameId: number, rowIndex: number, colIndex: number, value: number) =>
+	request<ValidateCellResponse>(`/games/${gameId}/validate`, {
+		method: 'POST',
+		body: JSON.stringify({ rowIndex, colIndex, value }),
 	})
 
 export const finishGame = (gameId: number, status: GameStatus, elapsedSeconds?: number) =>

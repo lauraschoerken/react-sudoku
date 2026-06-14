@@ -49,24 +49,54 @@ export const DashboardPage = () => {
 		<div className='dashboard-page'>
 			<h1 className='page-title'>Estadisticas</h1>
 			{stats && (
-				<div className='metric-grid'>
-					<div className='metric'>
-						<span>Partidas</span>
-						<strong>{stats.playedGames}</strong>
+				<>
+					<div className='metric-grid'>
+						<div className='metric'>
+							<span>Partidas</span>
+							<strong>{stats.playedGames}</strong>
+						</div>
+						<div className='metric'>
+							<span>Ganadas</span>
+							<strong>{stats.wonGames}</strong>
+						</div>
+						<div className='metric'>
+							<span>Mejor tiempo</span>
+							<strong>{stats.bestTimeSeconds}s</strong>
+						</div>
+						<div className='metric'>
+							<span>Pistas</span>
+							<strong>{stats.totalHints}</strong>
+						</div>
 					</div>
-					<div className='metric'>
-						<span>Ganadas</span>
-						<strong>{stats.wonGames}</strong>
+					<div className='panel' style={{ marginTop: '1rem' }}>
+						<h2>Por dificultad</h2>
+						<div className='history-list'>
+							{Object.entries(stats.byDifficulty).map(([difficulty, item]) => (
+								<div className='history-row' key={difficulty}>
+									<strong>{difficulty}</strong>
+									<span>{item.playedGames} partidas</span>
+									<span>{item.wonGames} ganadas</span>
+									<span>{Math.round(item.averageTimeSeconds)}s media</span>
+									<span className='muted'>{item.totalMistakes} errores</span>
+								</div>
+							))}
+						</div>
 					</div>
-					<div className='metric'>
-						<span>Mejor tiempo</span>
-						<strong>{stats.bestTimeSeconds}s</strong>
+					<div className='panel' style={{ marginTop: '1rem' }}>
+						<h2>Por tamaño</h2>
+						<div className='history-list'>
+							{Object.entries(stats.byGridSize).map(([size, item]) => (
+								<div className='history-row' key={size}>
+									<strong>{size}x{size}</strong>
+									<span>{item.playedGames} partidas</span>
+									<span>{item.wonGames} ganadas</span>
+									<span>{Math.round(item.averageTimeSeconds)}s media</span>
+									<span className='muted'>{item.totalHints} pistas</span>
+								</div>
+							))}
+						</div>
 					</div>
-					<div className='metric'>
-						<span>Pistas</span>
-						<strong>{stats.totalHints}</strong>
-					</div>
-				</div>
+				</>
 			)}
 
 			<div className='panel' style={{ marginTop: '1rem' }}>
