@@ -39,3 +39,26 @@ Para desarrollo completo, levanta antes el backend:
 cd ../java-sudoku
 mvn.cmd spring-boot:run
 ```
+
+## Docker
+
+La imagen usa Nginx para servir la SPA y proxy de `/api` hacia el servicio Docker `java-sudoku:8080`.
+
+Construir imagen local:
+
+```bash
+docker build -t ghcr.io/lauraschoerken/react-sudoku:latest .
+```
+
+Publicar en GitHub Container Registry:
+
+```bash
+docker login ghcr.io
+docker push ghcr.io/lauraschoerken/react-sudoku:latest
+```
+
+Por defecto el build usa `VITE_API_BASE_URL=/api`. Si necesitas otro endpoint:
+
+```bash
+docker build --build-arg VITE_API_BASE_URL=https://tu-dominio/api -t ghcr.io/lauraschoerken/react-sudoku:latest .
+```

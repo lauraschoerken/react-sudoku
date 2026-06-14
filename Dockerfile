@@ -1,9 +1,9 @@
-# ---------- Etapa 1: Build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
 
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
-# Instala deps con caché eficiente
 COPY package*.json ./
 RUN if [ -f package-lock.json ]; then \
       npm ci --no-audit --no-fund; \
@@ -14,16 +14,9 @@ RUN if [ -f package-lock.json ]; then \
 COPY . .
 RUN npm run build
 
-# ---------- Etapa 2: Runtime mínimo ----------
-FROM node:20-alpine AS runtime
-WORKDIR /app
-RUN npm i -g serve@14
-COPY --from=build /app/dist ./dist
-RUN addgroup -S app && adduser -S app -G app
-USER app
+FROM nginx:1.27-alpine AS runtime
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Exponer puerto de serve
 EXPOSE 3000
-
-# SPA fallback activado con -s
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]

@@ -1,6 +1,9 @@
 node_modules
+dist
+dist-ssr
 .git
-.gitignore
-Dockerfile
-.github
+.idea
+.vscode
 *.log
+Dockerfile
+README.md
