@@ -195,3 +195,19 @@ export const getUserCalendar = (userId: number, year: number, month: number) =>
 
 export const getUserGames = (userId: number) =>
 	request<GameSessionResponse[]>(`/users/${userId}/games`)
+
+export const generatePrintPack = (
+	quantity: number,
+	subgridSize: number,
+	difficulty: Difficulty,
+	includeSolutions: boolean
+) =>
+	request<SudokuPuzzleResponse[]>('/print/sudokus', {
+		method: 'POST',
+		body: JSON.stringify({
+			quantity,
+			subgridSize,
+			difficulty: difficultyToApi(difficulty),
+			includeSolutions,
+		}),
+	})

@@ -32,6 +32,9 @@ export const Header = () => {
 					<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
 						Stats
 					</NavLink>
+					<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
+						Imprimir
+					</NavLink>
 					<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('settings')}
 					</NavLink>
