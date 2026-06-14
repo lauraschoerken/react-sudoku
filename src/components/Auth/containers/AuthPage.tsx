@@ -3,7 +3,7 @@ import './AuthPage.scss'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 
-import { login, register } from '@/services/sudokuApi'
+import { getCurrentUser, login, register } from '@/services/sudokuApi'
 import { setSession, clearSession } from '@/store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
@@ -16,6 +16,7 @@ export const AuthPage = () => {
 	const [registerEmail, setRegisterEmail] = useState('')
 	const [registerPassword, setRegisterPassword] = useState('')
 	const [error, setError] = useState<string | null>(null)
+	const [checkingSession, setCheckingSession] = useState(false)
 
 	const onLogin = async (event: FormEvent) => {
 		event.preventDefault()
@@ -37,6 +38,20 @@ export const AuthPage = () => {
 		}
 	}
 
+	const onValidateSession = async () => {
+		if (!session.token) return
+		setCheckingSession(true)
+		setError(null)
+		try {
+			dispatch(setSession({ token: session.token, user: await getCurrentUser() }))
+		} catch {
+			dispatch(clearSession())
+			setError('La sesion ya no es valida.')
+		} finally {
+			setCheckingSession(false)
+		}
+	}
+
 	return (
 		<div className='auth-page'>
 			<h1 className='page-title'>Cuenta</h1>
@@ -47,6 +62,9 @@ export const AuthPage = () => {
 					</span>
 					<button className='btn' onClick={() => dispatch(clearSession())}>
 						Cerrar sesion
+					</button>
+					<button className='btn' disabled={checkingSession} onClick={onValidateSession}>
+						{checkingSession ? 'Validando...' : 'Validar sesion'}
 					</button>
 				</div>
 			)}

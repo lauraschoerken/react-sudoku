@@ -75,6 +75,16 @@ export interface HintResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
+const getAuthToken = () => {
+	try {
+		const rawAuth = localStorage.getItem('auth')
+		if (!rawAuth) return null
+		return (JSON.parse(rawAuth) as { token?: string }).token ?? null
+	} catch {
+		return null
+	}
+}
+
 const difficultyToApi = (difficulty: Difficulty): GameSessionResponse['difficulty'] => {
 	if (difficulty <= 8) return 'EASY'
 	if (difficulty <= 57) return 'MEDIUM'
@@ -83,8 +93,13 @@ const difficultyToApi = (difficulty: Difficulty): GameSessionResponse['difficult
 }
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
+	const token = getAuthToken()
 	const response = await fetch(`${API_BASE_URL}${path}`, {
-		headers: { 'Content-Type': 'application/json', ...init?.headers },
+		headers: {
+			'Content-Type': 'application/json',
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+			...init?.headers,
+		},
 		...init,
 	})
 
@@ -176,6 +191,8 @@ export const login = (email: string, password: string) =>
 		method: 'POST',
 		body: JSON.stringify({ email, password }),
 	})
+
+export const getCurrentUser = () => request<UserResponse>('/auth/me')
 
 export const getTodayDailySudoku = () => request<SudokuPuzzleResponse>('/daily-sudoku/today')
 
