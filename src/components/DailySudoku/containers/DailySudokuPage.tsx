@@ -24,7 +24,7 @@ export const DailySudokuPage = () => {
 
 	useEffect(() => {
 		if (!user) return
-		void getDailySudokuResult(todayKey(), user.id)
+		void getDailySudokuResult(todayKey())
 			.then(setGame)
 			.catch(() => {
 				// No daily game has been started yet for this user.
@@ -34,7 +34,7 @@ export const DailySudokuPage = () => {
 	const start = async () => {
 		setError(null)
 		try {
-			const nextGame = await startDailySudoku(todayKey(), user?.id)
+			const nextGame = await startDailySudoku(todayKey())
 			setGame(nextGame)
 			navigate(`/?gameId=${nextGame.id}`)
 		} catch {

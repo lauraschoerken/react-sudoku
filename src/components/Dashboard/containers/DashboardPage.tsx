@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { CalendarDayResponse, GameSessionResponse, UserStatsResponse } from '@/services/sudokuApi'
-import { getUserCalendar, getUserGames, getUserStats } from '@/services/sudokuApi'
+import { getMyCalendar, getMyGames, getMyStats } from '@/services/sudokuApi'
 import { useAppSelector } from '@/store/hooks'
 
 export const DashboardPage = () => {
@@ -19,9 +19,9 @@ export const DashboardPage = () => {
 		if (!user) return
 		setError(null)
 		void Promise.all([
-			getUserStats(user.id),
-			getUserCalendar(user.id, now.getFullYear(), now.getMonth() + 1),
-			getUserGames(user.id),
+			getMyStats(),
+			getMyCalendar(now.getFullYear(), now.getMonth() + 1),
+			getMyGames(),
 		])
 			.then(([nextStats, nextCalendar, nextGames]) => {
 				setStats(nextStats)

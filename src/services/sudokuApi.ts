@@ -201,8 +201,10 @@ export const startDailySudoku = (date: string, userId?: number) => {
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, { method: 'POST' })
 }
 
-export const getDailySudokuResult = (date: string, userId: number) =>
-	request<GameSessionResponse>(`/daily-sudoku/${date}/result?userId=${userId}`)
+export const getDailySudokuResult = (date: string, userId?: number) => {
+	const query = userId ? `?userId=${userId}` : ''
+	return request<GameSessionResponse>(`/daily-sudoku/${date}/result${query}`)
+}
 
 export const getUserStats = (userId: number) =>
 	request<UserStatsResponse>(`/users/${userId}/stats`)
@@ -212,6 +214,13 @@ export const getUserCalendar = (userId: number, year: number, month: number) =>
 
 export const getUserGames = (userId: number) =>
 	request<GameSessionResponse[]>(`/users/${userId}/games`)
+
+export const getMyStats = () => request<UserStatsResponse>('/users/me/stats')
+
+export const getMyCalendar = (year: number, month: number) =>
+	request<CalendarDayResponse[]>(`/users/me/calendar?year=${year}&month=${month}`)
+
+export const getMyGames = () => request<GameSessionResponse[]>('/users/me/games')
 
 export const generatePrintPack = (
 	quantity: number,
