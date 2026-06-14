@@ -1,6 +1,7 @@
 import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import DigitalTimer from '@/components/elements/Timer/Timer'
 import { useSudoku } from '@/hooks/useSudoku'
@@ -11,29 +12,60 @@ import { useAppSelector } from '@/store/hooks'
 import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
 export default function SudokuComponent() {
-	const {
-		puzzle,
-		userGrid,
-		errors,
-		setCell,
-		subgridSize,
-		setSubgridSize,
-		newGame,
-		difficulty,
-		setDifficulty,
-		gridSize,
-	} = useSudoku(3)
-
+	const [searchParams] = useSearchParams()
 	const {
 		errorsActive,
 		errorsLimit,
 		errorsLimiterEnabled,
 		timerEnabled,
 		timerMode,
-		timerSeconds, // 👈 segundos del countdown desde Redux
+		timerSeconds,
 	} = useAppSelector((s) => s.settings)
+	const authUser = useAppSelector((s) => s.auth.user)
+	const initialGameId = useMemo(() => {
+		const raw = searchParams.get('gameId')
+		if (!raw) return undefined
+		const parsed = Number(raw)
+		return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+	}, [searchParams])
+	const sudokuOptions = useMemo(
+		() => ({
+			initialGameId,
+			userId: authUser?.id,
+			errorWarningsEnabled: errorsActive,
+			maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
+			timerMode,
+			countdownSeconds: timerSeconds,
+		}),
+		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, initialGameId, timerMode, timerSeconds]
+	)
+
+	const {
+		puzzle,
+		userGrid,
+		errors,
+		notes,
+		setCell,
+		toggleNote,
+		subgridSize,
+		setSubgridSize,
+		newGame,
+		difficulty,
+		setDifficulty,
+		gridSize,
+		backendMistakes,
+		hintsUsed,
+		requestHint,
+		finishGame,
+		pauseGame,
+		resumeGame,
+		gameStatus,
+		usingBackend,
+	} = useSudoku(3, undefined, sudokuOptions)
+
 
 	const [mistakes, setMistakes] = useState(0)
+	const [notesMode, setNotesMode] = useState(false)
 	const prevUserGridRef = useRef<number[][] | null>(null)
 
 	// Estado de final de partida (bloquea inputs y pausa reloj)
@@ -66,7 +98,9 @@ export default function SudokuComponent() {
 		setLoseReason(null)
 	}, [puzzle])
 
-	const limitReached = errorsLimiterEnabled && mistakes >= errorsLimit
+	const displayMistakes = usingBackend ? backendMistakes : mistakes
+	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
+	const isPaused = gameStatus === 'PAUSED'
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -98,8 +132,9 @@ export default function SudokuComponent() {
 			setIsEnded(true)
 			setShowLose(true)
 			setLoseReason('errors')
+			finishGame('LOST')
 		}
-	}, [limitReached, isEnded])
+	}, [finishGame, limitReached, isEnded])
 
 	const [selectedCell, setSelectedCell] = useState<{
 		rowIndex: number | null
@@ -118,7 +153,7 @@ export default function SudokuComponent() {
 
 	const handleCellChange = useCallback(
 		(rowIndex: number, colIndex: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-			if (isEnded) return
+			if (isEnded || isPaused) return
 			if (limitReached) return
 
 			const raw = e.target.value
@@ -129,9 +164,14 @@ export default function SudokuComponent() {
 			const n = Number(raw)
 			if (!Number.isInteger(n)) return
 			if (n < 1 || n > gridSize) return
+			if (notesMode) {
+				toggleNote(rowIndex, colIndex, n)
+				e.currentTarget.value = ''
+				return
+			}
 			setCell(rowIndex, colIndex, n)
 		},
-		[setCell, gridSize, limitReached, isEnded]
+		[setCell, gridSize, limitReached, isEnded, isPaused, notesMode, toggleNote]
 	)
 
 	// Detectar victoria → finalizar partida y abrir overlay
@@ -141,11 +181,13 @@ export default function SudokuComponent() {
 		if (allFilled && !anyError && !isEnded) {
 			setIsEnded(true)
 			setShowWin(true)
+			finishGame('WON')
 		}
-	}, [userGrid, errors, isEnded])
+	}, [userGrid, errors, isEnded, finishGame])
 
 	// Nuevo puzzle (distinto) + reiniciar reloj
 	const handleNewGame = () => {
+		if (!isEnded) finishGame('ABANDONED')
 		setMistakes(0)
 		setSelectedCell({ rowIndex: null, colIndex: null })
 		setIsEnded(false)
@@ -158,6 +200,7 @@ export default function SudokuComponent() {
 
 	// Reintentar el mismo puzzle + reiniciar reloj
 	const handleRetrySame = () => {
+		if (!isEnded) finishGame('ABANDONED')
 		const size = userGrid.length
 		for (let r = 0; r < size; r++) {
 			for (let c = 0; c < size; c++) {
@@ -175,6 +218,7 @@ export default function SudokuComponent() {
 
 	// Cambiar tamaño → reinicia reloj
 	const handleChangeSize = (value: SubgridSize) => {
+		if (!isEnded) finishGame('ABANDONED')
 		setSubgridSize(value)
 		setMistakes(0)
 		setIsEnded(false)
@@ -186,6 +230,7 @@ export default function SudokuComponent() {
 
 	// Cambiar dificultad → reinicia reloj
 	const handleChangeDifficulty = (value: Difficulty) => {
+		if (!isEnded) finishGame('ABANDONED')
 		setDifficulty(value)
 		setMistakes(0)
 		setIsEnded(false)
@@ -200,6 +245,24 @@ export default function SudokuComponent() {
 			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
 				<button className='btn primary' onClick={handleNewGame}>
 					Nuevo
+				</button>
+
+				<button className='btn' onClick={requestHint} disabled={isEnded || !usingBackend}>
+					Pista{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
+				</button>
+
+				<button
+					className={`btn ${notesMode ? 'active' : ''}`}
+					onClick={() => setNotesMode((value) => !value)}
+					aria-pressed={notesMode}>
+					Notas
+				</button>
+
+				<button
+					className={`btn ${isPaused ? 'active' : ''}`}
+					onClick={isPaused ? resumeGame : pauseGame}
+					disabled={isEnded || !usingBackend}>
+					{isPaused ? 'Reanudar' : 'Pausar'}
 				</button>
 
 				<label className='sudoku-size'>
@@ -236,15 +299,15 @@ export default function SudokuComponent() {
 						aria-live='polite'
 						title={
 							errorsLimiterEnabled
-								? `Errores cometidos: ${mistakes} / ${errorsLimit}`
-								: `Errores cometidos: ${mistakes}`
+								? `Errores cometidos: ${displayMistakes} / ${errorsLimit}`
+								: `Errores cometidos: ${displayMistakes}`
 						}>
 						{errorsLimiterEnabled ? (
 							<span>
-								Errores: {mistakes} / {errorsLimit}
+								Errores: {displayMistakes} / {errorsLimit}
 							</span>
 						) : (
-							<span>Errores: {mistakes}</span>
+							<span>Errores: {displayMistakes}</span>
 						)}
 					</div>
 				)}
@@ -260,6 +323,7 @@ export default function SudokuComponent() {
 										{row.map((givenValue, colIndex) => {
 											const isGiven = givenValue !== 0
 											const playerValue = userGrid[rowIndex][colIndex]
+											const cellNotes = notes[`${rowIndex}:${colIndex}`] ?? []
 											const hasError = errorsActive ? errors[rowIndex][colIndex] : false
 											const cellValue = isGiven ? givenValue : playerValue
 
@@ -273,6 +337,7 @@ export default function SudokuComponent() {
 											const cellClass = [
 												isGiven ? 'given' : '',
 												hasError ? 'error' : '',
+												notesMode ? 'notes-mode' : '',
 												isInSameRowOrCol ? 'in-plus' : '',
 												isSameNumberHighlighted ? 'same-number' : '',
 											]
@@ -289,17 +354,30 @@ export default function SudokuComponent() {
 													{isGiven ? (
 														<span aria-label='celda dada'>{givenValue}</span>
 													) : (
+														<>
+															{playerValue === 0 && cellNotes.length > 0 && (
+																<div
+																	className='notes-grid'
+																	style={{ gridTemplateColumns: `repeat(${subgridSize}, 1fr)` }}
+																	aria-hidden='true'>
+																	{Array.from({ length: gridSize }, (_, noteIndex) => {
+																		const note = noteIndex + 1
+																		return <span key={note}>{cellNotes.includes(note) ? note : ''}</span>
+																	})}
+																</div>
+															)}
 														<input
 															aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
 															inputMode='numeric'
 															type='number'
 															min={1}
 															max={gridSize}
-															value={playerValue === 0 ? '' : playerValue}
+															value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
 															onChange={handleCellChange(rowIndex, colIndex)}
 															className={hasError ? 'input-error' : undefined}
-															disabled={isEnded} // bloqueado si la partida terminó
+															disabled={isEnded || isPaused} // bloqueado si la partida terminó
 														/>
+														</>
 													)}
 												</td>
 											)
@@ -317,13 +395,14 @@ export default function SudokuComponent() {
 								mode={timerMode}
 								seconds={timerSeconds} // 👈 usa los segundos desde Redux
 								forceHours={timerMode === 'normal'}
-								running={runFlag && !isEnded} // se para al terminar la partida
+								running={runFlag && !isEnded && !isPaused} // se para al terminar la partida
 								resetSignal={resetSignal}
 								onFinish={() => {
 									if (!isEnded) {
 										setIsEnded(true)
 										setShowLose(true)
 										setLoseReason('time')
+										finishGame('LOST', timerSeconds)
 									}
 								}}
 							/>

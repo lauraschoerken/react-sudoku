@@ -6,9 +6,9 @@
 - [x] Posibilidad de cambiar tamaño.
 - [x] Quiero poder "hacer" el sudoku.
 - [x] Dificultades.
-- [ ] Errores.
-- [ ] Contador de errores.
-- [ ] Modo cronometrado y Modo zen.
+- [x] Errores.
+- [x] Contador de errores.
+- [x] Modo cronometrado y Modo zen.
 - [ ] Pistas.
 - [ ] Contador de pistas.
 - [ ] Notas.
@@ -26,4 +26,4 @@
 - [x] Hacer un sudoku 4x4
 - [ ] Hacer un sudoku quizas un de 3x3 x5.
 - [ ] Modo “sin errores” (bloquea entradas incorrectas).
-- [ ] Modo “permitir errores” con límite configurable.
+- [x] Modo “permitir errores” con límite configurable.

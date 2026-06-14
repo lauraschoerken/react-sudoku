@@ -1,0 +1,229 @@
+.auth-page,
+.dashboard-page,
+.daily-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1.5rem;
+}
+
+.panel {
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	background: var(--bg);
+	padding: 1rem;
+}
+
+.auth-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.form-stack {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.form-stack label {
+	display: grid;
+	gap: 0.35rem;
+	font-weight: 600;
+}
+
+.form-stack input,
+.form-stack select {
+	border: 1px solid var(--border2);
+	border-radius: var(--card-radius);
+	background: var(--body-bg);
+	color: var(--fg);
+	padding: 0.65rem 0.75rem;
+}
+
+.page-title {
+	margin: 0 0 1rem;
+	font-size: 1.5rem;
+}
+
+.muted {
+	opacity: 0.75;
+}
+
+.error-text {
+	color: #c62828;
+	font-weight: 600;
+}
+
+.metric-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 0.75rem;
+}
+
+.metric {
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	padding: 0.75rem;
+	background: var(--bg);
+}
+
+.metric strong {
+	display: block;
+	font-size: 1.35rem;
+	margin-top: 0.25rem;
+}
+
+.calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	gap: 0.35rem;
+	margin-top: 1rem;
+}
+
+.calendar-day {
+	min-height: 4rem;
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	background: var(--bg);
+	padding: 0.5rem;
+	display: grid;
+	align-content: space-between;
+}
+
+.calendar-day.has-activity {
+	border-color: var(--fg);
+}
+
+.history-list {
+	display: grid;
+	gap: 0.4rem;
+}
+
+.history-row {
+	display: grid;
+	grid-template-columns: 4rem repeat(4, minmax(0, 1fr));
+	gap: 0.5rem;
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+	padding: 0.5rem 0;
+}
+
+.btn.compact {
+	justify-self: start;
+	padding: 0.4rem 0.65rem;
+	text-decoration: none;
+}
+
+.daily-board {
+	display: grid;
+	grid-template-columns: repeat(9, minmax(1.75rem, 2.25rem));
+	justify-content: start;
+	margin: 1rem 0;
+}
+
+.daily-cell {
+	aspect-ratio: 1;
+	display: grid;
+	place-items: center;
+	border: 1px solid var(--border);
+	background: var(--bg);
+}
+
+.print-page {
+	max-width: 80rem;
+	margin: 0 auto;
+	padding: 1.5rem;
+}
+
+.print-controls {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	align-items: end;
+}
+
+.inline-row {
+	display: flex !important;
+	grid-template-columns: none !important;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.print-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.print-pack {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.print-sheet {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.75rem;
+	border: 1px solid var(--border);
+	border-radius: var(--card-radius);
+	background: var(--bg);
+	padding: 1rem;
+	break-inside: avoid;
+}
+
+.print-card h3 {
+	margin: 0 0 0.5rem;
+	font-size: 1rem;
+}
+
+.print-board {
+	display: grid;
+	border-top: 2px solid var(--fg);
+	border-left: 2px solid var(--fg);
+}
+
+.print-board span {
+	aspect-ratio: 1;
+	display: grid;
+	place-items: center;
+	min-width: 0;
+	border-right: 1px solid var(--fg);
+	border-bottom: 1px solid var(--fg);
+	font-weight: 600;
+}
+
+@media (max-width: 760px) {
+	.auth-grid,
+	.metric-grid,
+	.print-controls,
+	.print-pack,
+	.print-sheet {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media print {
+	.header,
+	.footer,
+	.print-controls,
+	.page-title {
+		display: none !important;
+	}
+
+	.main {
+		background: white;
+		color: black;
+	}
+
+	.print-page {
+		padding: 0;
+	}
+
+	.print-pack {
+		display: block;
+	}
+
+	.print-sheet {
+		border: none;
+		page-break-inside: avoid;
+		margin-bottom: 1rem;
+	}
+}

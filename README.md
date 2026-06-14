@@ -1,13 +1,64 @@
-# 🚀 Proyecto React + Vite
+# react-sudoku
 
-Este proyecto usa **React + Vite + TypeScript** con soporte para **i18n**, **theme toggle**, layouts y configuración de entornos.
+Frontend React + Vite + TypeScript para jugar Sudoku consumiendo el backend `java-sudoku`.
 
----
+## Funcionalidades
 
-## 📦 Scripts disponibles
+- Juego principal con tableros 2x2, 3x3 y 4x4.
+- Dificultades conectadas con la API: `EASY`, `MEDIUM`, `HARD`, `EXPERT`.
+- Creacion y recuperacion de partidas desde backend.
+- Validacion de jugadas, errores, pistas, notas, pausa, reanudacion y finalizacion.
+- Soporte de usuario con login/registro y JWT persistido en `localStorage`.
+- Dashboard autenticado con estadisticas, calendario y partidas recientes.
+- Sudoku diario compartido por fecha.
+- Packs imprimibles con soluciones opcionales usando `window.print()`.
+- Fallback local para mantener la UI jugable si el backend no esta disponible.
+
+## Configuracion
+
+La API se configura con `VITE_API_BASE_URL`.
+
+Ejemplo:
+
+```env
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+## Scripts
 
 ```bash
-npm run dev       # Levanta en modo dev con enviroments/dev/.env.dev
-npm run build     # Compila en modo producción con enviroments/prod/.env.prod
-npm run preview   # Previsualiza la build
-npm run lint      # Linter con ESLint + reglas de import order
+npm.cmd install
+npm.cmd run dev
+npm.cmd run build
+npm.cmd run test
+```
+
+Para desarrollo completo, levanta antes el backend:
+
+```bash
+cd ../java-sudoku
+mvn.cmd spring-boot:run
+```
+
+## Docker
+
+La imagen usa Nginx para servir la SPA y proxy de `/api` hacia el servicio Docker `java-sudoku:8080`.
+
+Construir imagen local:
+
+```bash
+docker build -t ghcr.io/lauraschoerken/react-sudoku:latest .
+```
+
+Publicar en GitHub Container Registry:
+
+```bash
+docker login ghcr.io
+docker push ghcr.io/lauraschoerken/react-sudoku:latest
+```
+
+Por defecto el build usa `VITE_API_BASE_URL=/api`. Si necesitas otro endpoint:
+
+```bash
+docker build --build-arg VITE_API_BASE_URL=https://tu-dominio/api -t ghcr.io/lauraschoerken/react-sudoku:latest .
+```
