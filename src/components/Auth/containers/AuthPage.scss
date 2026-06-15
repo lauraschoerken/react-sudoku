@@ -44,6 +44,31 @@
 	font-size: 1.5rem;
 }
 
+.page-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.eyebrow {
+	margin: 0 0 0.25rem;
+	color: color-mix(in oklch, var(--fg) 65%, var(--bg) 35%);
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.status-pill {
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: color-mix(in oklch, var(--bg) 80%, var(--fg) 20%);
+	padding: 0.4rem 0.7rem;
+	font-weight: 700;
+}
+
 .muted {
 	opacity: 0.75;
 }
@@ -55,8 +80,9 @@
 
 .metric-grid {
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 0.75rem;
+	margin-bottom: 1rem;
 }
 
 .metric {
@@ -72,11 +98,30 @@
 	margin-top: 0.25rem;
 }
 
+.stats-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1rem;
+	margin: 1rem 0;
+}
+
+.state-panel {
+	display: grid;
+	gap: 0.75rem;
+	justify-items: start;
+}
+
 .calendar-grid {
 	display: grid;
 	grid-template-columns: repeat(7, minmax(0, 1fr));
 	gap: 0.35rem;
-	margin-top: 1rem;
+	margin-top: 0.5rem;
+}
+
+.calendar-grid--weekdays {
+	margin-top: 0.75rem;
+	text-align: center;
+	opacity: 0.7;
 }
 
 .calendar-day {
@@ -89,8 +134,17 @@
 	align-content: space-between;
 }
 
+.calendar-day--empty {
+	visibility: hidden;
+}
+
 .calendar-day.has-activity {
-	border-color: var(--fg);
+	border-color: var(--color2);
+	background: color-mix(in oklch, var(--color2) 12%, var(--bg) 88%);
+}
+
+.calendar-day.is-today {
+	box-shadow: inset 0 0 0 2px var(--fg);
 }
 
 .history-list {
@@ -107,17 +161,52 @@
 	padding: 0.5rem 0;
 }
 
+.game-row {
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 0.65rem;
+	background: color-mix(in oklch, var(--bg) 92%, var(--fg) 8%);
+}
+
 .btn.compact {
 	justify-self: start;
 	padding: 0.4rem 0.65rem;
 	text-decoration: none;
 }
 
+.daily-card {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 1.5rem;
+	align-items: center;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	padding: 1.25rem;
+	box-shadow: var(--shadow-sm);
+}
+
+.daily-card__copy {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.daily-card__copy h2 {
+	margin: 0;
+}
+
+.daily-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
 .daily-board {
 	display: grid;
-	grid-template-columns: repeat(9, minmax(1.75rem, 2.25rem));
 	justify-content: start;
-	margin: 1rem 0;
+	border: 2px solid var(--fg);
+	background: var(--fg);
+	gap: 1px;
 }
 
 .daily-cell {
@@ -126,6 +215,7 @@
 	place-items: center;
 	border: 1px solid var(--border);
 	background: var(--bg);
+	font-weight: 700;
 }
 
 .print-page {
@@ -193,10 +283,17 @@
 @media (max-width: 760px) {
 	.auth-grid,
 	.metric-grid,
+	.stats-grid,
 	.print-controls,
 	.print-pack,
-	.print-sheet {
+	.print-sheet,
+	.daily-card {
 		grid-template-columns: 1fr;
+	}
+
+	.page-heading {
+		align-items: flex-start;
+		flex-direction: column;
 	}
 }
 

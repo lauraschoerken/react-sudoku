@@ -107,6 +107,11 @@ export default function SettingsComponent() {
 	return (
 		<div className='page-wrapper'>
 			<div className='settings-component'>
+				<div className='settings-heading'>
+					<p className='eyebrow'>Preferencias</p>
+					<h1>Ajustes</h1>
+					<p className='muted'>Cambia ayudas, temporizador, idioma y tema sin salir de la app.</p>
+				</div>
 				<div className='settings-top'>
 					<ThemeToggle />
 					<LanguageSelect />
@@ -123,6 +128,7 @@ export default function SettingsComponent() {
 						/>
 						{t('errors.active')}
 					</label>
+					<p className='setting-help'>Si está apagado, no se marcan ni registran errores.</p>
 
 					<div className='error-limit'>
 						<label className='inline'>

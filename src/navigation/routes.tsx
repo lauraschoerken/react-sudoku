@@ -20,12 +20,8 @@ export const router = createBrowserRouter([
 			{ path: 'print', element: <PrintPage /> },
 			{ path: 'account', element: <AuthPage /> },
 			{ path: 'explication', element: <Explanation /> },
+			{ path: 'settings', element: <Settings /> },
 			// { path: '*', element: <NotFound /> },
 		],
-	},
-	{
-		path: '/settings',
-		element: <IndexLayout layout='minimal' />,
-		children: [{ index: true, element: <Settings /> }],
 	},
 ])

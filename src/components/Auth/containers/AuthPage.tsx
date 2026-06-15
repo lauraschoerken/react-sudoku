@@ -24,7 +24,7 @@ export const AuthPage = () => {
 		try {
 			dispatch(setSession(await login(loginEmail, loginPassword)))
 		} catch {
-			setError('No se pudo iniciar sesion.')
+			setError('No se pudo iniciar sesión.')
 		}
 	}
 
@@ -46,7 +46,7 @@ export const AuthPage = () => {
 			dispatch(setSession({ token: session.token, user: await getCurrentUser() }))
 		} catch {
 			dispatch(clearSession())
-			setError('La sesion ya no es valida.')
+			setError('La sesión ya no es válida.')
 		} finally {
 			setCheckingSession(false)
 		}
@@ -58,13 +58,14 @@ export const AuthPage = () => {
 			{session.user && (
 				<div className='panel form-stack'>
 					<span>
-						Sesion iniciada como <strong>{session.user.username}</strong>
+						Sesión iniciada como <strong>{session.user.username}</strong>
 					</span>
+					<span className='muted'>{session.user.email}</span>
 					<button className='btn' onClick={() => dispatch(clearSession())}>
-						Cerrar sesion
+						Cerrar sesión
 					</button>
 					<button className='btn' disabled={checkingSession} onClick={onValidateSession}>
-						{checkingSession ? 'Validando...' : 'Validar sesion'}
+						{checkingSession ? 'Validando...' : 'Validar sesión'}
 					</button>
 				</div>
 			)}
@@ -72,13 +73,13 @@ export const AuthPage = () => {
 			{!session.user && (
 				<div className='auth-grid'>
 					<form className='panel form-stack' onSubmit={onLogin}>
-						<h2>Entrar</h2>
+						<h2>Iniciar sesión</h2>
 						<label>
 							Email
 							<input value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
 						</label>
 						<label>
-							Password
+							Contraseña
 							<input
 								type='password'
 								value={loginPassword}
@@ -99,7 +100,7 @@ export const AuthPage = () => {
 							<input value={registerEmail} onChange={(e) => setRegisterEmail(e.target.value)} />
 						</label>
 						<label>
-							Password
+							Contraseña
 							<input
 								type='password'
 								value={registerPassword}

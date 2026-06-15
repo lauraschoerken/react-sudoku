@@ -1,13 +1,14 @@
 import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import DigitalTimer from '@/components/elements/Timer/Timer'
 import { useSudoku } from '@/hooks/useSudoku'
 import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
 import { useAppSelector } from '@/store/hooks'
+import { isBoardValidSolution } from '@/utils/appHelpers'
 
 import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
@@ -122,9 +123,9 @@ export default function SudokuComponent() {
 			}
 		}
 
-		if (newMistakes > 0) setMistakes((m) => m + newMistakes)
+		if (errorsActive && newMistakes > 0) setMistakes((m) => m + newMistakes)
 		prevUserGridRef.current = userGrid
-	}, [userGrid, errors])
+	}, [userGrid, errors, errorsActive])
 
 	// Derrota por límite de errores
 	useEffect(() => {
@@ -177,13 +178,13 @@ export default function SudokuComponent() {
 	// Detectar victoria → finalizar partida y abrir overlay
 	useEffect(() => {
 		const allFilled = userGrid.every((row) => row.every((cell) => cell !== 0))
-		const anyError = errors.some((row) => row.some(Boolean))
-		if (allFilled && !anyError && !isEnded) {
+		const validSolution = isBoardValidSolution(userGrid, puzzle, subgridSize)
+		if (allFilled && validSolution && !isEnded) {
 			setIsEnded(true)
 			setShowWin(true)
 			finishGame('WON')
 		}
-	}, [userGrid, errors, isEnded, finishGame])
+	}, [userGrid, puzzle, subgridSize, isEnded, finishGame])
 
 	// Nuevo puzzle (distinto) + reiniciar reloj
 	const handleNewGame = () => {
@@ -264,6 +265,21 @@ export default function SudokuComponent() {
 					disabled={isEnded || !usingBackend}>
 					{isPaused ? 'Reanudar' : 'Pausar'}
 				</button>
+
+				<details className='sudoku-more'>
+					<summary className='btn'>Más opciones</summary>
+					<div className='sudoku-more__menu'>
+						<Link className='btn compact' to='/print'>
+							Imprimir sudokus
+						</Link>
+						<button className='btn compact' onClick={handleRetrySame} type='button'>
+							Reiniciar
+						</button>
+						<Link className='btn compact' to='/settings'>
+							Ajustes rápidos
+						</Link>
+					</div>
+				</details>
 
 				<label className='sudoku-size'>
 					Tamaño:

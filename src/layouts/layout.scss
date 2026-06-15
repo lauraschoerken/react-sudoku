@@ -11,14 +11,17 @@
 .header {
 	border-bottom: 1px solid var(--border);
 	background: var(--header);
+	position: sticky;
+	top: 0;
+	z-index: 10;
 }
 .header__inner {
-	height: 2rem;
+	min-height: 3.25rem;
 	display: flex;
 	align-items: center;
-	justify-content: space-around;
+	justify-content: space-between;
 	gap: 1rem;
-	padding-block: 1rem;
+	padding: 0.75rem 1.25rem;
 }
 
 .container {
@@ -28,19 +31,56 @@
 
 .nav {
 	display: flex;
-	gap: 1rem;
+	gap: 0.45rem;
 	align-items: center;
+	flex-wrap: wrap;
 }
 
-.link {
+.link,
+.link-active,
+.nav-more summary {
 	text-decoration: none;
 	color: var(--fg);
+	border-radius: 8px;
+	cursor: pointer;
+	line-height: 1;
+	padding: 0.45rem 0.65rem;
 }
 
 .link-active {
-	text-decoration: underline;
 	font-weight: 600;
-	color: var(--fg);
+	background: color-mix(in oklch, var(--fg) 12%, transparent);
+}
+
+.brand {
+	font-weight: 800;
+	letter-spacing: 0;
+}
+
+.nav-more {
+	position: relative;
+}
+
+.nav-more summary {
+	list-style: none;
+}
+
+.nav-more summary::-webkit-details-marker {
+	display: none;
+}
+
+.nav-more__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.35rem);
+	z-index: 20;
+	min-width: 10rem;
+	display: grid;
+	padding: 0.4rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	box-shadow: var(--shadow-sm);
 }
 
 .main {
@@ -61,7 +101,13 @@
 
 //TODO hay que hacer un bocadillo para móvil
 @media (max-width: 520px) {
+	.header__inner {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
 	.nav {
+		width: 100%;
 		flex-wrap: nowrap;
 		overflow-x: auto;
 		gap: 0.75rem;

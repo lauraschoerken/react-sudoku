@@ -23,24 +23,29 @@ export const Header = () => {
 					<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('sudoku')}
 					</NavLink>
-					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
-						{t('explication')}
-					</NavLink>
 					<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>
 						Diario
 					</NavLink>
 					<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
 						Stats
 					</NavLink>
-					<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
-						Imprimir
+					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
+						{t('explication')}
 					</NavLink>
 					<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('settings')}
 					</NavLink>
 					<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>
-						{user?.username ?? 'Cuenta'}
+						{user ? user.username.slice(0, 1).toUpperCase() : 'Cuenta'}
 					</NavLink>
+					<details className='nav-more'>
+						<summary>Herramientas</summary>
+						<div className='nav-more__menu'>
+							<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
+								Imprimir
+							</NavLink>
+						</div>
+					</details>
 					<ThemeToggle />
 					<LanguageSelect />
 				</nav>

@@ -173,11 +173,13 @@ export const useSudoku = (
 			setErrorGrid((prev) => {
 				const copy = prev.map((row) => row.slice())
 				copy[rowIndex][colIndex] =
-					nextValue !== 0 ? validateCell(rowIndex, colIndex, nextValue, solutionGrid) : false
+					options.errorWarningsEnabled && nextValue !== 0
+						? validateCell(rowIndex, colIndex, nextValue, solutionGrid)
+						: false
 				return copy
 			})
 		},
-		[isGivenCell, solutionGrid]
+		[isGivenCell, options.errorWarningsEnabled, solutionGrid]
 	)
 
 	const loadGame = useCallback(
@@ -217,7 +219,7 @@ export const useSudoku = (
 					setGameStatus(game.status)
 					setErrorGrid((prev) => {
 						const copy = prev.map((row) => row.slice())
-						copy[rowIndex][colIndex] = nextValue !== 0 ? !correct : false
+						copy[rowIndex][colIndex] = options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
 						return copy
 					})
 				})
@@ -225,7 +227,7 @@ export const useSudoku = (
 					applyLocalCellValue(rowIndex, colIndex, nextValue)
 				})
 		},
-		[applyLocalCellValue, gameId, solutionGrid, usingBackend]
+		[applyLocalCellValue, gameId, options.errorWarningsEnabled, usingBackend]
 	)
 
 	const toggleNote = useCallback(

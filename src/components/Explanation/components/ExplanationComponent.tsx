@@ -1,62 +1,66 @@
 import './ExplanationComponent.scss'
 
-import { useTranslation } from 'react-i18next'
-
 interface Props {
 	loading: boolean
 }
 
+const sampleBoard = [
+	[5, 3, 0, 0],
+	[0, 0, 3, 4],
+	[3, 4, 0, 0],
+	[0, 0, 4, 2],
+]
 
 const ExplanationComponent: React.FC<Props> = ({ loading }) => {
-	const { t } = useTranslation('explication')
-
 	if (loading) {
-		return <p>{t('loading')}</p>
+		return <p>Cargando explicación...</p>
 	}
 
 	return (
 		<div className='explanation'>
-			<h1>{t('title')}</h1>
-			<p>{t('intro')}</p>
-			<h2>{t('objectiveTitle')}</h2>
-			<p>{t('objectiveText')}</p>
-			<img
-				src='https://png.pngtree.com/png-vector/20220621/ourmid/pngtree-sudokuinspired-vector-template-of-a-3x3-puzzle-grid-with-square-cells-vector-png-image_31894736.png'
-				alt={t('boardImageAlt')}
-				className='sudoku-img'
-			/>
-			<h2>{t('boardTitle')}</h2>
-			<ul>
-				<li>{t('boardList.item1')}</li>
-				<li>{t('boardList.item2')}</li>
-				<li>{t('boardList.item3')}</li>
-			</ul>
-			<h2>{t('rulesTitle')}</h2>
-			<ol>
-				<li>{t('rulesList.item1')}</li>
-				<li>{t('rulesList.item2')}</li>
-				<li>{t('rulesList.item3')}</li>
-			</ol>
-			<h2>{t('strategiesTitle')}</h2>
-			<ul>
-				<li>{t('strategiesList.item1')}</li>
-				<li>{t('strategiesList.item2')}</li>
-				<li>{t('strategiesList.item3')}</li>
-			</ul>
-			<h2>{t('exampleTitle')}</h2>
-			<p>{t('exampleRowLabel')}</p>
-			<pre className='example-row'>{t('exampleRowValue')}</pre>
-			<p>{t('exampleAnswer')}</p>
+			<section className='explanation-hero'>
+				<div>
+					<p className='eyebrow'>Guía rápida</p>
+					<h1>Cómo jugar al Sudoku</h1>
+					<p>
+						El objetivo es completar el tablero usando cada número una sola vez por fila, columna y
+						subcuadrícula.
+					</p>
+				</div>
+				<div className='example-board' aria-label='Ejemplo visual de Sudoku'>
+					{sampleBoard.flat().map((value, index) => (
+						<span key={index}>{value || ''}</span>
+					))}
+				</div>
+			</section>
 
-			<h2>{t('funTitle')}</h2>
-			<p>{t('funText')}</p>
-			<img
-				src='https://media.tenor.com/6p7N_0EDsEcAAAAi/sudoku-puzzle.gif'
-				alt={t('funImageAlt')}
-				className='fun-img'
-			/>
+			<div className='explanation-grid'>
+				<InfoBlock
+					title='Objetivo'
+					text='Rellena todas las casillas vacías sin contradecir las pistas iniciales.'
+				/>
+				<InfoBlock
+					title='Reglas básicas'
+					text='Cada fila, columna y caja debe contener todos los números válidos del tablero.'
+				/>
+				<InfoBlock
+					title='Notas'
+					text='Activa el modo notas para guardar candidatos en una celda mientras razonas.'
+				/>
+				<InfoBlock
+					title='Consejos'
+					text='Empieza por filas o cajas con pocas casillas vacías y descarta candidatos visibles.'
+				/>
+			</div>
 		</div>
 	)
 }
+
+const InfoBlock = ({ title, text }: { title: string; text: string }) => (
+	<section className='explanation-card'>
+		<h2>{title}</h2>
+		<p>{text}</p>
+	</section>
+)
 
 export default ExplanationComponent

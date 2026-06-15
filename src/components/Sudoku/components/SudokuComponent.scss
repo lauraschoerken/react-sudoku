@@ -183,6 +183,33 @@ $thick: 0.15rem;
 	}
 }
 
+.sudoku-more {
+	position: relative;
+}
+
+.sudoku-more summary {
+	list-style: none;
+}
+
+.sudoku-more summary::-webkit-details-marker {
+	display: none;
+}
+
+.sudoku-more__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.4rem);
+	z-index: 5;
+	display: grid;
+	gap: 0.35rem;
+	min-width: 12rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	box-shadow: var(--shadow-sm);
+	padding: 0.5rem;
+}
+
 @media (max-width: 900px) {
 	.sudoku-toolbar {
 		gap: 0.6rem 0.8rem;

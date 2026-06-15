@@ -89,3 +89,22 @@
 		opacity: 0.75;
 	}
 }
+.settings-heading {
+	margin-bottom: 1rem;
+}
+
+.settings-heading h1 {
+	margin: 0 0 0.35rem;
+}
+
+.setting-help {
+	margin: 0.35rem 0 0;
+	opacity: 0.72;
+	font-size: 0.9rem;
+}
+
+input:disabled,
+select:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
