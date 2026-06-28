@@ -1,7 +1,7 @@
 import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import DigitalTimer from '@/components/elements/Timer/Timer'
 import { useSudoku } from '@/hooks/useSudoku'
@@ -12,7 +12,12 @@ import { isBoardValidSolution } from '@/utils/appHelpers'
 
 import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
-export default function SudokuComponent() {
+type SudokuComponentProps = {
+	initialGameId?: number
+}
+
+export default function SudokuComponent({ initialGameId: initialGameIdProp }: SudokuComponentProps = {}) {
+	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const {
 		errorsActive,
@@ -24,11 +29,12 @@ export default function SudokuComponent() {
 	} = useAppSelector((s) => s.settings)
 	const authUser = useAppSelector((s) => s.auth.user)
 	const initialGameId = useMemo(() => {
+		if (initialGameIdProp) return initialGameIdProp
 		const raw = searchParams.get('gameId')
 		if (!raw) return undefined
 		const parsed = Number(raw)
 		return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
-	}, [searchParams])
+	}, [initialGameIdProp, searchParams])
 	const sudokuOptions = useMemo(
 		() => ({
 			initialGameId,
@@ -61,6 +67,7 @@ export default function SudokuComponent() {
 		pauseGame,
 		resumeGame,
 		gameStatus,
+		isDailyGame,
 		usingBackend,
 	} = useSudoku(3, undefined, sudokuOptions)
 
@@ -102,6 +109,18 @@ export default function SudokuComponent() {
 	const displayMistakes = usingBackend ? backendMistakes : mistakes
 	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
 	const isPaused = gameStatus === 'PAUSED'
+
+	useEffect(() => {
+		if (gameStatus === 'WON') {
+			setIsEnded(true)
+			setShowLose(false)
+			setLoseReason(null)
+			return
+		}
+		if (gameStatus === 'LOST') {
+			setIsEnded(true)
+		}
+	}, [gameStatus])
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -189,6 +208,10 @@ export default function SudokuComponent() {
 	// Nuevo puzzle (distinto) + reiniciar reloj
 	const handleNewGame = () => {
 		if (!isEnded) finishGame('ABANDONED')
+		if (isDailyGame) {
+			navigate('/daily')
+			return
+		}
 		setMistakes(0)
 		setSelectedCell({ rowIndex: null, colIndex: null })
 		setIsEnded(false)
@@ -433,6 +456,8 @@ export default function SudokuComponent() {
 				variant='win'
 				onClose={() => setShowWin(false)}
 				onPrimary={handleNewGame}
+				primaryLabel={isDailyGame ? 'Volver al diario' : undefined}
+				closeLabel={isDailyGame ? 'Ver tablero' : undefined}
 			/>
 
 			{/* Derrota (errores o tiempo) */}

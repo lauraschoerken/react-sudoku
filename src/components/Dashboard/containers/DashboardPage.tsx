@@ -4,13 +4,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { CalendarDayResponse, GameSessionResponse, UserStatsResponse } from '@/services/sudokuApi'
-import { getMyCalendar, getMyGames, getMyStats } from '@/services/sudokuApi'
-import { useAppSelector } from '@/store/hooks'
+import { getMyCalendar, getMyGames, getMyStats, isAuthError } from '@/services/sudokuApi'
+import { clearSession } from '@/store/features/auth/authSlice'
+import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { formatDuration, localTodayKey, translateDifficulty, translateStatus } from '@/utils/appHelpers'
 
 const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
 export const DashboardPage = () => {
+	const dispatch = useAppDispatch()
 	const user = useAppSelector((s) => s.auth.user)
 	const now = useMemo(() => new Date(), [])
 	const [stats, setStats] = useState<UserStatsResponse | null>(null)
@@ -31,8 +33,18 @@ export const DashboardPage = () => {
 				setCalendar(nextCalendar)
 				setGames(nextGames)
 			})
-			.catch(() => setError('No se pudieron cargar tus estadísticas.'))
-	}, [now, user])
+			.catch((requestError) => {
+				if (isAuthError(requestError)) {
+					dispatch(clearSession())
+					setStats(null)
+					setCalendar([])
+					setGames([])
+					setError('Tu sesión ha caducado. Inicia sesión de nuevo para ver tus estadísticas.')
+					return
+				}
+				setError('No se pudieron cargar tus estadísticas.')
+			})
+	}, [dispatch, now, user])
 
 	if (!user) {
 		return (
@@ -46,6 +58,7 @@ export const DashboardPage = () => {
 					<Link className='btn primary' to='/account'>
 						Ir a cuenta
 					</Link>
+					{error && <p className='error-text'>{error}</p>}
 				</div>
 			</div>
 		)

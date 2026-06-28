@@ -260,11 +260,14 @@ $thick: 0.15rem;
 }
 .sudoku-stage {
 	display: block;
+	max-width: 100%;
+	overflow-x: auto;
 	text-align: center;
 }
 
 .sudoku-boardbox {
 	display: inline-block;
+	max-width: 100%;
 	position: relative;
 }
 

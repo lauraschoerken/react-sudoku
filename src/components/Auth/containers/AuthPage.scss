@@ -218,6 +218,19 @@
 	font-weight: 700;
 }
 
+.daily-board-placeholder {
+	display: grid;
+	place-items: center;
+	gap: 0.5rem;
+	min-width: 16rem;
+	min-height: 16rem;
+	border: 1px dashed var(--border2);
+	border-radius: 8px;
+	background: color-mix(in oklch, var(--bg) 90%, var(--fg) 10%);
+	padding: 1rem;
+	text-align: center;
+}
+
 .print-page {
 	max-width: 80rem;
 	margin: 0 auto;

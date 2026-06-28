@@ -20,6 +20,7 @@ export interface GameSessionResponse {
 	startedAt: string
 	finishedAt: string | null
 	dailyGame: boolean
+	started: boolean
 }
 
 export interface UserResponse {
@@ -92,6 +93,19 @@ export interface ValidateCellResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
+export class SudokuApiError extends Error {
+	readonly status: number
+
+	constructor(status: number, message = `Sudoku API error ${status}`) {
+		super(message)
+		this.name = 'SudokuApiError'
+		this.status = status
+	}
+}
+
+export const isAuthError = (error: unknown) =>
+	error instanceof SudokuApiError && (error.status === 401 || error.status === 403)
+
 const getAuthToken = () => {
 	try {
 		const rawAuth = localStorage.getItem('auth')
@@ -121,7 +135,7 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 	})
 
 	if (!response.ok) {
-		throw new Error(`Sudoku API error ${response.status}`)
+		throw new SudokuApiError(response.status)
 	}
 
 	return response.json() as Promise<T>
@@ -151,7 +165,34 @@ export const createGame = (
 		}),
 	})
 
+export const createGameFromPuzzle = (
+	puzzleId: number,
+	subgridSize: number,
+	difficulty: Difficulty,
+	options?: {
+		userId?: number
+		timerMode?: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled?: boolean
+	}
+) =>
+	request<GameSessionResponse>(`/games/from-puzzle/${puzzleId}`, {
+		method: 'POST',
+		body: JSON.stringify({
+			userId: options?.userId,
+			subgridSize,
+			difficulty: difficultyToApi(difficulty),
+			timerMode: options?.timerMode ?? 'NORMAL',
+			countdownSeconds: options?.countdownSeconds,
+			maxErrors: options?.maxErrors,
+			errorWarningsEnabled: options?.errorWarningsEnabled ?? false,
+		}),
+	})
+
 export const getGame = (gameId: number) => request<GameSessionResponse>(`/games/${gameId}`)
+
+export const getActiveGame = () => request<GameSessionResponse>('/games/active')
 
 export const updateCell = (
 	gameId: number,
@@ -219,6 +260,12 @@ export const getCurrentUser = () => request<UserResponse>('/auth/me')
 
 export const getTodayDailySudoku = () => request<SudokuPuzzleResponse>('/daily-sudoku/today')
 
+export const generateSudoku = (subgridSize: number, difficulty: Difficulty) =>
+	request<SudokuPuzzleResponse>('/sudokus/generate', {
+		method: 'POST',
+		body: JSON.stringify({ subgridSize, difficulty: difficultyToApi(difficulty) }),
+	})
+
 export const startDailySudoku = (date: string, userId?: number) => {
 	const query = userId ? `?userId=${userId}` : ''
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, { method: 'POST' })
@@ -227,6 +274,11 @@ export const startDailySudoku = (date: string, userId?: number) => {
 export const getDailySudokuResult = (date: string, userId?: number) => {
 	const query = userId ? `?userId=${userId}` : ''
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/result${query}`)
+}
+
+export const resetDailySudoku = (date: string, userId?: number) => {
+	const query = userId ? `?userId=${userId}` : ''
+	return request<GameSessionResponse>(`/daily-sudoku/${date}/reset${query}`, { method: 'POST' })
 }
 
 export const getUserStats = (userId: number) =>
