@@ -23,29 +23,39 @@ export const Header = () => {
 					<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('sudoku')}
 					</NavLink>
-					<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>
-						Diario
-					</NavLink>
-					<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
-						Stats
-					</NavLink>
 					<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('explication')}
 					</NavLink>
-					<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
-						{t('settings')}
-					</NavLink>
-					<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>
-						{user ? user.username.slice(0, 1).toUpperCase() : 'Cuenta'}
-					</NavLink>
-					<details className='nav-more'>
-						<summary>Herramientas</summary>
-						<div className='nav-more__menu'>
-							<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
-								Imprimir
+
+					{user ? (
+						<>
+							<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>
+								Diario
 							</NavLink>
-						</div>
-					</details>
+							<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
+								Stats
+							</NavLink>
+							<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
+								{t('settings')}
+							</NavLink>
+							<details className='nav-more'>
+								<summary className='btn'>Herramientas</summary>
+								<div className='nav-more__menu'>
+									<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
+										Imprimir
+									</NavLink>
+								</div>
+							</details>
+							<NavLink to='/account' className={({ isActive }) => (isActive ? `${active} user-avatar` : 'link user-avatar')}>
+								{user.username.slice(0, 1).toUpperCase()}
+							</NavLink>
+						</>
+					) : (
+						<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link btn primary btn--sm')}>
+							Iniciar sesión
+						</NavLink>
+					)}
+
 					<ThemeToggle />
 					<LanguageSelect />
 				</nav>

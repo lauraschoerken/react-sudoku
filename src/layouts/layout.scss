@@ -126,3 +126,25 @@
 		border-radius: 999px;
 	}
 }
+
+// User avatar pill in nav
+.user-avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background: var(--color2);
+	color: #fff;
+	font-weight: 700;
+	font-size: 0.85rem;
+	padding: 0 !important;
+	text-decoration: none;
+}
+
+// Small login button in nav
+.btn--sm {
+	padding: 0.4rem 0.75rem;
+	font-size: 0.85rem;
+}

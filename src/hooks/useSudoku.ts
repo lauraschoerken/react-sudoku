@@ -5,16 +5,12 @@ import { type Difficulty, DifficultyLevels } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizes } from '@/models/utils/Size'
 import {
 	createEmptyErrorGrid,
-	generateCompletedSudoku,
-	getCellsToHide,
-	hideCells,
 	validateCell,
 } from '@/utils/Sudoku'
 import {
 	createGame,
 	createGameFromPuzzle,
 	finishGame,
-	generateSudoku,
 	getActiveGame,
 	getGame,
 	pauseGame,
@@ -32,34 +28,14 @@ interface UseSudokuOptions {
 	maxErrors?: number
 	timerMode?: 'normal' | 'countdown'
 	countdownSeconds?: number
+	/** When true, skip the auto-load of the active game on mount (user chose to start fresh). */
+	skipActiveGameCheck?: boolean
 }
 
 const noteKey = (rowIndex: number, colIndex: number) => `${rowIndex}:${colIndex}`
 
-/**
- * Custom React hook para manejar la lógica principal de un Sudoku:
- * - Generar solución completa.
- * - Ocultar celdas según la dificultad.
- * - Permitir al usuario introducir valores.
- * - Validar errores en tiempo real.
- *
- * @param initialSubgridSize Tamaño inicial de subcuadrícula (ej. 3 para Sudoku clásico 9x9).
- * @param initialDifficulty Dificultad inicial (ej. Fácil, Media, Difícil, Experto).
- *
- * @returns Objeto con:
- * - `puzzle`: tablero con las celdas ocultas (juego actual).
- * - `solution`: tablero solución completa.
- * - `userGrid`: tablero con los valores introducidos por el jugador.
- * - `errors`: matriz booleana de errores por celda.
- * - `setCell(row, col, value)`: función para modificar una celda del tablero de usuario.
- * - `newGame()`: genera un nuevo Sudoku con la configuración actual.
- * - `subgridSize`: tamaño actual de la subcuadrícula.
- * - `setSubgridSize()`: setter para cambiar el tamaño de subcuadrícula.
- * - `gridSize`: tamaño total del tablero (subgridSize²).
- * - `difficulty`: dificultad actual.
- * - `setDifficulty()`: setter para cambiar la dificultad.
- * - `isGivenCell(row, col)`: true si la celda es fija (forma parte del puzzle original).
- */
+const makeEmptyBoard = (size: number): Board => Array.from({ length: size }, () => Array(size).fill(0) as number[])
+
 export const useSudoku = (
 	initialSubgridSize: SubgridSize = SubgridSizes.Classic,
 	initialDifficulty: Difficulty = DifficultyLevels.Medium,
@@ -69,15 +45,15 @@ export const useSudoku = (
 	const [difficulty, setDifficulty] = useState(initialDifficulty)
 	const gridSize = useMemo(() => subgridSize * subgridSize, [subgridSize])
 
-	const [solutionGrid, setSolutionGrid] = useState<Board>(() =>
-		generateCompletedSudoku(gridSize, subgridSize)
+	const [solutionGrid, setSolutionGrid] = useState<Board>(() => makeEmptyBoard(gridSize))
+	const [puzzleGrid, setPuzzleGrid] = useState<Board>(() => makeEmptyBoard(gridSize))
+	const [playerGrid, setPlayerGrid] = useState<Board>(() => makeEmptyBoard(gridSize))
+	const [errorGrid, setErrorGrid] = useState<boolean[][]>(() =>
+		Array.from({ length: gridSize }, () => Array(gridSize).fill(false) as boolean[])
 	)
-	const [puzzleGrid, setPuzzleGrid] = useState<Board>(() =>
-		hideCells(solutionGrid, subgridSize, getCellsToHide(initialDifficulty))
-	)
-	const [playerGrid, setPlayerGrid] = useState<Board>(() => puzzleGrid.map((row) => row.slice()))
-	const [errorGrid, setErrorGrid] = useState<boolean[][]>(() => createEmptyErrorGrid(puzzleGrid))
 	const [gameId, setGameId] = useState<number | null>(null)
+	const [gameLoading, setGameLoading] = useState(true)
+	const [gameError, setGameError] = useState<string | null>(null)
 	const [serverPuzzleId, setServerPuzzleId] = useState<number | null>(null)
 	const [usingBackend, setUsingBackend] = useState(false)
 	const [backendMistakes, setBackendMistakes] = useState(0)
@@ -95,6 +71,7 @@ export const useSudoku = (
 		setUsingBackend(true)
 		setSubgridSize(game.subgridSize as SubgridSize)
 		setDifficulty(difficultyFromApi(game.difficulty))
+		setSolutionGrid(game.initialBoard)
 		setPuzzleGrid(game.initialBoard)
 		setPlayerGrid(game.currentBoard)
 		setErrorGrid(createEmptyErrorGrid(game.currentBoard))
@@ -103,43 +80,9 @@ export const useSudoku = (
 		setNotes(game.notes ?? {})
 		setGameStatus(game.status)
 		setIsDailyGame(game.dailyGame)
+		setGameLoading(false)
+		setGameError(null)
 	}, [])
-
-	const applyGeneratedPuzzle = useCallback(async () => {
-		try {
-			const generated = await generateSudoku(subgridSize, difficulty)
-			suppressNextRegenerateRef.current = true
-			setServerPuzzleId(generated.id)
-			setSubgridSize(generated.subgridSize as SubgridSize)
-			setDifficulty(difficultyFromApi(generated.difficulty))
-			setSolutionGrid(generated.solution ?? generated.puzzle)
-			setPuzzleGrid(generated.puzzle)
-			setPlayerGrid(generated.puzzle.map((row) => row.slice()))
-			setErrorGrid(createEmptyErrorGrid(generated.puzzle))
-			setGameId(null)
-			setUsingBackend(false)
-			setBackendMistakes(0)
-			setHintsUsed(0)
-			setNotes({})
-			setGameStatus('IN_PROGRESS')
-			setIsDailyGame(false)
-		} catch {
-			const fullSolution = generateCompletedSudoku(gridSize, subgridSize)
-			const puzzle = hideCells(fullSolution, subgridSize, getCellsToHide(difficulty))
-			setServerPuzzleId(null)
-			setSolutionGrid(fullSolution)
-			setPuzzleGrid(puzzle)
-			setPlayerGrid(puzzle.map((r) => r.slice()))
-			setErrorGrid(createEmptyErrorGrid(puzzle))
-			setGameId(null)
-			setUsingBackend(false)
-			setBackendMistakes(0)
-			setHintsUsed(0)
-			setNotes({})
-			setGameStatus('IN_PROGRESS')
-			setIsDailyGame(false)
-		}
-	}, [difficulty, gridSize, subgridSize])
 
 	const loadInitialGrids = useCallback(() => {
 		if (suppressNextRegenerateRef.current) {
@@ -152,31 +95,52 @@ export const useSudoku = (
 			loadedInitialGameIdRef.current !== options.initialGameId
 		) {
 			loadedInitialGameIdRef.current = options.initialGameId
+			setGameLoading(true)
+			setGameError(null)
 			void getGame(options.initialGameId)
 				.then(applyBackendGame)
 				.catch(() => {
 					loadedInitialGameIdRef.current = null
-					setUsingBackend(false)
-					void applyGeneratedPuzzle()
+					setGameLoading(false)
+					setGameError('No se pudo cargar la partida solicitada.')
 				})
 			return
 		}
 
-		if (options.userId) {
+		if (options.userId && !options.skipActiveGameCheck) {
+			setGameLoading(true)
+			setGameError(null)
 			void getActiveGame()
 				.then(applyBackendGame)
 				.catch(() => {
-					void applyGeneratedPuzzle()
+					// No active game – create a fresh one from the backend
+					void createGame(subgridSize, difficulty, gameOptions())
+						.then(applyBackendGame)
+						.catch(() => {
+							setGameLoading(false)
+							setGameError('No se pudo conectar con el servidor. Comprueba la conexión.')
+						})
 				})
 			return
 		}
 
-		void applyGeneratedPuzzle()
+		// Anonymous user or user declined resume – create anonymous game session
+		setGameLoading(true)
+		setGameError(null)
+		void createGame(subgridSize, difficulty, gameOptions())
+			.then(applyBackendGame)
+			.catch(() => {
+				setGameLoading(false)
+				setGameError('No se pudo conectar con el servidor. Comprueba la conexión.')
+			})
 	}, [
 		options.userId,
 		options.initialGameId,
+		options.skipActiveGameCheck,
 		applyBackendGame,
-		applyGeneratedPuzzle,
+		difficulty,
+		subgridSize,
+		gameOptions,
 	])
 
 	useEffect(() => {
@@ -209,9 +173,10 @@ export const useSudoku = (
 		void createGame(subgridSize, difficulty, gameOptions())
 			.then(applyBackendGame)
 			.catch(() => {
-				void applyGeneratedPuzzle()
+				setGameLoading(false)
+				setGameError('No se pudo crear la partida. Comprueba la conexión e inténtalo de nuevo.')
 			})
-	}, [applyBackendGame, applyGeneratedPuzzle, difficulty, gameOptions, subgridSize])
+	}, [applyBackendGame, difficulty, gameOptions, subgridSize])
 
 	const isGivenCell = useCallback(
 		(rowIndex: number, colIndex: number) => puzzleGrid[rowIndex][colIndex] !== 0,
@@ -431,6 +396,8 @@ export const useSudoku = (
 		pauseGame: pauseGameValue,
 		resumeGame: resumeGameValue,
 		loadGame,
+		gameLoading,
+		gameError,
 	}
 }
 

@@ -297,6 +297,12 @@ export const getMyCalendar = (year: number, month: number) =>
 
 export const getMyGames = () => request<GameSessionResponse[]>('/users/me/games')
 
+export const deleteMyGame = (sessionId: number) =>
+	request<void>(`/users/me/games/${sessionId}`, { method: 'DELETE' })
+
+export const getDailySudokuByDate = (date: string) =>
+	request<SudokuPuzzleResponse>(`/daily-sudoku/${date}`)
+
 export const generatePrintPack = (
 	quantity: number,
 	subgridSize: number,

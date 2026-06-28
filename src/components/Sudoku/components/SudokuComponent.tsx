@@ -14,9 +14,10 @@ import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 
 type SudokuComponentProps = {
 	initialGameId?: number
+	skipActiveGameCheck?: boolean
 }
 
-export default function SudokuComponent({ initialGameId: initialGameIdProp }: SudokuComponentProps = {}) {
+export default function SudokuComponent({ initialGameId: initialGameIdProp, skipActiveGameCheck }: SudokuComponentProps = {}) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
 	const {
@@ -43,8 +44,9 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp }: Su
 			maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
 			timerMode,
 			countdownSeconds: timerSeconds,
+			skipActiveGameCheck: skipActiveGameCheck ?? false,
 		}),
-		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, initialGameId, timerMode, timerSeconds]
+		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, initialGameId, timerMode, timerSeconds, skipActiveGameCheck]
 	)
 
 	const {
@@ -69,6 +71,8 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp }: Su
 		gameStatus,
 		isDailyGame,
 		usingBackend,
+		gameLoading,
+		gameError,
 	} = useSudoku(3, undefined, sudokuOptions)
 
 
@@ -109,6 +113,25 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp }: Su
 	const displayMistakes = usingBackend ? backendMistakes : mistakes
 	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
 	const isPaused = gameStatus === 'PAUSED'
+
+	// ── Loading / error state ────────────────────────────────────────────────
+	if (gameLoading) {
+		return (
+			<div className='game-loading'>
+				<div className='game-loading__spinner' />
+				<p className='muted'>Cargando sudoku...</p>
+			</div>
+		)
+	}
+
+	if (gameError) {
+		return (
+			<div className='game-loading'>
+				<p className='error-text'>{gameError}</p>
+				<button className='btn primary' onClick={newGame}>Reintentar</button>
+			</div>
+		)
+	}
 
 	useEffect(() => {
 		if (gameStatus === 'WON') {

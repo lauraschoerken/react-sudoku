@@ -27,12 +27,21 @@
 	gap: 1px;
 }
 
+.example-board--9 {
+	grid-template-columns: repeat(9, 1.8rem);
+}
+
 .example-board span {
 	aspect-ratio: 1;
 	display: grid;
 	place-items: center;
 	background: var(--bg);
 	font-weight: 800;
+	font-size: 0.85rem;
+}
+
+.example-board span.empty {
+	background: color-mix(in oklch, var(--bg) 85%, var(--fg) 15%);
 }
 
 .explanation-grid {
@@ -49,6 +58,11 @@
 	padding: 1rem;
 }
 
+.explanation-card__icon {
+	font-size: 1.75rem;
+	margin-bottom: 0.5rem;
+}
+
 .explanation-card h2 {
 	margin: 0 0 0.5rem;
 	font-size: 1rem;
@@ -57,6 +71,36 @@
 .explanation-card p {
 	margin: 0;
 	color: color-mix(in oklch, var(--fg) 78%, var(--bg) 22%);
+	font-size: 0.9rem;
+}
+
+.explanation-section {
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	padding: 1.25rem;
+	margin-top: 1rem;
+}
+
+.explanation-section h2 {
+	margin: 0 0 0.75rem;
+	font-size: 1.15rem;
+}
+
+.explanation-section p {
+	margin: 0 0 0.75rem;
+	line-height: 1.6;
+}
+
+.explanation-list {
+	margin: 0;
+	padding-left: 1.5rem;
+	display: grid;
+	gap: 0.4rem;
+}
+
+.explanation-list li {
+	line-height: 1.5;
 }
 
 @media (max-width: 780px) {
