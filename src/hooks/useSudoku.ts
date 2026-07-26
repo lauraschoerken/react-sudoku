@@ -3,10 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Board } from '@/models/components/Sudoku'
 import { type Difficulty, DifficultyLevels } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizes } from '@/models/utils/Size'
-import {
-	createEmptyErrorGrid,
-	validateCell,
-} from '@/utils/Sudoku'
+import { createEmptyErrorGrid, validateCell } from '@/utils/Sudoku'
 import {
 	createGame,
 	createGameFromPuzzle,
@@ -34,7 +31,8 @@ interface UseSudokuOptions {
 
 const noteKey = (rowIndex: number, colIndex: number) => `${rowIndex}:${colIndex}`
 
-const makeEmptyBoard = (size: number): Board => Array.from({ length: size }, () => Array(size).fill(0) as number[])
+const makeEmptyBoard = (size: number): Board =>
+	Array.from({ length: size }, () => Array(size).fill(0) as number[])
 
 export const useSudoku = (
 	initialSubgridSize: SubgridSize = SubgridSizes.Classic,
@@ -83,6 +81,23 @@ export const useSudoku = (
 		setGameLoading(false)
 		setGameError(null)
 	}, [])
+
+	const gameOptions = useCallback(
+		() => ({
+			userId: options.userId,
+			timerMode: options.timerMode === 'countdown' ? ('COUNTDOWN' as const) : ('NORMAL' as const),
+			countdownSeconds: options.timerMode === 'countdown' ? options.countdownSeconds : undefined,
+			maxErrors: options.maxErrors,
+			errorWarningsEnabled: options.errorWarningsEnabled,
+		}),
+		[
+			options.userId,
+			options.timerMode,
+			options.countdownSeconds,
+			options.maxErrors,
+			options.errorWarningsEnabled,
+		]
+	)
 
 	const loadInitialGrids = useCallback(() => {
 		if (suppressNextRegenerateRef.current) {
@@ -146,20 +161,6 @@ export const useSudoku = (
 	useEffect(() => {
 		loadInitialGrids()
 	}, [loadInitialGrids])
-
-	const gameOptions = useCallback(() => ({
-		userId: options.userId,
-		timerMode: options.timerMode === 'countdown' ? 'COUNTDOWN' as const : 'NORMAL' as const,
-		countdownSeconds: options.timerMode === 'countdown' ? options.countdownSeconds : undefined,
-		maxErrors: options.maxErrors,
-		errorWarningsEnabled: options.errorWarningsEnabled,
-	}), [
-		options.userId,
-		options.timerMode,
-		options.countdownSeconds,
-		options.maxErrors,
-		options.errorWarningsEnabled,
-	])
 
 	const createBackendGameForCurrentPuzzle = useCallback(async () => {
 		const game = serverPuzzleId
@@ -238,7 +239,8 @@ export const useSudoku = (
 						applyBackendGame(game)
 						setErrorGrid((prev) => {
 							const copy = prev.map((row) => row.slice())
-							copy[rowIndex][colIndex] = options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
+							copy[rowIndex][colIndex] =
+								options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
 							return copy
 						})
 					})
@@ -257,7 +259,8 @@ export const useSudoku = (
 					setGameStatus(game.status)
 					setErrorGrid((prev) => {
 						const copy = prev.map((row) => row.slice())
-						copy[rowIndex][colIndex] = options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
+						copy[rowIndex][colIndex] =
+							options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
 						return copy
 					})
 				})
@@ -265,7 +268,14 @@ export const useSudoku = (
 					applyLocalCellValue(rowIndex, colIndex, nextValue)
 				})
 		},
-		[applyBackendGame, applyLocalCellValue, createBackendGameForCurrentPuzzle, gameId, options.errorWarningsEnabled, usingBackend]
+		[
+			applyBackendGame,
+			applyLocalCellValue,
+			createBackendGameForCurrentPuzzle,
+			gameId,
+			options.errorWarningsEnabled,
+			usingBackend,
+		]
 	)
 
 	const toggleNote = useCallback(
@@ -303,7 +313,16 @@ export const useSudoku = (
 					// Keep optimistic local notes if the backend is temporarily unavailable.
 				})
 		},
-		[applyBackendGame, createBackendGameForCurrentPuzzle, gameId, gridSize, isGivenCell, notes, playerGrid, usingBackend]
+		[
+			applyBackendGame,
+			createBackendGameForCurrentPuzzle,
+			gameId,
+			gridSize,
+			isGivenCell,
+			notes,
+			playerGrid,
+			usingBackend,
+		]
 	)
 
 	const requestHintValue = useCallback(() => {

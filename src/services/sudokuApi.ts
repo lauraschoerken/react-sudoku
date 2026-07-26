@@ -211,12 +211,7 @@ export const requestHint = (gameId: number) =>
 		method: 'POST',
 	})
 
-export const updateNotes = (
-	gameId: number,
-	rowIndex: number,
-	colIndex: number,
-	notes: number[]
-) =>
+export const updateNotes = (gameId: number, rowIndex: number, colIndex: number, notes: number[]) =>
 	request<GameSessionResponse>(`/games/${gameId}/notes`, {
 		method: 'PATCH',
 		body: JSON.stringify({ rowIndex, colIndex, notes }),
@@ -281,8 +276,7 @@ export const resetDailySudoku = (date: string, userId?: number) => {
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/reset${query}`, { method: 'POST' })
 }
 
-export const getUserStats = (userId: number) =>
-	request<UserStatsResponse>(`/users/${userId}/stats`)
+export const getUserStats = (userId: number) => request<UserStatsResponse>(`/users/${userId}/stats`)
 
 export const getUserCalendar = (userId: number, year: number, month: number) =>
 	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`)

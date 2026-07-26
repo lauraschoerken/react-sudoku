@@ -28,13 +28,15 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 					<p className='eyebrow'>Guía completa</p>
 					<h1>Cómo jugar al Sudoku</h1>
 					<p>
-						El objetivo es completar el tablero usando cada número <strong>una sola vez</strong>{' '}
-						por fila, columna y subcuadrícula. No necesitas matemáticas, solo lógica.
+						El objetivo es completar el tablero usando cada número <strong>una sola vez</strong> por
+						fila, columna y subcuadrícula. No necesitas matemáticas, solo lógica.
 					</p>
 				</div>
 				<div className='example-board example-board--9' aria-label='Ejemplo visual de Sudoku 9×9'>
 					{sampleBoard.flat().map((value, index) => (
-						<span key={index} className={value !== 0 ? 'given' : 'empty'}>{value !== 0 ? value : ''}</span>
+						<span key={index} className={value !== 0 ? 'given' : 'empty'}>
+							{value !== 0 ? value : ''}
+						</span>
 					))}
 				</div>
 			</section>
@@ -65,13 +67,17 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 			<section className='explanation-section'>
 				<h2>Modo notas</h2>
 				<p>
-					Activa el <strong>modo notas</strong> pulsando el botón "Notas" de la barra de herramientas.
-					En este modo, los números que introduces se guardan como <em>candidatos</em> en la celda,
-					no como valor definitivo. Esto te permite razonar qué valores son posibles antes de decidirte.
+					Activa el <strong>modo notas</strong> pulsando el botón "Notas" de la barra de
+					herramientas. En este modo, los números que introduces se guardan como <em>candidatos</em>{' '}
+					en la celda, no como valor definitivo. Esto te permite razonar qué valores son posibles
+					antes de decidirte.
 				</p>
 				<ul className='explanation-list'>
 					<li>Los candidatos aparecen como números pequeños en la celda.</li>
-					<li>Al introducir un valor definitivo en una celda, sus candidatos desaparecen automáticamente.</li>
+					<li>
+						Al introducir un valor definitivo en una celda, sus candidatos desaparecen
+						automáticamente.
+					</li>
 					<li>Las notas se guardan en el servidor y se recuperan al reanudar la partida.</li>
 					<li>Pulsa el mismo número dos veces en modo notas para eliminarlo.</li>
 				</ul>
@@ -83,35 +89,53 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 					En <strong>Ajustes → Errores</strong> puedes configurar cómo el juego gestiona los fallos:
 				</p>
 				<ul className='explanation-list'>
-					<li><strong>Mostrar errores:</strong> las celdas incorrectas se muestran resaltadas en rojo.</li>
-					<li><strong>Límite de errores:</strong> si activas esta opción, al superar el número máximo configurado (ej. 3) la partida termina con derrota.</li>
-					<li>Si no activas el límite, puedes cometer todos los errores que quieras sin penalización final.</li>
+					<li>
+						<strong>Mostrar errores:</strong> las celdas incorrectas se muestran resaltadas en rojo.
+					</li>
+					<li>
+						<strong>Límite de errores:</strong> si activas esta opción, al superar el número máximo
+						configurado (ej. 3) la partida termina con derrota.
+					</li>
+					<li>
+						Si no activas el límite, puedes cometer todos los errores que quieras sin penalización
+						final.
+					</li>
 				</ul>
 			</section>
 
 			<section className='explanation-section'>
 				<h2>Cronómetro</h2>
-				<p>
-					El cronómetro mide cuánto tardas en completar cada sudoku. Tienes dos modos:
-				</p>
+				<p>El cronómetro mide cuánto tardas en completar cada sudoku. Tienes dos modos:</p>
 				<ul className='explanation-list'>
-					<li><strong>Normal:</strong> cuenta hacia arriba desde 0. Tu tiempo queda registrado en estadísticas.</li>
-					<li><strong>Cuenta atrás:</strong> empieza desde el tiempo configurado (ej. 10 minutos). Si llegas a 0 antes de terminar, pierdes la partida.</li>
-					<li>Puedes <strong>pausar</strong> el juego en cualquier momento. El tiempo se detiene y el tablero se oculta.</li>
+					<li>
+						<strong>Normal:</strong> cuenta hacia arriba desde 0. Tu tiempo queda registrado en
+						estadísticas.
+					</li>
+					<li>
+						<strong>Cuenta atrás:</strong> empieza desde el tiempo configurado (ej. 10 minutos). Si
+						llegas a 0 antes de terminar, pierdes la partida.
+					</li>
+					<li>
+						Puedes <strong>pausar</strong> el juego en cualquier momento. El tiempo se detiene y el
+						tablero se oculta.
+					</li>
 				</ul>
 			</section>
 
 			<section className='explanation-section'>
 				<h2>Sudoku diario</h2>
 				<p>
-					Cada día se genera un nuevo sudoku especial, <strong>igual para todos los usuarios</strong>.
-					Puedes acceder al diario desde la sección "Diario" del menú.
+					Cada día se genera un nuevo sudoku especial,{' '}
+					<strong>igual para todos los usuarios</strong>. Puedes acceder al diario desde la sección
+					"Diario" del menú.
 				</p>
 				<ul className='explanation-list'>
 					<li>Todos juegan el mismo tablero ese día.</li>
 					<li>Cada uno tiene sus propias notas y su propio progreso.</li>
 					<li>El progreso se guarda automáticamente al volver otro día.</li>
-					<li>Usa el <strong>calendario</strong> para acceder a sudokus de días anteriores.</li>
+					<li>
+						Usa el <strong>calendario</strong> para acceder a sudokus de días anteriores.
+					</li>
 					<li>Los días completados aparecen marcados en el calendario.</li>
 				</ul>
 			</section>
@@ -146,11 +170,18 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 			<section className='explanation-section'>
 				<h2>Consejos para resolver un sudoku</h2>
 				<ul className='explanation-list'>
-					<li>Empieza por las filas, columnas o cajas con <strong>menos celdas vacías</strong>.</li>
-					<li>Busca el número que ya aparece más veces en el tablero y localiza dónde más puede ir.</li>
+					<li>
+						Empieza por las filas, columnas o cajas con <strong>menos celdas vacías</strong>.
+					</li>
+					<li>
+						Busca el número que ya aparece más veces en el tablero y localiza dónde más puede ir.
+					</li>
 					<li>Usa las notas para anotar candidatos y descártalos progresivamente.</li>
 					<li>Si una celda solo puede tener un valor (único candidato), ponlo directamente.</li>
-					<li>Si en una caja solo hay una celda que puede tener cierto número, ese es el valor correcto.</li>
+					<li>
+						Si en una caja solo hay una celda que puede tener cierto número, ese es el valor
+						correcto.
+					</li>
 					<li>No adivines: un sudoku bien construido siempre tiene una única solución lógica.</li>
 				</ul>
 			</section>

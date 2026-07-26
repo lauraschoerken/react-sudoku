@@ -10,7 +10,7 @@ interface LoginGateProps {
  * Wraps page content that requires authentication.
  * Shows a prominent login prompt when there is no active session.
  */
-export const LoginGate = ({ title, description, children }: LoginGateProps) => {
+export const LoginGate = ({ children }: LoginGateProps) => {
 	return <>{children}</>
 }
 

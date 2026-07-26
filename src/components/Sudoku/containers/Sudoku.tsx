@@ -5,12 +5,17 @@ import { useEffect, useState } from 'react'
 import SudokuComponent from '../components/SudokuComponent'
 import { getActiveGame } from '@/services/sudokuApi'
 import { useAppSelector } from '@/store/hooks'
-import { translateDifficulty, translateStatus, formatDuration } from '@/utils/appHelpers'
+import { translateDifficulty, formatDuration } from '@/utils/appHelpers'
 
 export const Sudoku = () => {
 	const user = useAppSelector((s) => s.auth.user)
 	const [resumeGameId, setResumeGameId] = useState<number | null>(null)
-	const [resumeInfo, setResumeInfo] = useState<{ difficulty: string; gridSize: number; elapsed: number; status: string } | null>(null)
+	const [resumeInfo, setResumeInfo] = useState<{
+		difficulty: string
+		gridSize: number
+		elapsed: number
+		status: string
+	} | null>(null)
 	const [showModal, setShowModal] = useState(false)
 	const [activeGameId, setActiveGameId] = useState<number | undefined>(undefined)
 	const [skipActiveCheck, setSkipActiveCheck] = useState(false)
@@ -36,8 +41,8 @@ export const Sudoku = () => {
 				// No active game – proceed to new game
 			})
 			.finally(() => setChecked(true))
-	// Only run once when user changes
-	// eslint-disable-next-line react-hooks/exhaustive-deps
+		// Only run once when user changes
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user?.id])
 
 	const handleResume = () => {
@@ -84,10 +89,7 @@ export const Sudoku = () => {
 			)}
 
 			{!showModal && (
-				<SudokuComponent
-					initialGameId={activeGameId}
-					skipActiveGameCheck={skipActiveCheck}
-				/>
+				<SudokuComponent initialGameId={activeGameId} skipActiveGameCheck={skipActiveCheck} />
 			)}
 		</>
 	)

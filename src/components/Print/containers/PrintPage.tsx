@@ -45,7 +45,9 @@ export const PrintPage = () => {
 			} else if (status === 400) {
 				setError('Parámetros incorrectos. Verifica la cantidad, tamaño y dificultad.')
 			} else {
-				setError('No se pudo generar el pack de sudokus. Comprueba la conexión e inténtalo de nuevo.')
+				setError(
+					'No se pudo generar el pack de sudokus. Comprueba la conexión e inténtalo de nuevo.'
+				)
 			}
 		} finally {
 			setLoading(false)
@@ -59,9 +61,7 @@ export const PrintPage = () => {
 					<p className='eyebrow'>Herramientas</p>
 					<h1 className='page-title'>Imprimir sudokus</h1>
 				</div>
-				{pack.length > 0 && (
-					<span className='status-pill'>{pack.length} sudokus generados</span>
-				)}
+				{pack.length > 0 && <span className='status-pill'>{pack.length} sudokus generados</span>}
 			</div>
 
 			<form className='panel form-stack print-controls no-print' onSubmit={submit}>
@@ -124,7 +124,9 @@ export const PrintPage = () => {
 
 			{pack.length === 0 && !loading && !error && (
 				<div className='panel state-panel no-print' style={{ marginTop: '1rem' }}>
-					<p className='muted'>Configura los parámetros y pulsa "Generar" para ver los sudokus antes de imprimir.</p>
+					<p className='muted'>
+						Configura los parámetros y pulsa "Generar" para ver los sudokus antes de imprimir.
+					</p>
 				</div>
 			)}
 

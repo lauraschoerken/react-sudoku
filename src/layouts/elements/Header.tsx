@@ -46,12 +46,18 @@ export const Header = () => {
 									</NavLink>
 								</div>
 							</details>
-							<NavLink to='/account' className={({ isActive }) => (isActive ? `${active} user-avatar` : 'link user-avatar')}>
+							<NavLink
+								to='/account'
+								className={({ isActive }) =>
+									isActive ? `${active} user-avatar` : 'link user-avatar'
+								}>
 								{user.username.slice(0, 1).toUpperCase()}
 							</NavLink>
 						</>
 					) : (
-						<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link btn primary btn--sm')}>
+						<NavLink
+							to='/account'
+							className={({ isActive }) => (isActive ? active : 'link btn primary btn--sm')}>
 							Iniciar sesión
 						</NavLink>
 					)}

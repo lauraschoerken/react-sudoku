@@ -17,17 +17,14 @@ type SudokuComponentProps = {
 	skipActiveGameCheck?: boolean
 }
 
-export default function SudokuComponent({ initialGameId: initialGameIdProp, skipActiveGameCheck }: SudokuComponentProps = {}) {
+export default function SudokuComponent({
+	initialGameId: initialGameIdProp,
+	skipActiveGameCheck,
+}: SudokuComponentProps = {}) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
-	const {
-		errorsActive,
-		errorsLimit,
-		errorsLimiterEnabled,
-		timerEnabled,
-		timerMode,
-		timerSeconds,
-	} = useAppSelector((s) => s.settings)
+	const { errorsActive, errorsLimit, errorsLimiterEnabled, timerEnabled, timerMode, timerSeconds } =
+		useAppSelector((s) => s.settings)
 	const authUser = useAppSelector((s) => s.auth.user)
 	const initialGameId = useMemo(() => {
 		if (initialGameIdProp) return initialGameIdProp
@@ -46,7 +43,16 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp, skip
 			countdownSeconds: timerSeconds,
 			skipActiveGameCheck: skipActiveGameCheck ?? false,
 		}),
-		[authUser?.id, errorsActive, errorsLimit, errorsLimiterEnabled, initialGameId, timerMode, timerSeconds, skipActiveGameCheck]
+		[
+			authUser?.id,
+			errorsActive,
+			errorsLimit,
+			errorsLimiterEnabled,
+			initialGameId,
+			timerMode,
+			timerSeconds,
+			skipActiveGameCheck,
+		]
 	)
 
 	const {
@@ -74,7 +80,6 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp, skip
 		gameLoading,
 		gameError,
 	} = useSudoku(3, undefined, sudokuOptions)
-
 
 	const [mistakes, setMistakes] = useState(0)
 	const [notesMode, setNotesMode] = useState(false)
@@ -128,7 +133,9 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp, skip
 		return (
 			<div className='game-loading'>
 				<p className='error-text'>{gameError}</p>
-				<button className='btn primary' onClick={newGame}>Reintentar</button>
+				<button className='btn primary' onClick={newGame}>
+					Reintentar
+				</button>
 			</div>
 		)
 	}
@@ -424,21 +431,23 @@ export default function SudokuComponent({ initialGameId: initialGameIdProp, skip
 																	aria-hidden='true'>
 																	{Array.from({ length: gridSize }, (_, noteIndex) => {
 																		const note = noteIndex + 1
-																		return <span key={note}>{cellNotes.includes(note) ? note : ''}</span>
+																		return (
+																			<span key={note}>{cellNotes.includes(note) ? note : ''}</span>
+																		)
 																	})}
 																</div>
 															)}
-														<input
-															aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
-															inputMode='numeric'
-															type='number'
-															min={1}
-															max={gridSize}
-															value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
-															onChange={handleCellChange(rowIndex, colIndex)}
-															className={hasError ? 'input-error' : undefined}
-															disabled={isEnded || isPaused} // bloqueado si la partida terminó
-														/>
+															<input
+																aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
+																inputMode='numeric'
+																type='number'
+																min={1}
+																max={gridSize}
+																value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
+																onChange={handleCellChange(rowIndex, colIndex)}
+																className={hasError ? 'input-error' : undefined}
+																disabled={isEnded || isPaused} // bloqueado si la partida terminó
+															/>
 														</>
 													)}
 												</td>
