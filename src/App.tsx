@@ -6,8 +6,8 @@ import { useEffect } from 'react'
 import { useThemeSync } from './hooks/settings/useThemeSync'
 import { I18nProvider } from './i18n/I18nProvider'
 import { router } from './navigation/routes'
-import { getCurrentUser, isAuthError } from './services/sudokuApi'
-import { clearSession, setSession } from './store/features/auth/authSlice'
+import { getCurrentUser } from './services/sudokuApi'
+import { setSession } from './store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 
 const SessionGuard = () => {
@@ -16,14 +16,15 @@ const SessionGuard = () => {
 
 	useEffect(() => {
 		if (!token) return
-		const handleExpiredSession = () => dispatch(clearSession())
-		window.addEventListener('sudoku-auth-expired', handleExpiredSession)
+		let cancelled = false
 		void getCurrentUser()
-			.then((user) => dispatch(setSession({ token, user })))
-			.catch((error) => {
-				if (isAuthError(error)) dispatch(clearSession())
+			.then((user) => {
+				if (!cancelled) dispatch(setSession({ token, user }))
 			})
-		return () => window.removeEventListener('sudoku-auth-expired', handleExpiredSession)
+			.catch(() => undefined)
+		return () => {
+			cancelled = true
+		}
 	}, [dispatch, token])
 
 	return null

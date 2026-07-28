@@ -1,6 +1,7 @@
 import '@/components/Auth/containers/AuthPage.scss'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { LoginPrompt } from '@/components/elements/LoginGate/LoginGate'
@@ -14,8 +15,7 @@ import {
 	startDailySudoku,
 	SudokuApiError,
 } from '@/services/sudokuApi'
-import { clearSession } from '@/store/features/auth/authSlice'
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useAppSelector } from '@/store/hooks'
 import { isBoardValidSolution, localTodayKey } from '@/utils/appHelpers'
 
 interface CalendarDay {
@@ -23,22 +23,6 @@ interface CalendarDay {
 	completed: boolean
 	pending: boolean
 }
-
-const WEEK_DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-const MONTHS_ES = [
-	'Enero',
-	'Febrero',
-	'Marzo',
-	'Abril',
-	'Mayo',
-	'Junio',
-	'Julio',
-	'Agosto',
-	'Septiembre',
-	'Octubre',
-	'Noviembre',
-	'Diciembre',
-]
 
 const DailyCalendar = ({
 	selectedDate,
@@ -51,6 +35,7 @@ const DailyCalendar = ({
 	calendarDays: CalendarDay[]
 	onMonthChange: (year: number, month: number) => void
 }) => {
+	const { t, i18n } = useTranslation('common')
 	const today = useMemo(() => new Date(), [])
 	const [viewYear, setViewYear] = useState(today.getFullYear())
 	const [viewMonth, setViewMonth] = useState(today.getMonth())
@@ -83,23 +68,23 @@ const DailyCalendar = ({
 					className='btn'
 					onClick={() => changeMonth(-1)}
 					type='button'>
-					Anterior
+					{t('previous')}
 				</button>
 				<h3>
-					{MONTHS_ES[viewMonth]} {viewYear}
+					{new Date(viewYear, viewMonth, 1).toLocaleDateString(i18n.language, { month: 'long' })} {viewYear}
 				</h3>
 				<button
 					className='btn'
 					disabled={!canGoNext}
 					onClick={() => changeMonth(1)}
 					type='button'>
-					Siguiente
+					{t('next')}
 				</button>
 			</div>
 			<div className='daily-calendar__grid'>
-				{WEEK_DAYS.map((day) => (
-					<span className='daily-calendar__weekday' key={day}>
-						{day}
+				{Array.from({ length: 7 }, (_, index) => new Date(2024, 0, index + 1)).map((date) => (
+					<span className='daily-calendar__weekday' key={date.toISOString()}>
+						{date.toLocaleDateString(i18n.language, { weekday: 'short' }).slice(0, 1).toUpperCase()}
 					</span>
 				))}
 				{Array.from({ length: firstWeekDay }, (_, index) => (
@@ -138,8 +123,8 @@ const DailyCalendar = ({
 }
 
 export const DailySudokuPage = () => {
-	const dispatch = useAppDispatch()
 	const navigate = useNavigate()
+	const { t } = useTranslation('common')
 	const user = useAppSelector((state) => state.auth.user)
 	const todayKey = useMemo(() => localTodayKey(), [])
 
@@ -191,8 +176,7 @@ export const DailySudokuPage = () => {
 			const nextGame = gameResult.status === 'fulfilled' ? gameResult.value : null
 
 			if (authFailed) {
-				dispatch(clearSession())
-				setError('Tu sesion ha caducado. Inicia sesion de nuevo.')
+				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
 			} else if (!nextPuzzle && !nextGame && !notStarted) {
 				setError('No se pudo cargar el Sudoku diario. Revisa la conexion e intentalo de nuevo.')
 			}
@@ -201,7 +185,7 @@ export const DailySudokuPage = () => {
 			setGame(nextGame)
 			setLoading(false)
 		},
-		[dispatch, user]
+		[user]
 	)
 
 	useEffect(() => {
@@ -221,8 +205,7 @@ export const DailySudokuPage = () => {
 			navigate(`/?gameId=${nextGame.id}&daily=1`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
-				dispatch(clearSession())
-				setError('Tu sesion ha caducado. Inicia sesion de nuevo para jugar el diario.')
+				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
 				return
 			}
 			setError('No se pudo iniciar el Sudoku diario.')
@@ -241,8 +224,7 @@ export const DailySudokuPage = () => {
 			navigate(`/?gameId=${nextGame.id}&daily=1`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
-				dispatch(clearSession())
-				setError('Tu sesion ha caducado. Inicia sesion de nuevo para rehacer el diario.')
+				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
 				return
 			}
 			setError('No se pudo reiniciar el Sudoku diario.')
@@ -264,11 +246,11 @@ export const DailySudokuPage = () => {
 
 	const ctaLabel = game
 		? game.status === 'WON'
-			? 'Ver tablero'
+			? t('viewBoard')
 			: game.started
-				? 'Continuar'
-				: 'Jugar diario'
-		: 'Jugar diario'
+				? t('continue')
+				: t('playDaily')
+		: t('playDaily')
 	const previewBoard = game?.currentBoard ?? puzzle?.puzzle ?? null
 	const previewSize = game?.gridSize ?? puzzle?.gridSize ?? 9
 	const completed =
@@ -279,8 +261,8 @@ export const DailySudokuPage = () => {
 		<div className='daily-page'>
 			<div className='page-heading'>
 				<div>
-					<p className='eyebrow'>Reto del dia</p>
-					<h1 className='page-title'>Sudoku diario</h1>
+					<p className='eyebrow'>{t('dailyChallenge')}</p>
+					<h1 className='page-title'>{t('dailyTitle')}</h1>
 				</div>
 				<span className='status-pill'>{selectedDate}</span>
 			</div>
@@ -292,13 +274,13 @@ export const DailySudokuPage = () => {
 				selectedDate={selectedDate}
 			/>
 
-			{loading && <div className='panel state-panel'>Cargando el Sudoku diario...</div>}
+			{loading && <div className='panel state-panel'>{t('loadingDaily')}</div>}
 
 			{!loading && error && !puzzle && !game && (
 				<div className='panel state-panel'>
 					<p className='error-text'>{error}</p>
 					<button className='btn primary' onClick={() => void loadDaily(selectedDate)}>
-						Reintentar
+						{t('retry')}
 					</button>
 				</div>
 			)}
@@ -306,21 +288,21 @@ export const DailySudokuPage = () => {
 			{!loading && (puzzle || game) && (
 				<div className='daily-card'>
 					<div className='daily-card__copy'>
-						<h2>{completed ? 'Completado' : started ? 'En curso' : 'Disponible'}</h2>
+						<h2>{completed ? t('completed') : started ? t('inProgress') : t('available')}</h2>
 						<p className='muted'>
 							{game
 								? completed
 									? 'Sudoku completado. Puedes ver el tablero o deshacerlo para repetirlo.'
-									: 'Tienes una partida diaria en curso. Puedes continuarla aqui mismo.'
-								: `El puzzle del ${selectedDate} esta disponible. Todos juegan el mismo tablero.`}
+									: t('dailyInProgress')
+								: t('dailyAvailable', { date: selectedDate })}
 						</p>
 						<div className='daily-actions'>
 							<button className='btn primary' disabled={starting} onClick={start}>
-								{starting ? 'Preparando...' : ctaLabel}
+								{starting ? t('preparing') : ctaLabel}
 							</button>
 							{completed && (
 								<button className='btn' disabled={resetting} onClick={reset}>
-									{resetting ? 'Reiniciando...' : 'Deshacer y rehacer'}
+									{resetting ? t('resetting') : t('undoDaily')}
 								</button>
 							)}
 						</div>

@@ -270,8 +270,9 @@ $thick: 0.15rem;
 }
 .sudoku-stage {
 	display: block;
+	width: 100%;
 	max-width: 100%;
-	overflow-x: auto;
+	overflow-x: clip;
 	text-align: center;
 }
 
@@ -358,13 +359,29 @@ user-select: none;
 }
 
 .sudoku-boardbox {
-	display: inline-block;
+	display: grid;
+	justify-items: center;
+	width: 100%;
 	max-width: 100%;
 	position: relative;
+	margin-inline: auto;
+}
+
+.sudoku-wrap {
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	padding-inline: 0.25rem;
+}
+
+.sudoku-wrap .sudoku {
+	margin-inline: auto;
 }
 
 .sudoku-timer-stick {
 	position: static;
+	width: 100%;
+	max-width: 100%;
 	margin: 0.75rem auto 0;
 	display: flex;
 	align-items: center;

@@ -1,19 +1,26 @@
 import '@/components/Auth/containers/AuthPage.scss'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 
 import { LoginPrompt } from '@/components/elements/LoginGate/LoginGate'
 import type { CalendarDayResponse, GameSessionResponse, UserStatsResponse } from '@/services/sudokuApi'
-import { deleteMyGame, getMyCalendar, getMyGames, getMyStats, isAuthError } from '@/services/sudokuApi'
-import { clearSession } from '@/store/features/auth/authSlice'
-import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import {
+	deleteMyGame,
+	getMyCalendar,
+	getMyGames,
+	getMyStats,
+	isAuthError,
+	SudokuApiError,
+} from '@/services/sudokuApi'
+import { useAppSelector } from '@/store/hooks'
 import { formatDuration, localTodayKey, translateDifficulty, translateStatus } from '@/utils/appHelpers'
 
 const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
 export const DashboardPage = () => {
-	const dispatch = useAppDispatch()
+	const { t } = useTranslation('common')
 	const user = useAppSelector((state) => state.auth.user)
 	const initialMonth = useMemo(() => new Date(), [])
 	const [calendarCursor, setCalendarCursor] = useState({
@@ -43,16 +50,16 @@ export const DashboardPage = () => {
 			})
 			.catch((requestError) => {
 				if (isAuthError(requestError)) {
-					dispatch(clearSession())
 					setStats(null)
 					setCalendar([])
 					setGames([])
-					setError('Tu sesion ha caducado. Inicia sesion de nuevo para ver tus estadisticas.')
+					const status = requestError instanceof SudokuApiError ? ` (HTTP ${requestError.status})` : ''
+					setError(`El servidor no ha podido validar la sesión${status}. Tu usuario sigue conectado.`)
 					return
 				}
 				setError('No se pudieron cargar tus estadisticas.')
 			})
-	}, [calendarCursor, dispatch, user])
+	}, [calendarCursor, user])
 
 	useEffect(() => {
 		loadData()
@@ -99,8 +106,8 @@ export const DashboardPage = () => {
 		<div className='dashboard-page'>
 			<div className='page-heading'>
 				<div>
-					<p className='eyebrow'>Tu progreso</p>
-					<h1 className='page-title'>Estadisticas</h1>
+					<p className='eyebrow'>{t('progress')}</p>
+					<h1 className='page-title'>{t('statistics')}</h1>
 				</div>
 				<span className='status-pill'>{user.username}</span>
 			</div>
@@ -110,15 +117,17 @@ export const DashboardPage = () => {
 			{lastActiveGame && (
 				<div className='continue-banner'>
 					<div>
-						<strong>Partida en curso</strong>
+						<strong>{t('gameInProgress')}</strong>
 						<p className='muted'>
 							#{lastActiveGame.id}, {translateDifficulty(lastActiveGame.difficulty)},{' '}
 							{lastActiveGame.gridSize}x{lastActiveGame.gridSize},{' '}
 							{translateStatus(lastActiveGame.status)}
 						</p>
 					</div>
-					<Link className='btn primary' to={`/?gameId=${lastActiveGame.id}`}>
-						Continuar partida
+					<Link
+						className='btn primary'
+						to={`/?gameId=${lastActiveGame.id}${lastActiveGame.dailyGame ? '&daily=1' : ''}`}>
+						{t('continue')}
 					</Link>
 				</div>
 			)}
@@ -126,32 +135,32 @@ export const DashboardPage = () => {
 			{stats && (
 				<>
 					<div className='metric-grid'>
-						<Metric label='Partidas jugadas' value={stats.playedGames} />
-						<Metric label='Victorias' value={stats.wonGames} />
-						<Metric label='Porcentaje de victoria' value={stats.playedGames ? `${winRate}%` : '-'} />
-						<Metric label='Mejor tiempo' value={formatDuration(stats.bestTimeSeconds)} />
-						<Metric label='Pistas usadas' value={stats.totalHints} />
-						<Metric label='Errores registrados' value={stats.totalMistakes} />
+						<Metric label={t('gamesPlayed')} value={stats.playedGames} />
+						<Metric label={t('wins')} value={stats.wonGames} />
+						<Metric label={t('winRate')} value={stats.playedGames ? `${winRate}%` : '-'} />
+						<Metric label={t('bestTime')} value={formatDuration(stats.bestTimeSeconds)} />
+						<Metric label={t('hintsUsed')} value={stats.totalHints} />
+						<Metric label={t('mistakes')} value={stats.totalMistakes} />
 					</div>
 
 					{stats.playedGames === 0 && (
 						<div className='panel state-panel'>
-							<h2>Todavia no tienes partidas terminadas</h2>
-							<p className='muted'>Juega tu primer Sudoku para ver estadisticas utiles aqui.</p>
+							<h2>{t('noFinishedGames')}</h2>
+							<p className='muted'>{t('firstGameHint')}</p>
 						</div>
 					)}
 
 					<div className='stats-grid'>
-						<Breakdown title='Por dificultad' items={stats.byDifficulty} labelFormatter={translateDifficulty} />
-						<Breakdown title='Por tamano' items={stats.byGridSize} labelFormatter={(size) => `${size}x${size}`} />
+						<Breakdown title={t('byDifficulty')} items={stats.byDifficulty} labelFormatter={translateDifficulty} />
+						<Breakdown title={t('bySize')} items={stats.byGridSize} labelFormatter={(size) => `${size}x${size}`} />
 					</div>
 				</>
 			)}
 
 			<div className='panel calendar-panel'>
 				<div className='calendar-heading'>
-					<h2>Calendario</h2>
-					<div className='calendar-nav' aria-label='Navegar por el calendario'>
+					<h2>{t('calendar')}</h2>
+					<div className='calendar-nav' aria-label={t('navigateCalendar')}>
 						<button
 							className='btn compact'
 							type='button'
@@ -160,7 +169,7 @@ export const DashboardPage = () => {
 									month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 }
 								)
 							}
-							aria-label='Mes anterior'>
+							aria-label={t('previousMonth')}>
 							&lt;
 						</button>
 						<strong>{monthLabel}</strong>
@@ -172,7 +181,7 @@ export const DashboardPage = () => {
 									month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 }
 								)
 							}
-							aria-label='Mes siguiente'>
+							aria-label={t('nextMonth')}>
 							&gt;
 						</button>
 					</div>
@@ -225,7 +234,7 @@ export const DashboardPage = () => {
 			)}
 
 			<div className='panel'>
-				<h2>Partidas recientes</h2>
+				<h2>{t('recentGames')}</h2>
 				<div className='history-list'>
 			{games.map((game) => (
 						<div className='history-row game-row' key={game.id}>
@@ -236,40 +245,48 @@ export const DashboardPage = () => {
 							</span>
 							<span>{translateStatus(game.status)}</span>
 							{game.status === 'WON' ? (
-								<Link className='btn compact' to='/?new=1'>
-									Jugar de nuevo
+								<Link className='btn compact' to={game.dailyGame ? '/daily' : '/?new=1'}>
+									{game.dailyGame ? t('viewDaily') : t('playAgain')}
 								</Link>
 							) : game.status === 'LOST' ? (
-								<Link className='btn compact' to={`/?gameId=${game.id}`}>
-									Reintentar
+								<Link className='btn compact' to={`/?gameId=${game.id}${game.dailyGame ? '&daily=1' : ''}`}>
+									{t('retry')}
 								</Link>
 							) : (
-								<Link className='btn compact' to={`/?gameId=${game.id}`}>
-									Continuar
+								<Link className='btn compact' to={`/?gameId=${game.id}${game.dailyGame ? '&daily=1' : ''}`}>
+									{t('continue')}
 								</Link>
 							)}
-							{confirmDeleteId === game.id ? (
-								<div className='confirm-row'>
-									<button
-										className='btn compact danger'
-										disabled={deletingId === game.id}
-										onClick={() => void handleDeleteGame(game.id)}>
-										{deletingId === game.id ? '...' : 'Confirmar borrar'}
-									</button>
-									<button className='btn compact' onClick={() => setConfirmDeleteId(null)}>
-										Cancelar
-									</button>
-								</div>
-							) : (
-								<button className='btn compact danger' onClick={() => setConfirmDeleteId(game.id)}>
-									Borrar
-								</button>
-							)}
+							<button className='btn compact danger' onClick={() => setConfirmDeleteId(game.id)}>
+								{t('delete')}
+							</button>
 						</div>
 					))}
 					{games.length === 0 && <p className='muted'>Todavia no hay partidas guardadas.</p>}
 				</div>
 			</div>
+
+			{confirmDeleteId !== null && (
+				<div className='confirm-modal-overlay' role='dialog' aria-modal='true' aria-labelledby='confirm-delete-title'>
+					<div className='confirm-modal'>
+						<p className='eyebrow'>{t('gameLabel')} #{confirmDeleteId}</p>
+						<h2 id='confirm-delete-title'>¿Seguro que quieres eliminar esta partida?</h2>
+						<p className='muted'>Esta acción no se puede deshacer.</p>
+						<div className='confirm-modal__actions'>
+							<button className='btn' onClick={() => setConfirmDeleteId(null)} type='button'>
+								{t('cancel')}
+							</button>
+							<button
+								className='btn danger'
+								disabled={deletingId === confirmDeleteId}
+								onClick={() => void handleDeleteGame(confirmDeleteId)}
+								type='button'>
+								{deletingId === confirmDeleteId ? 'Eliminando...' : 'Sí, eliminar'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

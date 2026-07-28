@@ -10,7 +10,7 @@ import { APP_NAME } from '@/utils/constants'
 
 export const Header = () => {
 	const active = 'link-active'
-	const { t } = useTranslation(['layout'])
+	const { t } = useTranslation(['layout', 'common'])
 	const user = useAppSelector((s) => s.auth.user)
 
 	return (
@@ -30,29 +30,32 @@ export const Header = () => {
 					{user ? (
 						<>
 							<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>
-								Diario
+								{t('daily', { ns: 'common' })}
 							</NavLink>
 							<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
-								Stats
-							</NavLink>
-							<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
-								{t('settings')}
+								{t('stats', { ns: 'common' })}
 							</NavLink>
 							<details className='nav-more'>
-								<summary className='btn'>Herramientas</summary>
+								<summary className='btn'>{t('tools', { ns: 'common' })}</summary>
 								<div className='nav-more__menu'>
 									<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
-										Imprimir
+										{t('print', { ns: 'common' })}
 									</NavLink>
 								</div>
 							</details>
-							<NavLink
-								to='/account'
-								className={({ isActive }) =>
-									isActive ? `${active} user-avatar` : 'link user-avatar'
-								}>
-								{user.avatar ?? user.username.slice(0, 1).toUpperCase()}
-							</NavLink>
+							<details className='user-menu'>
+								<summary className='user-avatar' aria-label={t('account', { ns: 'common' })}>
+									{user.avatar ?? user.username.slice(0, 1).toUpperCase()}
+								</summary>
+								<div className='user-menu__menu'>
+									<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>
+										{t('account', { ns: 'common' })}
+									</NavLink>
+									<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>
+										{t('settings', { ns: 'layout' })}
+									</NavLink>
+								</div>
+							</details>
 						</>
 					) : (
 						<NavLink

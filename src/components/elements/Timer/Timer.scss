@@ -3,7 +3,8 @@ $border-radius: 0.5rem;
 /* ===== Countdown (Time Timer) ===== */
 .timer-dial {
 	position: relative;
-	display: inline-block;
+	display: block;
+	margin-inline: auto;
 	border-radius: 100%;
 	padding: 0.35rem;
 	background: color-mix(in oklch, var(--bg-clock) 82%, var(--color2) 18%);
@@ -12,6 +13,9 @@ $border-radius: 0.5rem;
 		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),
 		inset 0 0 0 1px color-mix(in oklch, var(--fg-clock) 12%, transparent 88%),
 		0 0 0 0.35rem color-mix(in oklch, var(--bg-clock) 76%, transparent 24%);
+}
+.timer-dial svg {
+	display: block;
 }
 .timer-dial__label {
 	position: absolute;
@@ -57,7 +61,9 @@ $border-radius: 0.5rem;
 
 /* ===== LCD (digital) ===== */
 .lcd-timer {
-	display: inline-block;
+	display: block;
+	width: max-content;
+	margin-inline: auto;
 	border-radius: $border-radius;
 	box-shadow:
 		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),

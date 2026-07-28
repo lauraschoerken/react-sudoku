@@ -2,12 +2,14 @@ import './AuthPage.scss'
 
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { changePassword, getCurrentUser, login, register } from '@/services/sudokuApi'
 import { setAvatar, setSession, clearSession } from '@/store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
 export const AuthPage = () => {
+	const { t } = useTranslation('common')
 	const avatarOptions = ['L', 'S', '★', '✦', '◆', '●']
 	const dispatch = useAppDispatch()
 	const session = useAppSelector((s) => s.auth)
@@ -83,7 +85,7 @@ export const AuthPage = () => {
 
 	return (
 		<div className='auth-page'>
-			<h1 className='page-title'>Cuenta</h1>
+			<h1 className='page-title'>{t('account')}</h1>
 			{accountUser && (
 				<div className='account-layout'>
 				<div className='panel account-profile'>
@@ -141,11 +143,11 @@ export const AuthPage = () => {
 								onChange={(e) => setLoginPassword(e.target.value)}
 							/>
 						</label>
-						<button className='btn primary'>Entrar</button>
+						<button className='btn primary'>{t('enter')}</button>
 					</form>
 
 					<form className='panel form-stack' onSubmit={onRegister}>
-						<h2>Registro</h2>
+						<h2>{t('register')}</h2>
 						<label>
 							Usuario
 							<input value={username} onChange={(e) => setUsername(e.target.value)} />
@@ -162,7 +164,7 @@ export const AuthPage = () => {
 								onChange={(e) => setRegisterPassword(e.target.value)}
 							/>
 						</label>
-						<button className='btn primary'>Crear cuenta</button>
+						<button className='btn primary'>{t('createAccount')}</button>
 					</form>
 				</div>
 			)}

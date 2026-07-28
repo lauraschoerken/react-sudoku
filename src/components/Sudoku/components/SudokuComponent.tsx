@@ -1,6 +1,7 @@
 import './SudokuComponent.scss'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import DigitalTimer from '@/components/elements/Timer/Timer'
@@ -27,6 +28,7 @@ export default function SudokuComponent({
 }: SudokuComponentProps = {}) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
+	const { t } = useTranslation('common')
 	const { errorsActive, errorsLimit, errorsLimiterEnabled, timerEnabled, timerMode, timerSeconds } =
 		useAppSelector((s) => s.settings)
 	const authUser = useAppSelector((s) => s.auth.user)
@@ -104,6 +106,7 @@ export default function SudokuComponent({
 	const [resetting, setResetting] = useState(false)
 	const [abandoningDaily, setAbandoningDaily] = useState(false)
 	const [showNewModal, setShowNewModal] = useState(false)
+	const [creatingNewGame, setCreatingNewGame] = useState(false)
 	const [newSize, setNewSize] = useState<SubgridSize>(subgridSize)
 	const [newDifficulty, setNewDifficulty] = useState<Difficulty>(difficulty)
 
@@ -262,18 +265,23 @@ export default function SudokuComponent({
 		setShowNewModal(true)
 	}
 
-	const handleCreateNewGame = () => {
-		if (!isEnded && !window.confirm('¿Quieres abandonar esta partida y generar un sudoku nuevo?')) return
-		if (!isEnded) void finishGame('ABANDONED')
-		setMistakes(0)
-		setSelectedCell({ rowIndex: null, colIndex: null })
-		setIsEnded(false)
-		setShowWin(false)
-		setShowLose(false)
-		setLoseReason(null)
-		setShowNewModal(false)
-		newGame(newSize, newDifficulty)
-		restartTimer()
+	const handleCreateNewGame = async () => {
+		if (creatingNewGame) return
+		setCreatingNewGame(true)
+		try {
+			if (!isEnded) await finishGame('ABANDONED')
+			setMistakes(0)
+			setSelectedCell({ rowIndex: null, colIndex: null })
+			setIsEnded(false)
+			setShowWin(false)
+			setShowLose(false)
+			setLoseReason(null)
+			setShowNewModal(false)
+			newGame(newSize, newDifficulty)
+			restartTimer()
+		} finally {
+			setCreatingNewGame(false)
+		}
 	}
 
 	// Reintentar el mismo puzzle + reiniciar reloj
@@ -308,7 +316,7 @@ export default function SudokuComponent({
 		return (
 			<div className='game-loading'>
 				<div className='game-loading__spinner' />
-				<p className='muted'>Cargando sudoku...</p>
+				<p className='muted'>{t('loadingSudoku')}</p>
 			</div>
 		)
 	}
@@ -318,7 +326,7 @@ export default function SudokuComponent({
 			<div className='game-loading'>
 				<p className='error-text'>{gameError}</p>
 				<button className='btn primary' onClick={() => newGame()}>
-					Reintentar
+					{t('retry')}
 				</button>
 			</div>
 		)
@@ -333,25 +341,25 @@ export default function SudokuComponent({
 			)}
 			{!isDailyView && <div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
 				<button className='btn primary' onClick={handleNewGame}>
-					Nuevo sudoku
+					{t('newGame')}
 				</button>
 
 				<button className='btn' onClick={requestHint} disabled={isEnded || isPaused}>
-					Pista{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
+					{t('hint')}{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
 				</button>
 
 				<button
 					className={`btn ${notesMode ? 'active' : ''}`}
 					onClick={() => setNotesMode((value) => !value)}
 					aria-pressed={notesMode}>
-					Notas
+					{t('notes')}
 				</button>
 
 				<button
 					className={`btn ${isPaused ? 'active' : ''}`}
 					onClick={isPaused ? resumeGame : () => pauseGame(timerElapsed)}
 					disabled={isEnded}>
-					{isPaused ? 'Reanudar' : 'Pausar'}
+					{isPaused ? t('resume') : t('pause')}
 				</button>
 
 				<details className='sudoku-more'>
@@ -380,10 +388,10 @@ export default function SudokuComponent({
 						}>
 						{errorsLimiterEnabled ? (
 							<span>
-								Errores: {displayMistakes} / {errorsLimit}
+								{t('errors')}: {displayMistakes} / {errorsLimit}
 							</span>
 						) : (
-							<span>Errores: {displayMistakes}</span>
+								<span>{t('errors')}: {displayMistakes}</span>
 						)}
 					</div>
 				)}
@@ -393,8 +401,8 @@ export default function SudokuComponent({
 				<div className='sudoku-modal-overlay' role='dialog' aria-modal='true' aria-label='Nuevo sudoku'>
 					<div className='sudoku-new-modal'>
 						<div>
-							<p className='eyebrow'>Nueva partida</p>
-							<h2>Elige tu sudoku</h2>
+							<p className='eyebrow'>{t('newSession')}</p>
+							<h2>{t('chooseSudoku')}</h2>
 							<p className='muted'>Se mantienen como propuesta el tamaño y la dificultad usados anteriormente.</p>
 						</div>
 						<label>
@@ -414,8 +422,10 @@ export default function SudokuComponent({
 							</select>
 						</label>
 						<div className='sudoku-new-modal__actions'>
-							<button className='btn' onClick={() => setShowNewModal(false)} type='button'>Cancelar</button>
-							<button className='btn primary' onClick={handleCreateNewGame} type='button'>Generar sudoku</button>
+							<button className='btn' onClick={() => setShowNewModal(false)} type='button'>{t('cancel')}</button>
+							<button className='btn primary' disabled={creatingNewGame} onClick={() => void handleCreateNewGame()} type='button'>
+								{creatingNewGame ? t('generating') : t('generate')}
+							</button>
 						</div>
 					</div>
 				</div>
@@ -527,7 +537,7 @@ export default function SudokuComponent({
 			{isDailyView && !isEnded && (
 				<div className='daily-game-actions'>
 					<button className='btn' disabled={abandoningDaily} onClick={handleAbandonDaily} type='button'>
-						{abandoningDaily ? 'Abandonando...' : 'Abandonar sudoku diario'}
+										{abandoningDaily ? t('generating') : t('abandonDaily')}
 					</button>
 				</div>
 			)}
@@ -544,8 +554,8 @@ export default function SudokuComponent({
 				}
 				onClose={() => (isDailyGame ? navigate('/daily') : setShowWin(false))}
 				onPrimary={() => (isDailyGame ? navigate('/?new=1') : handleNewGame())}
-				primaryLabel={isDailyGame ? 'Nuevo sudoku normal' : undefined}
-				closeLabel={isDailyGame ? 'Revisar retos diarios' : undefined}
+							primaryLabel={isDailyGame ? t('newNormalGame') : undefined}
+							closeLabel={isDailyGame ? t('reviewDaily') : undefined}
 			/>
 
 			{/* Derrota (errores o tiempo) */}

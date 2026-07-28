@@ -95,6 +95,8 @@ export interface ValidateCellResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
+let runtimeAuthToken: string | null | undefined
+
 export class SudokuApiError extends Error {
 	readonly status: number
 
@@ -109,6 +111,7 @@ export const isAuthError = (error: unknown) =>
 	error instanceof SudokuApiError && (error.status === 401 || error.status === 403)
 
 const getAuthToken = () => {
+	if (runtimeAuthToken !== undefined) return runtimeAuthToken
 	try {
 		const rawAuth = localStorage.getItem('auth')
 		if (!rawAuth) return null
@@ -116,6 +119,10 @@ const getAuthToken = () => {
 	} catch {
 		return null
 	}
+}
+
+export const setApiAuthToken = (token: string | null) => {
+	runtimeAuthToken = token
 }
 
 const difficultyToApi = (difficulty: Difficulty): GameSessionResponse['difficulty'] => {
@@ -137,14 +144,6 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 	})
 
 	if (!response.ok) {
-		if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined') {
-			try {
-				localStorage.removeItem('auth')
-			} catch {
-				// The session will still be cleared in memory by the application event.
-			}
-			window.dispatchEvent(new Event('sudoku-auth-expired'))
-		}
 		throw new SudokuApiError(response.status)
 	}
 	if (response.status === 204) return undefined as T

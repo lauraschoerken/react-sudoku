@@ -1,4 +1,5 @@
 import './ExplanationComponent.scss'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
 	loading: boolean
@@ -17,6 +18,7 @@ const sampleBoard = [
 ]
 
 const ExplanationComponent: React.FC<Props> = ({ loading }) => {
+	const { t } = useTranslation('explication')
 	if (loading) {
 		return <p>Cargando explicación...</p>
 	}
@@ -44,7 +46,7 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 			<div className='explanation-grid'>
 				<InfoBlock
 					icon='🎯'
-					title='Objetivo'
+					 title={t('objectiveTitle')}
 					text='Rellena todas las casillas vacías sin repetir números en ninguna fila, columna ni caja. Cada número del 1 al N debe aparecer exactamente una vez en cada zona.'
 				/>
 				<InfoBlock
@@ -54,12 +56,12 @@ const ExplanationComponent: React.FC<Props> = ({ loading }) => {
 				/>
 				<InfoBlock
 					icon='⚡'
-					title='Dificultad'
+					title={t('rulesTitle')}
 					text='Fácil (8% vacío), Medio (57%), Difícil (65%), Experto (70%). Más celdas vacías significa más combinaciones a evaluar y mayor complejidad lógica.'
 				/>
 				<InfoBlock
 					icon='💡'
-					title='Pistas'
+					title={t('strategiesTitle')}
 					text='Pulsa el botón "Pista" para que el juego rellene automáticamente la siguiente celda vacía con su valor correcto. Cada pista se registra en tus estadísticas.'
 				/>
 			</div>

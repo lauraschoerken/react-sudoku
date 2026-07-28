@@ -6,6 +6,7 @@
 	flex-direction: column;
 	background: var(--bg);
 	color: var(--fg);
+	overflow-x: clip;
 }
 
 .header {
@@ -87,10 +88,37 @@
 	box-shadow: var(--shadow-sm);
 }
 
+.user-menu {
+	position: relative;
+}
+
+.user-menu summary {
+	list-style: none;
+}
+
+.user-menu summary::-webkit-details-marker {
+	display: none;
+}
+
+.user-menu__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.35rem);
+	z-index: 20;
+	min-width: 10rem;
+	display: grid;
+	padding: 0.4rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	box-shadow: var(--shadow-sm);
+}
+
 .main {
 	flex: 1;
 	background: var(--body-bg);
 	color: var(--fg);
+	overflow-x: clip;
 }
 
 .footer {
