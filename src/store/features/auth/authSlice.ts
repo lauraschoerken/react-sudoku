@@ -5,6 +5,7 @@ export interface AuthUser {
 	id: number
 	username: string
 	email: string
+	avatar?: string
 }
 
 interface AuthState {
@@ -44,9 +45,12 @@ const authSlice = createSlice({
 			state.token = null
 			state.user = null
 		},
+		setAvatar: (state, action: PayloadAction<string>) => {
+			if (state.user) state.user.avatar = action.payload
+		},
 	},
 })
 
-export const { setSession, clearSession } = authSlice.actions
+export const { setSession, clearSession, setAvatar } = authSlice.actions
 export { STORAGE_KEY as AUTH_STORAGE_KEY }
 export default authSlice.reducer

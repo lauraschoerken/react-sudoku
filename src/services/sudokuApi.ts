@@ -14,6 +14,8 @@ export interface GameSessionResponse {
 	currentBoard: Board
 	status: GameStatus
 	notes: Record<string, number[]>
+	errorCells: string[]
+	hintedCells: string[]
 	mistakes: number
 	hintsUsed: number
 	elapsedSeconds: number
@@ -135,8 +137,17 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 	})
 
 	if (!response.ok) {
+		if ((response.status === 401 || response.status === 403) && typeof window !== 'undefined') {
+			try {
+				localStorage.removeItem('auth')
+			} catch {
+				// The session will still be cleared in memory by the application event.
+			}
+			window.dispatchEvent(new Event('sudoku-auth-expired'))
+		}
 		throw new SudokuApiError(response.status)
 	}
+	if (response.status === 204) return undefined as T
 
 	return response.json() as Promise<T>
 }
@@ -229,13 +240,25 @@ export const finishGame = (gameId: number, status: GameStatus, elapsedSeconds?: 
 		body: JSON.stringify({ status, elapsedSeconds }),
 	})
 
-export const pauseGame = (gameId: number) =>
+export const pauseGame = (gameId: number, elapsedSeconds?: number) =>
 	request<GameSessionResponse>(`/games/${gameId}/pause`, {
 		method: 'POST',
+		body: JSON.stringify({ elapsedSeconds }),
 	})
 
 export const resumeGame = (gameId: number) =>
 	request<GameSessionResponse>(`/games/${gameId}/resume`, {
+		method: 'POST',
+	})
+
+export const updateGameTime = (gameId: number, elapsedSeconds: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/time`, {
+		method: 'PATCH',
+		body: JSON.stringify({ elapsedSeconds }),
+	})
+
+export const resetGame = (gameId: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/reset`, {
 		method: 'POST',
 	})
 
@@ -252,6 +275,12 @@ export const login = (email: string, password: string) =>
 	})
 
 export const getCurrentUser = () => request<UserResponse>('/auth/me')
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+	request<void>('/auth/me/password', {
+		method: 'PATCH',
+		body: JSON.stringify({ currentPassword, newPassword }),
+	})
 
 export const getTodayDailySudoku = () => request<SudokuPuzzleResponse>('/daily-sudoku/today')
 

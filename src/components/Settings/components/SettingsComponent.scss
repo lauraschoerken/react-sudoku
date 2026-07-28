@@ -3,28 +3,43 @@
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
-	padding: 1rem;
+	padding: 2rem 1rem 3rem;
+	background: color-mix(in oklch, var(--body-bg) 92%, var(--color2) 8%);
 }
 
 .settings-component {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.25rem;
 	width: 100%;
-	max-width: 560px;
-	padding: 1.5rem 2rem;
+	max-width: 760px;
+	padding: 1.75rem;
+	border: 1px solid var(--border);
 	background: var(--bg);
 	color: var(--fg);
-	border-radius: 1rem;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	border-radius: 0.75rem;
+	box-shadow: var(--shadow-sm);
+}
+
+.settings-component::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 1.75rem;
+	right: 1.75rem;
+	height: 3px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--color2), var(--fg-clock));
 }
 
 .settings-top {
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-end;
 	gap: 1rem;
-	margin-bottom: 0.5rem;
+	padding-bottom: 0.25rem;
+	border-bottom: 1px solid var(--border);
 }
 
 .setting-item {
@@ -32,6 +47,17 @@
 	align-items: center;
 	gap: 0.75rem;
 	flex-wrap: wrap;
+	padding: 1rem;
+	border: 1px solid var(--border);
+	border-radius: 0.6rem;
+	background: color-mix(in oklch, var(--bg) 94%, var(--fg) 6%);
+	transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+
+	&:hover {
+		border-color: color-mix(in oklch, var(--color2) 55%, var(--border) 45%);
+		background: color-mix(in oklch, var(--bg) 90%, var(--color2) 10%);
+		transform: translateY(-1px);
+	}
 }
 
 .setting-row {
@@ -61,7 +87,7 @@
 	font-size: 0.9rem;
 	background-color: var(--bg);
 	color: var(--fg);
-	border: 1px solid #ccc;
+	border: 1px solid var(--border2);
 	cursor: pointer;
 	transition: border-color 0.2s ease;
 
@@ -93,6 +119,14 @@
 	margin-bottom: 1rem;
 }
 
+.timer-seconds,
+.error-limit {
+	padding: 0.45rem 0.65rem;
+	border: 1px solid var(--border);
+	border-radius: 0.5rem;
+	background: color-mix(in oklch, var(--bg) 92%, var(--color2) 8%);
+}
+
 .settings-heading h1 {
 	margin: 0 0 0.35rem;
 }
@@ -103,8 +137,27 @@
 	font-size: 0.9rem;
 }
 
+.settings-heading p:last-child {
+	max-width: 48rem;
+}
+
 input:disabled,
 select:disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+	.page-wrapper {
+		padding: 1rem 0.75rem 2rem;
+	}
+
+	.settings-component {
+		padding: 1rem;
+	}
+
+	.settings-top {
+		justify-content: stretch;
+		flex-wrap: wrap;
+	}
 }

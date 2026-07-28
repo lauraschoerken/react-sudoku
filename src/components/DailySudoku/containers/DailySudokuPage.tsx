@@ -1,9 +1,9 @@
 import '@/components/Auth/containers/AuthPage.scss'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { LoginPrompt } from '@/components/elements/LoginGate/LoginGate'
-import SudokuComponent from '@/components/Sudoku/components/SudokuComponent'
 import type { GameSessionResponse, SudokuPuzzleResponse } from '@/services/sudokuApi'
 import {
 	getDailySudokuByDate,
@@ -16,7 +16,7 @@ import {
 } from '@/services/sudokuApi'
 import { clearSession } from '@/store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { localTodayKey, translateDifficulty, translateStatus } from '@/utils/appHelpers'
+import { isBoardValidSolution, localTodayKey } from '@/utils/appHelpers'
 
 interface CalendarDay {
 	date: string
@@ -44,10 +44,12 @@ const DailyCalendar = ({
 	selectedDate,
 	onSelect,
 	calendarDays,
+	onMonthChange,
 }: {
 	selectedDate: string
 	onSelect: (date: string) => void
 	calendarDays: CalendarDay[]
+	onMonthChange: (year: number, month: number) => void
 }) => {
 	const today = useMemo(() => new Date(), [])
 	const [viewYear, setViewYear] = useState(today.getFullYear())
@@ -66,20 +68,20 @@ const DailyCalendar = ({
 
 	const dateKeyFor = (day: number) =>
 		`${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+	const changeMonth = (delta: number) => {
+		const next = new Date(viewYear, viewMonth + delta, 1)
+		if (next > new Date(today.getFullYear(), today.getMonth(), 1)) return
+		setViewYear(next.getFullYear())
+		setViewMonth(next.getMonth())
+		onMonthChange(next.getFullYear(), next.getMonth() + 1)
+	}
 
 	return (
 		<div className='daily-calendar'>
 			<div className='daily-calendar__nav'>
 				<button
 					className='btn'
-					onClick={() => {
-						if (viewMonth === 0) {
-							setViewYear((year) => year - 1)
-							setViewMonth(11)
-						} else {
-							setViewMonth((month) => month - 1)
-						}
-					}}
+					onClick={() => changeMonth(-1)}
 					type='button'>
 					Anterior
 				</button>
@@ -89,15 +91,7 @@ const DailyCalendar = ({
 				<button
 					className='btn'
 					disabled={!canGoNext}
-					onClick={() => {
-						if (!canGoNext) return
-						if (viewMonth === 11) {
-							setViewYear((year) => year + 1)
-							setViewMonth(0)
-						} else {
-							setViewMonth((month) => month + 1)
-						}
-					}}
+					onClick={() => changeMonth(1)}
 					type='button'>
 					Siguiente
 				</button>
@@ -134,6 +128,7 @@ const DailyCalendar = ({
 							onClick={() => onSelect(dateKey)}
 							type='button'>
 							{day}
+							{info?.completed && <span aria-label='Completado'>✓</span>}
 						</button>
 					)
 				})}
@@ -144,6 +139,7 @@ const DailyCalendar = ({
 
 export const DailySudokuPage = () => {
 	const dispatch = useAppDispatch()
+	const navigate = useNavigate()
 	const user = useAppSelector((state) => state.auth.user)
 	const todayKey = useMemo(() => localTodayKey(), [])
 
@@ -151,35 +147,35 @@ export const DailySudokuPage = () => {
 	const [puzzle, setPuzzle] = useState<SudokuPuzzleResponse | null>(null)
 	const [game, setGame] = useState<GameSessionResponse | null>(null)
 	const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([])
-	const [activeGameId, setActiveGameId] = useState<number | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [starting, setStarting] = useState(false)
 	const [resetting, setResetting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 
-	useEffect(() => {
+	const loadCalendar = useCallback((year?: number, month?: number) => {
 		if (!user) return
 		const now = new Date()
-		void getMyCalendar(now.getFullYear(), now.getMonth() + 1)
+		void getMyCalendar(year ?? now.getFullYear(), month ?? now.getMonth() + 1)
 			.then((days) =>
 				setCalendarDays(
 					days.map((day) => ({
 						date: day.date,
-						completed: day.dailySudokuCompleted || day.completedGames > 0,
+						completed: day.dailySudokuCompleted,
 						pending: day.pendingGames > 0,
 					}))
 				)
 			)
-			.catch(() => {
-				setCalendarDays([])
-			})
+			.catch(() => setCalendarDays([]))
 	}, [user])
+
+	useEffect(() => {
+		loadCalendar()
+	}, [loadCalendar])
 
 	const loadDaily = useCallback(
 		async (date: string) => {
-			setLoading(true)
-			setError(null)
-			setActiveGameId(null)
+		setLoading(true)
+		setError(null)
 
 			const [puzzleResult, gameResult] = await Promise.allSettled([
 				getDailySudokuByDate(date),
@@ -214,7 +210,7 @@ export const DailySudokuPage = () => {
 
 	const start = async () => {
 		if (game) {
-			setActiveGameId(game.id)
+			navigate(`/?gameId=${game.id}&daily=1`)
 			return
 		}
 		setStarting(true)
@@ -222,7 +218,7 @@ export const DailySudokuPage = () => {
 		try {
 			const nextGame = await startDailySudoku(selectedDate)
 			setGame(nextGame)
-			setActiveGameId(nextGame.id)
+			navigate(`/?gameId=${nextGame.id}&daily=1`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
 				dispatch(clearSession())
@@ -242,7 +238,7 @@ export const DailySudokuPage = () => {
 		try {
 			const nextGame = await resetDailySudoku(selectedDate)
 			setGame(nextGame)
-			setActiveGameId(nextGame.id)
+			navigate(`/?gameId=${nextGame.id}&daily=1`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
 				dispatch(clearSession())
@@ -267,15 +263,17 @@ export const DailySudokuPage = () => {
 	}
 
 	const ctaLabel = game
-		? game.status === 'WON' || game.status === 'LOST'
+		? game.status === 'WON'
 			? 'Ver tablero'
-			: 'Continuar'
+			: game.started
+				? 'Continuar'
+				: 'Jugar diario'
 		: 'Jugar diario'
-	const shownDifficulty = puzzle?.difficulty ?? game?.difficulty
-	const shownGridSize = puzzle?.gridSize ?? game?.gridSize ?? 9
 	const previewBoard = game?.currentBoard ?? puzzle?.puzzle ?? null
-	const previewSize = game?.gridSize ?? puzzle?.gridSize ?? shownGridSize
-	const completed = game?.status === 'WON' || game?.status === 'LOST'
+	const previewSize = game?.gridSize ?? puzzle?.gridSize ?? 9
+	const completed =
+		game?.status === 'WON' && isBoardValidSolution(game.currentBoard, game.initialBoard, game.subgridSize)
+	const started = game?.started === true
 
 	return (
 		<div className='daily-page'>
@@ -289,6 +287,7 @@ export const DailySudokuPage = () => {
 
 			<DailyCalendar
 				calendarDays={calendarDays}
+				onMonthChange={loadCalendar}
 				onSelect={setSelectedDate}
 				selectedDate={selectedDate}
 			/>
@@ -307,10 +306,7 @@ export const DailySudokuPage = () => {
 			{!loading && (puzzle || game) && (
 				<div className='daily-card'>
 					<div className='daily-card__copy'>
-						<p className='eyebrow'>
-							{shownDifficulty ? translateDifficulty(shownDifficulty) : 'Diario'}
-						</p>
-						<h2>{game ? translateStatus(game.status) : 'Disponible'}</h2>
+						<h2>{completed ? 'Completado' : started ? 'En curso' : 'Disponible'}</h2>
 						<p className='muted'>
 							{game
 								? completed
@@ -322,27 +318,19 @@ export const DailySudokuPage = () => {
 							<button className='btn primary' disabled={starting} onClick={start}>
 								{starting ? 'Preparando...' : ctaLabel}
 							</button>
-							<button className='btn' onClick={() => void loadDaily(selectedDate)}>
-								Actualizar
-							</button>
 							{completed && (
 								<button className='btn' disabled={resetting} onClick={reset}>
 									{resetting ? 'Reiniciando...' : 'Deshacer y rehacer'}
 								</button>
 							)}
 						</div>
-						{game && (
-							<p className='muted'>
-								Partida #{game.id}, {game.gridSize}x{game.gridSize}, {translateStatus(game.status)}.
-							</p>
-						)}
 						{error && <p className='error-text'>{error}</p>}
 					</div>
 
 					{previewBoard ? (
 						<div
 							aria-label='Vista previa del Sudoku diario'
-							className='daily-board'
+							className={`daily-board ${completed ? '' : 'daily-board--hidden'}`}
 							style={{ gridTemplateColumns: `repeat(${previewSize}, minmax(1.5rem, 2.2rem))` }}>
 							{previewBoard.flat().map((value, index) => (
 								<span className='daily-cell' key={index}>
@@ -353,7 +341,7 @@ export const DailySudokuPage = () => {
 					) : (
 						<div className='daily-board-placeholder'>
 							<strong>
-								{shownGridSize}x{shownGridSize}
+								Sudoku diario
 							</strong>
 							<span>Vista previa no disponible.</span>
 						</div>
@@ -361,11 +349,6 @@ export const DailySudokuPage = () => {
 				</div>
 			)}
 
-			{activeGameId && (
-				<div className='daily-game'>
-					<SudokuComponent initialGameId={activeGameId} />
-				</div>
-			)}
 		</div>
 	)
 }

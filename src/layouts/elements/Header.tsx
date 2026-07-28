@@ -51,7 +51,7 @@ export const Header = () => {
 								className={({ isActive }) =>
 									isActive ? `${active} user-avatar` : 'link user-avatar'
 								}>
-								{user.username.slice(0, 1).toUpperCase()}
+								{user.avatar ?? user.username.slice(0, 1).toUpperCase()}
 							</NavLink>
 						</>
 					) : (

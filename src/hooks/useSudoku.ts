@@ -8,13 +8,16 @@ import {
 	createGame,
 	createGameFromPuzzle,
 	finishGame,
+	generateSudoku,
 	getActiveGame,
 	getGame,
 	pauseGame,
+	resetGame,
 	requestHint,
 	resumeGame,
 	updateCell,
 	updateNotes,
+	updateGameTime,
 } from '@/services/sudokuApi'
 import type { GameStatus } from '@/services/sudokuApi'
 
@@ -33,6 +36,17 @@ const noteKey = (rowIndex: number, colIndex: number) => `${rowIndex}:${colIndex}
 
 const makeEmptyBoard = (size: number): Board =>
 	Array.from({ length: size }, () => Array(size).fill(0) as number[])
+
+const errorGridFromCells = (cells: string[] | undefined, size: number) => {
+	const grid = Array.from({ length: size }, () => Array(size).fill(false) as boolean[])
+	for (const key of cells ?? []) {
+		const [row, col] = key.split(':').map(Number)
+		if (Number.isInteger(row) && Number.isInteger(col) && row >= 0 && row < size && col >= 0 && col < size) {
+			grid[row][col] = true
+		}
+	}
+	return grid
+}
 
 export const useSudoku = (
 	initialSubgridSize: SubgridSize = SubgridSizes.Classic,
@@ -55,12 +69,19 @@ export const useSudoku = (
 	const [serverPuzzleId, setServerPuzzleId] = useState<number | null>(null)
 	const [usingBackend, setUsingBackend] = useState(false)
 	const [backendMistakes, setBackendMistakes] = useState(0)
+	const [elapsedSeconds, setElapsedSeconds] = useState(0)
 	const [hintsUsed, setHintsUsed] = useState(0)
 	const [notes, setNotes] = useState<Record<string, number[]>>({})
+	const [hintedCells, setHintedCells] = useState<Set<string>>(new Set())
 	const [gameStatus, setGameStatus] = useState<GameStatus>('IN_PROGRESS')
 	const [isDailyGame, setIsDailyGame] = useState(false)
 	const suppressNextRegenerateRef = useRef(false)
 	const loadedInitialGameIdRef = useRef<number | null>(null)
+	const backendGamePromiseRef = useRef<Promise<Awaited<ReturnType<typeof getGame>>> | null>(null)
+	const previewStorageKey = useMemo(
+		() => `sudoku-preview:${options.userId ?? 'anonymous'}:${subgridSize}:${difficulty}`,
+		[options.userId, subgridSize, difficulty]
+	)
 
 	const applyBackendGame = useCallback((game: Awaited<ReturnType<typeof getGame>>) => {
 		suppressNextRegenerateRef.current = true
@@ -72,10 +93,12 @@ export const useSudoku = (
 		setSolutionGrid(game.initialBoard)
 		setPuzzleGrid(game.initialBoard)
 		setPlayerGrid(game.currentBoard)
-		setErrorGrid(createEmptyErrorGrid(game.currentBoard))
+		setErrorGrid(errorGridFromCells(game.errorCells, game.currentBoard.length))
 		setBackendMistakes(game.mistakes)
+		setElapsedSeconds(game.elapsedSeconds)
 		setHintsUsed(game.hintsUsed)
 		setNotes(game.notes ?? {})
+		setHintedCells(new Set(game.hintedCells ?? []))
 		setGameStatus(game.status)
 		setIsDailyGame(game.dailyGame)
 		setGameLoading(false)
@@ -98,6 +121,43 @@ export const useSudoku = (
 			options.errorWarningsEnabled,
 		]
 	)
+
+	const applyGeneratedPuzzle = useCallback(async () => {
+		let generated: Awaited<ReturnType<typeof generateSudoku>> | null = null
+		try {
+			const cached = localStorage.getItem(previewStorageKey)
+			if (cached) generated = JSON.parse(cached) as Awaited<ReturnType<typeof generateSudoku>>
+		} catch {
+			// La vista previa local se regenerara si no es valida.
+		}
+		if (!generated) {
+			generated = await generateSudoku(subgridSize, difficulty)
+			try {
+				localStorage.setItem(previewStorageKey, JSON.stringify(generated))
+			} catch {
+				// La persistencia local es opcional.
+			}
+		}
+		suppressNextRegenerateRef.current = true
+		setGameId(null)
+		setServerPuzzleId(generated.id)
+		setUsingBackend(false)
+		setSubgridSize(generated.subgridSize as SubgridSize)
+		setDifficulty(difficultyFromApi(generated.difficulty))
+		setSolutionGrid(generated.solution ?? generated.puzzle)
+		setPuzzleGrid(generated.puzzle)
+		setPlayerGrid(generated.puzzle)
+		setErrorGrid(createEmptyErrorGrid(generated.puzzle))
+		setBackendMistakes(0)
+		setElapsedSeconds(0)
+		setHintsUsed(0)
+		setNotes({})
+		setHintedCells(new Set())
+		setGameStatus('IN_PROGRESS')
+		setIsDailyGame(false)
+		setGameLoading(false)
+		setGameError(null)
+	}, [difficulty, previewStorageKey, subgridSize])
 
 	const loadInitialGrids = useCallback(() => {
 		if (suppressNextRegenerateRef.current) {
@@ -129,8 +189,7 @@ export const useSudoku = (
 				.then(applyBackendGame)
 				.catch(() => {
 					// No active game – create a fresh one from the backend
-					void createGame(subgridSize, difficulty, gameOptions())
-						.then(applyBackendGame)
+					void applyGeneratedPuzzle()
 						.catch(() => {
 							setGameLoading(false)
 							setGameError('No se pudo conectar con el servidor. Comprueba la conexión.')
@@ -142,8 +201,7 @@ export const useSudoku = (
 		// Anonymous user or user declined resume – create anonymous game session
 		setGameLoading(true)
 		setGameError(null)
-		void createGame(subgridSize, difficulty, gameOptions())
-			.then(applyBackendGame)
+		void applyGeneratedPuzzle()
 			.catch(() => {
 				setGameLoading(false)
 				setGameError('No se pudo conectar con el servidor. Comprueba la conexión.')
@@ -153,9 +211,9 @@ export const useSudoku = (
 		options.initialGameId,
 		options.skipActiveGameCheck,
 		applyBackendGame,
+		applyGeneratedPuzzle,
 		difficulty,
 		subgridSize,
-		gameOptions,
 	])
 
 	useEffect(() => {
@@ -163,25 +221,53 @@ export const useSudoku = (
 	}, [loadInitialGrids])
 
 	const createBackendGameForCurrentPuzzle = useCallback(async () => {
+		if (backendGamePromiseRef.current) return backendGamePromiseRef.current
+		const promise = (async () => {
 		const game = serverPuzzleId
 			? await createGameFromPuzzle(serverPuzzleId, subgridSize, difficulty, gameOptions())
 			: await createGame(subgridSize, difficulty, gameOptions())
 		applyBackendGame(game)
 		return game
+		})()
+		backendGamePromiseRef.current = promise
+		try {
+			return await promise
+		} finally {
+			if (backendGamePromiseRef.current === promise) backendGamePromiseRef.current = null
+		}
 	}, [applyBackendGame, difficulty, gameOptions, serverPuzzleId, subgridSize])
 
-	const createNewGame = useCallback(() => {
-		void createGame(subgridSize, difficulty, gameOptions())
-			.then(applyBackendGame)
+	const createNewGame = useCallback((nextSubgridSize = subgridSize, nextDifficulty = difficulty) => {
+		setGameLoading(true)
+		setGameError(null)
+		const nextStorageKey = `sudoku-preview:${options.userId ?? 'anonymous'}:${nextSubgridSize}:${nextDifficulty}`
+		try {
+			localStorage.removeItem(nextStorageKey)
+		} catch {
+			// La persistencia local es opcional.
+		}
+		void generateSudoku(nextSubgridSize, nextDifficulty)
+			.then((generated) => {
+				try {
+					localStorage.setItem(nextStorageKey, JSON.stringify(generated))
+				} catch {
+					// La persistencia local es opcional.
+				}
+				return createGameFromPuzzle(generated.id, nextSubgridSize, nextDifficulty, gameOptions())
+			})
+			.then((game) => {
+				applyBackendGame(game)
+			})
 			.catch(() => {
 				setGameLoading(false)
 				setGameError('No se pudo crear la partida. Comprueba la conexión e inténtalo de nuevo.')
 			})
-	}, [applyBackendGame, difficulty, gameOptions, subgridSize])
+	}, [applyBackendGame, difficulty, gameOptions, options.userId, subgridSize])
 
 	const isGivenCell = useCallback(
-		(rowIndex: number, colIndex: number) => puzzleGrid[rowIndex][colIndex] !== 0,
-		[puzzleGrid]
+		(rowIndex: number, colIndex: number) =>
+			puzzleGrid[rowIndex][colIndex] !== 0 || hintedCells.has(noteKey(rowIndex, colIndex)),
+		[puzzleGrid, hintedCells]
 	)
 
 	const applyLocalCellValue = useCallback(
@@ -220,7 +306,7 @@ export const useSudoku = (
 	)
 
 	const setCellValue = useCallback(
-		(rowIndex: number, colIndex: number, value: number | null | undefined) => {
+		(rowIndex: number, colIndex: number, value: number | null | undefined, elapsedSeconds?: number) => {
 			const nextValue = value && value >= 1 ? value : 0
 			if (nextValue !== 0) {
 				setNotes((prev) => {
@@ -234,15 +320,10 @@ export const useSudoku = (
 			if (!usingBackend || gameId === null) {
 				applyLocalCellValue(rowIndex, colIndex, nextValue)
 				void createBackendGameForCurrentPuzzle()
-					.then((game) => updateCell(game.id, rowIndex, colIndex, nextValue))
-					.then(({ game, correct }) => {
+					.then((game) => updateCell(game.id, rowIndex, colIndex, nextValue, elapsedSeconds))
+					.then(({ game }) => {
 						applyBackendGame(game)
-						setErrorGrid((prev) => {
-							const copy = prev.map((row) => row.slice())
-							copy[rowIndex][colIndex] =
-								options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
-							return copy
-						})
+						setErrorGrid(errorGridFromCells(game.errorCells, game.currentBoard.length))
 					})
 					.catch(() => {
 						setUsingBackend(false)
@@ -250,19 +331,16 @@ export const useSudoku = (
 				return
 			}
 
-			void updateCell(gameId, rowIndex, colIndex, nextValue)
-				.then(({ game, correct }) => {
+			void updateCell(gameId, rowIndex, colIndex, nextValue, elapsedSeconds)
+				.then(({ game }) => {
 					setPlayerGrid(game.currentBoard)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
 					setNotes(game.notes ?? {})
+					setHintedCells(new Set(game.hintedCells ?? []))
+					setElapsedSeconds(game.elapsedSeconds)
 					setGameStatus(game.status)
-					setErrorGrid((prev) => {
-						const copy = prev.map((row) => row.slice())
-						copy[rowIndex][colIndex] =
-							options.errorWarningsEnabled && nextValue !== 0 ? !correct : false
-						return copy
-					})
+					setErrorGrid(errorGridFromCells(game.errorCells, game.currentBoard.length))
 				})
 				.catch(() => {
 					applyLocalCellValue(rowIndex, colIndex, nextValue)
@@ -342,8 +420,10 @@ export const useSudoku = (
 				setBackendMistakes(game.mistakes)
 				setHintsUsed(game.hintsUsed)
 				setNotes(game.notes ?? {})
+				setHintedCells(new Set(game.hintedCells ?? []))
+				setElapsedSeconds(game.elapsedSeconds)
 				setGameStatus(game.status)
-				setErrorGrid(createEmptyErrorGrid(game.currentBoard))
+				setErrorGrid(errorGridFromCells(game.errorCells, game.currentBoard.length))
 			})
 			.catch(() => {
 				// Hint fallback is intentionally skipped; local mode has no persisted hint accounting.
@@ -352,42 +432,82 @@ export const useSudoku = (
 
 	const finishGameValue = useCallback(
 		(status: Exclude<GameStatus, 'IN_PROGRESS' | 'PAUSED'>, elapsedSeconds?: number) => {
-			if (!usingBackend || gameId === null) return
+			if (!usingBackend || gameId === null) return Promise.resolve(null)
 
-			void finishGame(gameId, status, elapsedSeconds)
+			return finishGame(gameId, status, elapsedSeconds)
 				.then((game) => {
 					setPlayerGrid(game.currentBoard)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
 					setNotes(game.notes ?? {})
+					setHintedCells(new Set(game.hintedCells ?? []))
 					setGameStatus(game.status)
+					setElapsedSeconds(game.elapsedSeconds)
+					return game
 				})
 				.catch(() => {
 					// Finishing is retried by user actions later; keep local end state responsive.
+					return null
 				})
 		},
 		[gameId, usingBackend]
 	)
 
-	const pauseGameValue = useCallback(() => {
-		if (!usingBackend || gameId === null) return
+	const pauseGameValue = useCallback((nextElapsedSeconds?: number) => {
+		if (!usingBackend || gameId === null) {
+			void createBackendGameForCurrentPuzzle()
+				.then((game) => pauseGame(game.id, nextElapsedSeconds))
+				.then((game) => {
+					setElapsedSeconds(game.elapsedSeconds)
+					setGameStatus(game.status)
+				})
+				.catch(() => setUsingBackend(false))
+			return
+		}
 
-		void pauseGame(gameId)
-			.then((game) => setGameStatus(game.status))
+		void pauseGame(gameId, nextElapsedSeconds)
+			.then((game) => {
+				setElapsedSeconds(game.elapsedSeconds)
+				setGameStatus(game.status)
+			})
 			.catch(() => {
 				// Keep current local status if the backend rejects the transition.
 			})
-	}, [gameId, usingBackend])
+	}, [createBackendGameForCurrentPuzzle, gameId, usingBackend])
+
+	const persistElapsedTime = useCallback(
+		(nextElapsedSeconds: number) => {
+			if (!usingBackend || gameId === null) return Promise.resolve(null)
+			return updateGameTime(gameId, nextElapsedSeconds)
+				.then((game) => {
+					setElapsedSeconds(game.elapsedSeconds)
+					return game
+				})
+				.catch(() => null)
+		},
+		[gameId, usingBackend]
+	)
 
 	const resumeGameValue = useCallback(() => {
 		if (!usingBackend || gameId === null) return
 
 		void resumeGame(gameId)
-			.then((game) => setGameStatus(game.status))
+			.then((game) => {
+				setElapsedSeconds(game.elapsedSeconds)
+				setGameStatus(game.status)
+			})
 			.catch(() => {
 				// Keep current local status if the backend rejects the transition.
 			})
 	}, [gameId, usingBackend])
+
+	const resetGameValue = useCallback(() => {
+		if (!usingBackend || gameId === null) return Promise.resolve(null)
+		return resetGame(gameId).then((game) => {
+			applyBackendGame(game)
+			return game
+		})
+	}, [applyBackendGame, gameId, usingBackend])
 
 	return {
 		puzzle: puzzleGrid,
@@ -404,16 +524,20 @@ export const useSudoku = (
 		difficulty,
 		setDifficulty,
 		isGivenCell,
+		hintedCells,
 		gameId,
 		usingBackend,
 		gameStatus,
 		isDailyGame,
 		backendMistakes,
+		elapsedSeconds,
 		hintsUsed,
 		requestHint: requestHintValue,
 		finishGame: finishGameValue,
+		persistElapsedTime,
 		pauseGame: pauseGameValue,
 		resumeGame: resumeGameValue,
+		resetGame: resetGameValue,
 		loadGame,
 		gameLoading,
 		gameError,

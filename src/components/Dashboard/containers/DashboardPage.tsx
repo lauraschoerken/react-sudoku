@@ -15,20 +15,25 @@ const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 export const DashboardPage = () => {
 	const dispatch = useAppDispatch()
 	const user = useAppSelector((state) => state.auth.user)
-	const now = useMemo(() => new Date(), [])
+	const initialMonth = useMemo(() => new Date(), [])
+	const [calendarCursor, setCalendarCursor] = useState({
+		year: initialMonth.getFullYear(),
+		month: initialMonth.getMonth() + 1,
+	})
 	const [stats, setStats] = useState<UserStatsResponse | null>(null)
 	const [calendar, setCalendar] = useState<CalendarDayResponse[]>([])
 	const [games, setGames] = useState<GameSessionResponse[]>([])
 	const [error, setError] = useState<string | null>(null)
 	const [deletingId, setDeletingId] = useState<number | null>(null)
 	const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+	const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null)
 
 	const loadData = useCallback(() => {
 		if (!user) return
 		setError(null)
 		void Promise.all([
 			getMyStats(),
-			getMyCalendar(now.getFullYear(), now.getMonth() + 1),
+			getMyCalendar(calendarCursor.year, calendarCursor.month),
 			getMyGames(),
 		])
 			.then(([nextStats, nextCalendar, nextGames]) => {
@@ -47,7 +52,7 @@ export const DashboardPage = () => {
 				}
 				setError('No se pudieron cargar tus estadisticas.')
 			})
-	}, [dispatch, now, user])
+	}, [calendarCursor, dispatch, user])
 
 	useEffect(() => {
 		loadData()
@@ -58,7 +63,8 @@ export const DashboardPage = () => {
 		try {
 			await deleteMyGame(sessionId)
 			setConfirmDeleteId(null)
-			loadData()
+			setGames((currentGames) => currentGames.filter((game) => game.id !== sessionId))
+			void loadData()
 		} catch {
 			setError('No se pudo eliminar la partida.')
 		} finally {
@@ -81,6 +87,13 @@ export const DashboardPage = () => {
 	const winRate = stats && stats.playedGames > 0 ? Math.round((stats.wonGames / stats.playedGames) * 100) : 0
 	const firstWeekDay = calendar[0] ? (new Date(`${calendar[0].date}T00:00:00`).getDay() + 6) % 7 : 0
 	const todayKey = localTodayKey()
+	const selectedDayGames = selectedCalendarDay
+		? games.filter((game) => game.startedAt.slice(0, 10) === selectedCalendarDay)
+		: []
+	const monthLabel = new Date(calendarCursor.year, calendarCursor.month - 1, 1).toLocaleDateString('es-ES', {
+		month: 'long',
+		year: 'numeric',
+	})
 
 	return (
 		<div className='dashboard-page'>
@@ -136,7 +149,34 @@ export const DashboardPage = () => {
 			)}
 
 			<div className='panel calendar-panel'>
-				<h2>Calendario</h2>
+				<div className='calendar-heading'>
+					<h2>Calendario</h2>
+					<div className='calendar-nav' aria-label='Navegar por el calendario'>
+						<button
+							className='btn compact'
+							type='button'
+							onClick={() =>
+								setCalendarCursor(({ year, month }) =>
+									month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 }
+								)
+							}
+							aria-label='Mes anterior'>
+							&lt;
+						</button>
+						<strong>{monthLabel}</strong>
+						<button
+							className='btn compact'
+							type='button'
+							onClick={() =>
+								setCalendarCursor(({ year, month }) =>
+									month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 }
+								)
+							}
+							aria-label='Mes siguiente'>
+							&gt;
+						</button>
+					</div>
+				</div>
 				<div className='calendar-grid calendar-grid--weekdays'>
 					{weekDays.map((day) => (
 						<strong key={day}>{day}</strong>
@@ -149,23 +189,45 @@ export const DashboardPage = () => {
 					{calendar.map((day) => {
 						const active = day.completedGames > 0 || day.pendingGames > 0 || day.dailySudokuCompleted
 						return (
-							<div
+							<button
 								className={`calendar-day ${active ? 'has-activity' : ''} ${day.date === todayKey ? 'is-today' : ''}`}
-								key={day.date}>
+								key={day.date}
+								onClick={() => setSelectedCalendarDay(day.date)}
+								type='button'>
 								<strong>{Number(day.date.slice(-2))}</strong>
 								{day.completedGames > 0 && <span>{day.completedGames} fin.</span>}
 								{day.pendingGames > 0 && <span>{day.pendingGames} pend.</span>}
 								{day.dailySudokuCompleted && <span>Diario</span>}
-							</div>
+							</button>
 						)
 					})}
 				</div>
 			</div>
 
+			{selectedCalendarDay && (
+				<div className='panel selected-day-panel'>
+					<h2>{selectedCalendarDay}</h2>
+					{selectedDayGames.length > 0 ? (
+						<div className='selected-day-list'>
+							{selectedDayGames.map((game) => (
+								<div className='selected-day-row' key={game.id}>
+									<strong>#{game.id}</strong>
+									<span>{translateDifficulty(game.difficulty)}</span>
+									<span>{game.gridSize}x{game.gridSize}</span>
+									<span>{translateStatus(game.status)}</span>
+								</div>
+							))}
+						</div>
+					) : (
+						<p className='muted'>No hay partidas guardadas ese día.</p>
+					)}
+				</div>
+			)}
+
 			<div className='panel'>
 				<h2>Partidas recientes</h2>
 				<div className='history-list'>
-					{games.map((game) => (
+			{games.map((game) => (
 						<div className='history-row game-row' key={game.id}>
 							<strong>#{game.id}</strong>
 							<span>{translateDifficulty(game.difficulty)}</span>
@@ -173,13 +235,17 @@ export const DashboardPage = () => {
 								{game.gridSize}x{game.gridSize}
 							</span>
 							<span>{translateStatus(game.status)}</span>
-							{game.status === 'IN_PROGRESS' || game.status === 'PAUSED' ? (
+							{game.status === 'WON' ? (
+								<Link className='btn compact' to='/?new=1'>
+									Jugar de nuevo
+								</Link>
+							) : game.status === 'LOST' ? (
 								<Link className='btn compact' to={`/?gameId=${game.id}`}>
-									Continuar
+									Reintentar
 								</Link>
 							) : (
-								<Link className='btn compact' to='/'>
-									Jugar nuevo
+								<Link className='btn compact' to={`/?gameId=${game.id}`}>
+									Continuar
 								</Link>
 							)}
 							{confirmDeleteId === game.id ? (

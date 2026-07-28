@@ -15,11 +15,15 @@ import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
 type SudokuComponentProps = {
 	initialGameId?: number
 	skipActiveGameCheck?: boolean
+	dailyMode?: boolean
+	onCompleted?: () => void
 }
 
 export default function SudokuComponent({
 	initialGameId: initialGameIdProp,
 	skipActiveGameCheck,
+	dailyMode = false,
+	onCompleted,
 }: SudokuComponentProps = {}) {
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
@@ -63,27 +67,32 @@ export default function SudokuComponent({
 		setCell,
 		toggleNote,
 		subgridSize,
-		setSubgridSize,
 		newGame,
 		difficulty,
-		setDifficulty,
 		gridSize,
 		backendMistakes,
+		elapsedSeconds,
 		hintsUsed,
 		requestHint,
 		finishGame,
 		pauseGame,
 		resumeGame,
+		resetGame,
+		persistElapsedTime,
+		gameId,
 		gameStatus,
 		isDailyGame,
+		hintedCells,
 		usingBackend,
 		gameLoading,
 		gameError,
 	} = useSudoku(3, undefined, sudokuOptions)
 
 	const [mistakes, setMistakes] = useState(0)
+	const [timerElapsed, setTimerElapsed] = useState(0)
 	const [notesMode, setNotesMode] = useState(false)
 	const prevUserGridRef = useRef<number[][] | null>(null)
+	const puzzleSignature = useMemo(() => puzzle.map((row) => row.join(',')).join('|'), [puzzle])
 
 	// Estado de final de partida (bloquea inputs y pausa reloj)
 	const [isEnded, setIsEnded] = useState(false)
@@ -92,10 +101,31 @@ export default function SudokuComponent({
 	const [showWin, setShowWin] = useState(false)
 	const [showLose, setShowLose] = useState(false)
 	const [loseReason, setLoseReason] = useState<'time' | 'errors' | null>(null)
+	const [resetting, setResetting] = useState(false)
+	const [abandoningDaily, setAbandoningDaily] = useState(false)
+	const [showNewModal, setShowNewModal] = useState(false)
+	const [newSize, setNewSize] = useState<SubgridSize>(subgridSize)
+	const [newDifficulty, setNewDifficulty] = useState<Difficulty>(difficulty)
 
 	// Señal para reiniciar el temporizador (sin ocultarlo) + control de arranque diferido
 	const [resetSignal, setResetSignal] = useState(0)
 	const [runFlag, setRunFlag] = useState(true) // controla running en el Timer
+	const isPaused = gameStatus === 'PAUSED'
+	const timerElapsedRef = useRef(0)
+	useEffect(() => {
+		timerElapsedRef.current = timerElapsed
+	}, [timerElapsed])
+
+	useEffect(() => {
+		if (!timerEnabled || !usingBackend || gameId === null || isEnded || isPaused) return
+		const syncId = window.setInterval(() => {
+			void persistElapsedTime(timerElapsedRef.current)
+		}, 5000)
+		return () => {
+			window.clearInterval(syncId)
+			void persistElapsedTime(timerElapsedRef.current)
+		}
+	}, [gameId, isEnded, isPaused, persistElapsedTime, timerEnabled, usingBackend])
 
 	const restartTimer = () => {
 		setRunFlag(false)
@@ -107,39 +137,20 @@ export default function SudokuComponent({
 	}, [resetSignal])
 
 	useEffect(() => {
+		setTimerElapsed(elapsedSeconds)
 		setMistakes(0)
 		prevUserGridRef.current = userGrid
 		setIsEnded(false)
 		setShowWin(false)
 		setShowLose(false)
 		setLoseReason(null)
-	}, [puzzle])
+	}, [puzzleSignature])
 
 	const displayMistakes = usingBackend ? backendMistakes : mistakes
 	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
-	const isPaused = gameStatus === 'PAUSED'
+	const isDailyView = dailyMode || isDailyGame
 
 	// ── Loading / error state ────────────────────────────────────────────────
-	if (gameLoading) {
-		return (
-			<div className='game-loading'>
-				<div className='game-loading__spinner' />
-				<p className='muted'>Cargando sudoku...</p>
-			</div>
-		)
-	}
-
-	if (gameError) {
-		return (
-			<div className='game-loading'>
-				<p className='error-text'>{gameError}</p>
-				<button className='btn primary' onClick={newGame}>
-					Reintentar
-				</button>
-			</div>
-		)
-	}
-
 	useEffect(() => {
 		if (gameStatus === 'WON') {
 			setIsEnded(true)
@@ -149,8 +160,13 @@ export default function SudokuComponent({
 		}
 		if (gameStatus === 'LOST') {
 			setIsEnded(true)
+			setShowLose(true)
+			return
 		}
-	}, [gameStatus])
+		if (gameStatus === 'ABANDONED' && !isDailyGame) {
+			void resumeGame()
+		}
+	}, [gameStatus, isDailyGame, resumeGame])
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -182,7 +198,7 @@ export default function SudokuComponent({
 			setIsEnded(true)
 			setShowLose(true)
 			setLoseReason('errors')
-			finishGame('LOST')
+			void finishGame('LOST', timerElapsed)
 		}
 	}, [finishGame, limitReached, isEnded])
 
@@ -208,7 +224,7 @@ export default function SudokuComponent({
 
 			const raw = e.target.value
 			if (raw === '') {
-				setCell(rowIndex, colIndex, null)
+				setCell(rowIndex, colIndex, null, timerElapsed)
 				return
 			}
 			const n = Number(raw)
@@ -219,9 +235,9 @@ export default function SudokuComponent({
 				e.currentTarget.value = ''
 				return
 			}
-			setCell(rowIndex, colIndex, n)
+			setCell(rowIndex, colIndex, n, timerElapsed)
 		},
-		[setCell, gridSize, limitReached, isEnded, isPaused, notesMode, toggleNote]
+		[setCell, gridSize, limitReached, isEnded, isPaused, notesMode, toggleNote, timerElapsed]
 	)
 
 	// Detectar victoria → finalizar partida y abrir overlay
@@ -231,77 +247,96 @@ export default function SudokuComponent({
 		if (allFilled && validSolution && !isEnded) {
 			setIsEnded(true)
 			setShowWin(true)
-			finishGame('WON')
+			void finishGame('WON').then(() => onCompleted?.())
 		}
-	}, [userGrid, puzzle, subgridSize, isEnded, finishGame])
+	}, [userGrid, puzzle, subgridSize, isEnded, finishGame, onCompleted])
 
 	// Nuevo puzzle (distinto) + reiniciar reloj
 	const handleNewGame = () => {
-		if (!isEnded) finishGame('ABANDONED')
 		if (isDailyGame) {
 			navigate('/daily')
 			return
 		}
+		setNewSize(subgridSize)
+		setNewDifficulty(difficulty)
+		setShowNewModal(true)
+	}
+
+	const handleCreateNewGame = () => {
+		if (!isEnded && !window.confirm('¿Quieres abandonar esta partida y generar un sudoku nuevo?')) return
+		if (!isEnded) void finishGame('ABANDONED')
 		setMistakes(0)
 		setSelectedCell({ rowIndex: null, colIndex: null })
 		setIsEnded(false)
 		setShowWin(false)
 		setShowLose(false)
 		setLoseReason(null)
-		newGame()
+		setShowNewModal(false)
+		newGame(newSize, newDifficulty)
 		restartTimer()
 	}
 
 	// Reintentar el mismo puzzle + reiniciar reloj
 	const handleRetrySame = () => {
-		if (!isEnded) finishGame('ABANDONED')
-		const size = userGrid.length
-		for (let r = 0; r < size; r++) {
-			for (let c = 0; c < size; c++) {
-				if (puzzle[r][c] === 0) setCell(r, c, null)
-			}
-		}
-		setMistakes(0)
-		setSelectedCell({ rowIndex: null, colIndex: null })
-		setIsEnded(false)
-		setShowWin(false)
-		setShowLose(false)
-		setLoseReason(null)
-		restartTimer()
+		if (!usingBackend || resetting) return
+		setResetting(true)
+		void resetGame()
+			.then((game) => {
+				if (!game) throw new Error('No se pudo reiniciar la partida')
+				setMistakes(0)
+				setSelectedCell({ rowIndex: null, colIndex: null })
+				setIsEnded(false)
+				setShowWin(false)
+				setShowLose(false)
+				setLoseReason(null)
+				restartTimer()
+			})
+			.catch(() => setShowLose(true))
+			.finally(() => setResetting(false))
 	}
 
-	// Cambiar tamaño → reinicia reloj
-	const handleChangeSize = (value: SubgridSize) => {
-		if (!isEnded) finishGame('ABANDONED')
-		setSubgridSize(value)
-		setMistakes(0)
-		setIsEnded(false)
-		setShowWin(false)
-		setShowLose(false)
-		setLoseReason(null)
-		restartTimer()
+	const handleAbandonDaily = () => {
+		if (!isDailyGame || abandoningDaily || isEnded) return
+		setAbandoningDaily(true)
+		void finishGame('ABANDONED').finally(() => {
+			setAbandoningDaily(false)
+			navigate('/daily')
+		})
 	}
 
-	// Cambiar dificultad → reinicia reloj
-	const handleChangeDifficulty = (value: Difficulty) => {
-		if (!isEnded) finishGame('ABANDONED')
-		setDifficulty(value)
-		setMistakes(0)
-		setIsEnded(false)
-		setShowWin(false)
-		setShowLose(false)
-		setLoseReason(null)
-		restartTimer()
+	if (gameLoading) {
+		return (
+			<div className='game-loading'>
+				<div className='game-loading__spinner' />
+				<p className='muted'>Cargando sudoku...</p>
+			</div>
+		)
+	}
+
+	if (gameError) {
+		return (
+			<div className='game-loading'>
+				<p className='error-text'>{gameError}</p>
+				<button className='btn primary' onClick={() => newGame()}>
+					Reintentar
+				</button>
+			</div>
+		)
 	}
 
 	return (
 		<div>
-			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
+			{!authUser && (
+				<div className='guest-warning' role='status'>
+					Estas jugando sin iniciar sesión. Tu progreso no se guardará al cerrar o recargar la página.
+				</div>
+			)}
+			{!isDailyView && <div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
 				<button className='btn primary' onClick={handleNewGame}>
-					Nuevo
+					Nuevo sudoku
 				</button>
 
-				<button className='btn' onClick={requestHint} disabled={isEnded || !usingBackend}>
+				<button className='btn' onClick={requestHint} disabled={isEnded || isPaused}>
 					Pista{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
 				</button>
 
@@ -314,13 +349,13 @@ export default function SudokuComponent({
 
 				<button
 					className={`btn ${isPaused ? 'active' : ''}`}
-					onClick={isPaused ? resumeGame : pauseGame}
-					disabled={isEnded || !usingBackend}>
+					onClick={isPaused ? resumeGame : () => pauseGame(timerElapsed)}
+					disabled={isEnded}>
 					{isPaused ? 'Reanudar' : 'Pausar'}
 				</button>
 
 				<details className='sudoku-more'>
-					<summary className='btn'>Más opciones</summary>
+					<summary className='btn' aria-label='Más opciones' title='Más opciones'>...</summary>
 					<div className='sudoku-more__menu'>
 						<Link className='btn compact' to='/print'>
 							Imprimir sudokus
@@ -333,34 +368,6 @@ export default function SudokuComponent({
 						</Link>
 					</div>
 				</details>
-
-				<label className='sudoku-size'>
-					Tamaño:
-					<select
-						value={subgridSize}
-						onChange={(e) => handleChangeSize(parseInt(e.target.value, 10) as SubgridSize)}
-						aria-label='Tamaño de subcuadrícula'>
-						{SubgridSizeOptions.map(([name, value]) => (
-							<option key={name} value={value}>
-								{name} ({value}×{value})
-							</option>
-						))}
-					</select>
-				</label>
-
-				<label className='sudoku-size'>
-					Dificultad:
-					<select
-						value={difficulty}
-						onChange={(e) => handleChangeDifficulty(parseInt(e.target.value, 10) as Difficulty)}
-						aria-label='Nivel de dificultad'>
-						{DifficultyOptions.map(([name, value]) => (
-							<option key={name} value={value}>
-								{name} ({value}% celdas ocultas)
-							</option>
-						))}
-					</select>
-				</label>
 
 				{errorsActive && (
 					<div
@@ -380,9 +387,41 @@ export default function SudokuComponent({
 						)}
 					</div>
 				)}
-			</div>
+			</div>}
 
-			<div className='sudoku-stage'>
+			{showNewModal && (
+				<div className='sudoku-modal-overlay' role='dialog' aria-modal='true' aria-label='Nuevo sudoku'>
+					<div className='sudoku-new-modal'>
+						<div>
+							<p className='eyebrow'>Nueva partida</p>
+							<h2>Elige tu sudoku</h2>
+							<p className='muted'>Se mantienen como propuesta el tamaño y la dificultad usados anteriormente.</p>
+						</div>
+						<label>
+							Tamaño
+							<select value={newSize} onChange={(event) => setNewSize(Number(event.target.value) as SubgridSize)}>
+								{SubgridSizeOptions.map(([name, value]) => (
+									<option key={name} value={value}>{name} ({value}×{value})</option>
+								))}
+							</select>
+						</label>
+						<label>
+							Dificultad
+							<select value={newDifficulty} onChange={(event) => setNewDifficulty(Number(event.target.value) as Difficulty)}>
+								{DifficultyOptions.map(([name, value]) => (
+									<option key={name} value={value}>{name} ({value}% ocultas)</option>
+								))}
+							</select>
+						</label>
+						<div className='sudoku-new-modal__actions'>
+							<button className='btn' onClick={() => setShowNewModal(false)} type='button'>Cancelar</button>
+							<button className='btn primary' onClick={handleCreateNewGame} type='button'>Generar sudoku</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			<div className={`sudoku-stage ${isPaused ? 'sudoku-stage--paused' : ''}`}>
 				<div className='sudoku-boardbox'>
 					<div className='sudoku-wrap'>
 						<table className='sudoku' data-subgrid={subgridSize}>
@@ -390,11 +429,12 @@ export default function SudokuComponent({
 								{puzzle.map((row, rowIndex) => (
 									<tr key={rowIndex}>
 										{row.map((givenValue, colIndex) => {
-											const isGiven = givenValue !== 0
+										const isHinted = hintedCells.has(`${rowIndex}:${colIndex}`)
+										const isGiven = givenValue !== 0 || isHinted
 											const playerValue = userGrid[rowIndex][colIndex]
 											const cellNotes = notes[`${rowIndex}:${colIndex}`] ?? []
 											const hasError = errorsActive ? errors[rowIndex][colIndex] : false
-											const cellValue = isGiven ? givenValue : playerValue
+										const cellValue = isGiven ? givenValue || playerValue : playerValue
 
 											const isInSameRowOrCol =
 												selectedCell.rowIndex !== null &&
@@ -421,7 +461,7 @@ export default function SudokuComponent({
 													tabIndex={0}
 													className={cellClass}>
 													{isGiven ? (
-														<span aria-label='celda dada'>{givenValue}</span>
+												<span aria-label={isHinted ? 'pista fija' : 'celda dada'}>{cellValue}</span>
 													) : (
 														<>
 															{playerValue === 0 && cellNotes.length > 0 && (
@@ -443,7 +483,7 @@ export default function SudokuComponent({
 																type='number'
 																min={1}
 																max={gridSize}
-																value={notesMode ? '' : playerValue === 0 ? '' : playerValue}
+										value={playerValue === 0 ? '' : playerValue}
 																onChange={handleCellChange(rowIndex, colIndex)}
 																className={hasError ? 'input-error' : undefined}
 																disabled={isEnded || isPaused} // bloqueado si la partida terminó
@@ -465,6 +505,8 @@ export default function SudokuComponent({
 								key={resetSignal}
 								mode={timerMode}
 								seconds={timerSeconds} // 👈 usa los segundos desde Redux
+								initialSeconds={elapsedSeconds}
+															onTick={setTimerElapsed}
 								forceHours={timerMode === 'normal'}
 								running={runFlag && !isEnded && !isPaused} // se para al terminar la partida
 								resetSignal={resetSignal}
@@ -473,7 +515,7 @@ export default function SudokuComponent({
 										setIsEnded(true)
 										setShowLose(true)
 										setLoseReason('time')
-										finishGame('LOST', timerSeconds)
+										finishGame('LOST', timerMode === 'countdown' ? timerSeconds : timerElapsed)
 									}
 								}}
 							/>
@@ -482,14 +524,28 @@ export default function SudokuComponent({
 				</div>
 			</div>
 
+			{isDailyView && !isEnded && (
+				<div className='daily-game-actions'>
+					<button className='btn' disabled={abandoningDaily} onClick={handleAbandonDaily} type='button'>
+						{abandoningDaily ? 'Abandonando...' : 'Abandonar sudoku diario'}
+					</button>
+				</div>
+			)}
+
 			{/* Victoria */}
 			<ResultOverlay
 				isOpen={showWin}
 				variant='win'
-				onClose={() => setShowWin(false)}
-				onPrimary={handleNewGame}
-				primaryLabel={isDailyGame ? 'Volver al diario' : undefined}
-				closeLabel={isDailyGame ? 'Ver tablero' : undefined}
+				title={isDailyGame ? 'Sudoku diario completado' : undefined}
+				message={
+					isDailyGame
+						? 'Has completado el reto diario. Puedes revisar otros días o volver a jugar cuando quieras.'
+						: undefined
+				}
+				onClose={() => (isDailyGame ? navigate('/daily') : setShowWin(false))}
+				onPrimary={() => (isDailyGame ? navigate('/?new=1') : handleNewGame())}
+				primaryLabel={isDailyGame ? 'Nuevo sudoku normal' : undefined}
+				closeLabel={isDailyGame ? 'Revisar retos diarios' : undefined}
 			/>
 
 			{/* Derrota (errores o tiempo) */}

@@ -1,6 +1,7 @@
 import '@/components/Auth/containers/AuthPage.scss'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import SudokuComponent from '../components/SudokuComponent'
 import { getActiveGame } from '@/services/sudokuApi'
@@ -9,6 +10,15 @@ import { translateDifficulty, formatDuration } from '@/utils/appHelpers'
 
 export const Sudoku = () => {
 	const user = useAppSelector((s) => s.auth.user)
+	const [searchParams] = useSearchParams()
+	const requestedGameId = useMemo(() => {
+		const raw = searchParams.get('gameId')
+		if (!raw) return undefined
+		const parsed = Number(raw)
+		return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
+	}, [searchParams])
+	const dailyMode = searchParams.get('daily') === '1'
+	const newGameRequested = searchParams.get('new') === '1'
 	const [resumeGameId, setResumeGameId] = useState<number | null>(null)
 	const [resumeInfo, setResumeInfo] = useState<{
 		difficulty: string
@@ -19,15 +29,19 @@ export const Sudoku = () => {
 	const [showModal, setShowModal] = useState(false)
 	const [activeGameId, setActiveGameId] = useState<number | undefined>(undefined)
 	const [skipActiveCheck, setSkipActiveCheck] = useState(false)
-	const [checked, setChecked] = useState(!user) // skip check for anonymous
+	const [checked, setChecked] = useState(!user || requestedGameId !== undefined || newGameRequested)
 
 	useEffect(() => {
-		if (!user) {
+		if (!user || requestedGameId !== undefined || newGameRequested) {
 			setChecked(true)
 			return
 		}
 		void getActiveGame()
 			.then((game) => {
+				if (!game.started) {
+					setActiveGameId(game.id)
+					return
+				}
 				setResumeGameId(game.id)
 				setResumeInfo({
 					difficulty: game.difficulty,
@@ -43,7 +57,7 @@ export const Sudoku = () => {
 			.finally(() => setChecked(true))
 		// Only run once when user changes
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user?.id])
+	}, [newGameRequested, requestedGameId, user?.id])
 
 	const handleResume = () => {
 		if (resumeGameId) setActiveGameId(resumeGameId)
@@ -89,7 +103,11 @@ export const Sudoku = () => {
 			)}
 
 			{!showModal && (
-				<SudokuComponent initialGameId={activeGameId} skipActiveGameCheck={skipActiveCheck} />
+				<SudokuComponent
+					dailyMode={dailyMode}
+					initialGameId={requestedGameId ?? activeGameId}
+					skipActiveGameCheck={skipActiveCheck || newGameRequested}
+				/>
 			)}
 		</>
 	)

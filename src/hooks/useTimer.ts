@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export type TimerMode = 'normal' | 'countdown'
 
 export interface UseDigitalTimerOptions {
 	mode: TimerMode
 	seconds?: number
+	initialSeconds?: number
 	autoStart?: boolean
 	running?: boolean
 	onFinish?: () => void
+	onTick?: (shownSeconds: number) => void
 }
 
 export interface UseDigitalTimerReturn {
@@ -25,9 +27,11 @@ export interface UseDigitalTimerReturn {
 export const useDigitalTimer = ({
 	mode,
 	seconds,
+	initialSeconds = 0,
 	autoStart = true,
 	running,
 	onFinish,
+	onTick,
 }: UseDigitalTimerOptions): UseDigitalTimerReturn => {
 	if (mode === 'countdown' && (seconds == null || seconds < 0)) {
 		throw new Error('useDigitalTimer: "seconds" es obligatorio y >= 0 cuando mode="down".')
@@ -35,7 +39,8 @@ export const useDigitalTimer = ({
 
 	const controlled = typeof running === 'boolean'
 	const [isRunning, setIsRunning] = useState<boolean>(controlled ? !!running : autoStart)
-	const [elapsed, setElapsed] = useState<number>(0)
+	const initialSecondsRef = useRef(Math.max(0, initialSeconds))
+	const [elapsed, setElapsed] = useState<number>(mode === 'normal' ? initialSecondsRef.current : 0)
 	const tickRef = useRef<number | null>(null)
 
 	useEffect(() => {
@@ -43,7 +48,7 @@ export const useDigitalTimer = ({
 	}, [controlled, running])
 
 	useEffect(() => {
-		setElapsed(0)
+		setElapsed(mode === 'normal' ? initialSecondsRef.current : 0)
 		if (!controlled) setIsRunning(autoStart)
 	}, [mode, seconds, autoStart, controlled])
 
@@ -54,14 +59,19 @@ export const useDigitalTimer = ({
 			return
 		}
 		tickRef.current = window.setInterval(() => {
-			setElapsed((v) => v + 1)
+			setElapsed((v) => {
+				const nextElapsed = v + 1
+				const nextShown = mode === 'countdown' ? Math.max(0, (seconds as number) - nextElapsed) : nextElapsed
+				onTick?.(nextShown)
+				return nextElapsed
+			})
 		}, 1000) as unknown as number
 
 		return () => {
 			if (tickRef.current) clearInterval(tickRef.current)
 			tickRef.current = null
 		}
-	}, [isRunning])
+	}, [isRunning, mode, onTick, seconds])
 
 	const shownSeconds = useMemo(
 		() => (mode === 'countdown' ? Math.max(0, (seconds as number) - elapsed) : elapsed),
@@ -75,15 +85,15 @@ export const useDigitalTimer = ({
 		}
 	}, [shownSeconds, isRunning, mode, onFinish, controlled])
 
-	const start = () => {
+	const start = useCallback(() => {
 		if (!controlled) setIsRunning(true)
-	}
-	const pause = () => {
+	}, [controlled])
+	const pause = useCallback(() => {
 		if (!controlled) setIsRunning(false)
-	}
-	const resume = () => {
+	}, [controlled])
+	const resume = useCallback(() => {
 		if (!controlled) setIsRunning(true)
-	}
+	}, [controlled])
 	const reset = () => {
 		setElapsed(0)
 	}
@@ -92,11 +102,11 @@ export const useDigitalTimer = ({
 		if (!controlled) setIsRunning(false)
 	}
 
-	const setShownSeconds = (value: number) => {
+	const setShownSeconds = useCallback((value: number) => {
 		if (mode === 'normal') {
 			setElapsed(Math.max(0, Math.floor(value)))
 		}
-	}
+	}, [mode])
 	const addSeconds = (delta: number) => {
 		if (mode === 'normal') {
 			setElapsed((v) => Math.max(0, v + delta))

@@ -185,10 +185,20 @@ $thick: 0.15rem;
 
 .sudoku-more {
 	position: relative;
+	order: 99;
+}
+
+.daily-game-actions {
+	display: flex;
+	justify-content: center;
+	margin: 0.85rem 0 1.25rem;
 }
 
 .sudoku-more summary {
 	list-style: none;
+	min-width: 2.4rem;
+	padding-inline: 0.7rem;
+	text-align: center;
 }
 
 .sudoku-more summary::-webkit-details-marker {
@@ -265,6 +275,88 @@ $thick: 0.15rem;
 	text-align: center;
 }
 
+.guest-warning {
+	max-width: 48rem;
+	margin: 0.75rem auto;
+	padding: 0.7rem 1rem;
+	border: 1px solid color-mix(in oklch, var(--warning) 55%, var(--border) 45%);
+	border-radius: 8px;
+	background: color-mix(in oklch, var(--warning) 12%, var(--bg) 88%);
+	color: var(--fg);
+	text-align: center;
+	font-weight: 600;
+}
+
+.sudoku-modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	display: grid;
+	place-items: center;
+	padding: 1rem;
+	background: rgba(2, 7, 18, 0.68);
+}
+
+.sudoku-new-modal {
+	display: grid;
+	gap: 1rem;
+	width: min(100%, 30rem);
+	padding: 1.35rem;
+	border: 1px solid var(--border2);
+	border-radius: 12px;
+	background: var(--bg);
+	box-shadow: var(--shadow);
+}
+
+.sudoku-new-modal h2 {
+	margin: 0.2rem 0 0;
+}
+
+.sudoku-new-modal label {
+	display: grid;
+	gap: 0.4rem;
+	font-weight: 700;
+}
+
+.sudoku-new-modal select {
+	padding: 0.65rem 0.75rem;
+	border: 1px solid var(--border2);
+	border-radius: 8px;
+	background: var(--body-bg);
+	color: var(--fg);
+}
+
+.sudoku-new-modal__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+
+.sudoku-stage--paused {
+	position: relative;
+}
+
+.sudoku-stage--paused .sudoku-boardbox {
+	filter: blur(0.55rem);
+	pointer-events: none;
+user-select: none;
+}
+
+.sudoku-stage--paused::after {
+	content: 'Partida pausada';
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 2;
+	padding: 0.8rem 1.1rem;
+	border: 1px solid var(--border2);
+	border-radius: 0.5rem;
+	background: color-mix(in oklch, var(--bg) 88%, var(--fg) 12%);
+	font-weight: 700;
+}
+
 .sudoku-boardbox {
 	display: inline-block;
 	max-width: 100%;
@@ -272,10 +364,8 @@ $thick: 0.15rem;
 }
 
 .sudoku-timer-stick {
-	position: absolute;
-	left: 100%;
-	top: 0;
-	margin-left: 1.25rem;
+	position: static;
+	margin: 0.75rem auto 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;

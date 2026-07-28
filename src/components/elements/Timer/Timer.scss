@@ -5,23 +5,30 @@ $border-radius: 0.5rem;
 	position: relative;
 	display: inline-block;
 	border-radius: 100%;
+	padding: 0.35rem;
+	background: color-mix(in oklch, var(--bg-clock) 82%, var(--color2) 18%);
+	border: 1px solid color-mix(in oklch, var(--fg-clock) 35%, transparent 65%);
 	box-shadow:
 		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),
-		inset 0 0 0 1px color-mix(in oklch, var(--bg) 85%, black 15%);
+		inset 0 0 0 1px color-mix(in oklch, var(--fg-clock) 12%, transparent 88%),
+		0 0 0 0.35rem color-mix(in oklch, var(--bg-clock) 76%, transparent 24%);
 }
 .timer-dial__label {
 	position: absolute;
 	left: 50%;
-	top: 60%;
-	transform: translate(-50%, -35%);
+	top: 50%;
+	transform: translate(-50%, -50%);
 	font-family:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
 		monospace;
 	font-weight: 700;
 	font-size: 1.1rem;
-	padding: 0.2rem 0.8rem;
-	border-radius: 0.4rem;
+	padding: 0.35rem 0.65rem;
+	border: 1px solid color-mix(in oklch, var(--fg-clock) 25%, transparent 75%);
+	border-radius: 999px;
+	background: color-mix(in oklch, var(--bg-clock) 82%, transparent 18%);
 	color: var(--fg-clock);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 /* ===== Countdown Dial SVG colors ===== */
 .dial-bezel {
@@ -29,11 +36,12 @@ $border-radius: 0.5rem;
 }
 
 .dial-face {
-	fill: var(--bg-clock);
+	fill: color-mix(in oklch, var(--bg-clock) 88%, var(--color2) 12%);
 }
 
 .dial-warning {
-	fill: var(--warning);
+	fill: var(--color2);
+	opacity: 0.88;
 }
 
 .dial-tick {
@@ -63,11 +71,12 @@ $border-radius: 0.5rem;
 	box-shadow:
 		0 4px 16px rgba(0, 0, 0, 0.25),
 		inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	border: 1px solid color-mix(in oklch, var(--fg-clock) 24%, var(--bg-clock) 76%);
 	display: inline-block;
 }
 
 .lcd-screen {
-	width: 13rem;
+	width: 13.5rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -75,6 +84,7 @@ $border-radius: 0.5rem;
 	padding: 0.6rem 0.9rem;
 	border-radius: 0.4rem;
 	background: var(--fg-clock);
+	box-shadow: inset 0 0 18px color-mix(in oklch, var(--bg-clock) 26%, transparent 74%);
 }
 
 .lcd-digit,
@@ -85,6 +95,7 @@ $border-radius: 0.5rem;
 	line-height: 1;
 	color: var(--bg-clock);
 	letter-spacing: 0.08em;
+	text-shadow: 0 0 10px color-mix(in oklch, var(--bg-clock) 45%, transparent 55%);
 }
 
 .lcd-colon {
@@ -100,7 +111,7 @@ $border-radius: 0.5rem;
 	margin-top: 0.45rem;
 	display: grid;
 	grid-template-columns: repeat(4, auto);
-	gap: 01.5rem;
+	gap: 1.5rem;
 	justify-content: center;
 }
 .lcd-btn {
