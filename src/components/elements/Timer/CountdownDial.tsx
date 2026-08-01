@@ -20,33 +20,18 @@ const fmt = (s: number) => {
 export default function CountdownDial({
 	total,
 	remaining,
-	size = 150,
+	size = 116,
 	showLabel = true,
 	className,
 }: CountdownDialProps) {
 	const R = size / 2
-	const faceR = R - 6
+	const progressR = R - 8
 	const frac = useMemo(() => {
 		if (total <= 0) return 0
 		return Math.max(0, Math.min(1, remaining / total))
 	}, [remaining, total])
 
-	const angle = 2 * Math.PI * frac
-	const startAng = -Math.PI / 2
-	const endAng = startAng + angle
-	const largeArc = angle > Math.PI ? 1 : 0
-
-	const sx = R + faceR * Math.cos(startAng)
-	const sy = R + faceR * Math.sin(startAng)
-	const ex = R + faceR * Math.cos(endAng)
-	const ey = R + faceR * Math.sin(endAng)
-
-	const path = `
-    M ${R} ${R}
-    L ${sx} ${sy}
-    A ${faceR} ${faceR} 0 ${largeArc} 1 ${ex} ${ey}
-    Z
-  `
+	const circumference = 2 * Math.PI * progressR
 
 	return (
 		<div className={`timer-dial ${className ?? ''}`} style={{ width: size, height: size }}>
@@ -56,37 +41,21 @@ export default function CountdownDial({
 				viewBox={`0 0 ${size} ${size}`}
 				role='timer'
 				aria-label='countdown'>
-				<circle className='dial-bezel' cx={R} cy={R} r={faceR + 6} />
-				<circle className='dial-face' cx={R} cy={R} r={faceR} />
-				{frac > 0 && <path className='dial-warning' d={path} opacity={0.95} />}
-				{Array.from({ length: 12 }).map((_, i) => {
-					const a = (i * Math.PI) / 6
-					const r1 = faceR - 14
-					const r2 = faceR
-					const x1 = R + r1 * Math.cos(a)
-					const y1 = R + r1 * Math.sin(a)
-					const x2 = R + r2 * Math.cos(a)
-					const y2 = R + r2 * Math.sin(a)
-					return (
-						<line
-							key={i}
-							x1={x1}
-							y1={y1}
-							x2={x2}
-							y2={y2}
-							className='dial-tick'
-							strokeWidth={2.5}
-							strokeLinecap='round'
-							opacity={0.85}
-						/>
-					)
-				})}
-				<circle className='dial-center' cx={R} cy={R} r={3} />
+				<circle className='dial-track' cx={R} cy={R} r={progressR} />
+				<circle
+					className='dial-progress'
+					cx={R}
+					cy={R}
+					r={progressR}
+					strokeDasharray={circumference}
+					strokeDashoffset={circumference * (1 - frac)}
+				/>
 			</svg>
 
 			{showLabel && (
 				<div className='timer-dial__label' aria-hidden='true'>
-					{fmt(remaining)}
+					<span>Tiempo</span>
+					<strong>{fmt(remaining)}</strong>
 				</div>
 			)}
 		</div>

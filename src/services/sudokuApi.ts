@@ -13,13 +13,20 @@ export interface GameSessionResponse {
 	initialBoard: Board
 	currentBoard: Board
 	status: GameStatus
+	timerMode: 'NORMAL' | 'COUNTDOWN'
+	countdownSeconds: number | null
+	maxErrors: number | null
+	errorWarningsEnabled: boolean
 	notes: Record<string, number[]>
+	errorCells: string[]
+	hintedCells: string[]
 	mistakes: number
 	hintsUsed: number
 	elapsedSeconds: number
 	startedAt: string
 	finishedAt: string | null
 	dailyGame: boolean
+	started: boolean
 }
 
 export interface UserResponse {
@@ -61,6 +68,9 @@ export interface CalendarDayResponse {
 	completedGames: number
 	pendingGames: number
 	dailySudokuCompleted: boolean
+	dailySudokuStarted: boolean
+	dailySudokuStatus: GameStatus | null
+	dailySudokuMistakes: number
 }
 
 export interface SudokuPuzzleResponse {
@@ -92,7 +102,23 @@ export interface ValidateCellResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
 
+let runtimeAuthToken: string | null | undefined
+
+export class SudokuApiError extends Error {
+	readonly status: number
+
+	constructor(status: number, message = `Sudoku API error ${status}`) {
+		super(message)
+		this.name = 'SudokuApiError'
+		this.status = status
+	}
+}
+
+export const isAuthError = (error: unknown) =>
+	error instanceof SudokuApiError && (error.status === 401 || error.status === 403)
+
 const getAuthToken = () => {
+	if (runtimeAuthToken !== undefined) return runtimeAuthToken
 	try {
 		const rawAuth = localStorage.getItem('auth')
 		if (!rawAuth) return null
@@ -100,6 +126,10 @@ const getAuthToken = () => {
 	} catch {
 		return null
 	}
+}
+
+export const setApiAuthToken = (token: string | null) => {
+	runtimeAuthToken = token
 }
 
 const difficultyToApi = (difficulty: Difficulty): GameSessionResponse['difficulty'] => {
@@ -121,8 +151,9 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 	})
 
 	if (!response.ok) {
-		throw new Error(`Sudoku API error ${response.status}`)
+		throw new SudokuApiError(response.status)
 	}
+	if (response.status === 204) return undefined as T
 
 	return response.json() as Promise<T>
 }
@@ -151,7 +182,34 @@ export const createGame = (
 		}),
 	})
 
+export const createGameFromPuzzle = (
+	puzzleId: number,
+	subgridSize: number,
+	difficulty: Difficulty,
+	options?: {
+		userId?: number
+		timerMode?: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled?: boolean
+	}
+) =>
+	request<GameSessionResponse>(`/games/from-puzzle/${puzzleId}`, {
+		method: 'POST',
+		body: JSON.stringify({
+			userId: options?.userId,
+			subgridSize,
+			difficulty: difficultyToApi(difficulty),
+			timerMode: options?.timerMode ?? 'NORMAL',
+			countdownSeconds: options?.countdownSeconds,
+			maxErrors: options?.maxErrors,
+			errorWarningsEnabled: options?.errorWarningsEnabled ?? false,
+		}),
+	})
+
 export const getGame = (gameId: number) => request<GameSessionResponse>(`/games/${gameId}`)
+
+export const getActiveGame = () => request<GameSessionResponse>('/games/active')
 
 export const updateCell = (
 	gameId: number,
@@ -170,12 +228,7 @@ export const requestHint = (gameId: number) =>
 		method: 'POST',
 	})
 
-export const updateNotes = (
-	gameId: number,
-	rowIndex: number,
-	colIndex: number,
-	notes: number[]
-) =>
+export const updateNotes = (gameId: number, rowIndex: number, colIndex: number, notes: number[]) =>
 	request<GameSessionResponse>(`/games/${gameId}/notes`, {
 		method: 'PATCH',
 		body: JSON.stringify({ rowIndex, colIndex, notes }),
@@ -193,13 +246,81 @@ export const finishGame = (gameId: number, status: GameStatus, elapsedSeconds?: 
 		body: JSON.stringify({ status, elapsedSeconds }),
 	})
 
-export const pauseGame = (gameId: number) =>
+export const pauseGame = (gameId: number, elapsedSeconds?: number) =>
 	request<GameSessionResponse>(`/games/${gameId}/pause`, {
 		method: 'POST',
+		body: JSON.stringify({ elapsedSeconds }),
 	})
 
 export const resumeGame = (gameId: number) =>
 	request<GameSessionResponse>(`/games/${gameId}/resume`, {
+		method: 'POST',
+	})
+
+export const updateGameTime = (gameId: number, elapsedSeconds: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/time`, {
+		method: 'PATCH',
+		body: JSON.stringify({ elapsedSeconds }),
+	})
+
+export const updateGameSettings = (
+	gameId: number,
+	settings: {
+		timerMode: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled: boolean
+	}
+) =>
+	request<GameSessionResponse>(`/games/${gameId}/settings`, {
+		method: 'PATCH',
+		body: JSON.stringify(settings),
+	})
+
+const gameTimeKey = (gameId: number) => `sudoku-game-time:${gameId}`
+
+export const readStoredGameTime = (gameId: number) => {
+	try {
+		const rawValue = localStorage.getItem(gameTimeKey(gameId))
+		if (rawValue === null) return null
+		const value = Number(rawValue)
+		return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null
+	} catch {
+		return null
+	}
+}
+
+export const storeGameTime = (gameId: number, elapsedSeconds: number) => {
+	try {
+		localStorage.setItem(gameTimeKey(gameId), String(Math.max(0, Math.floor(elapsedSeconds))))
+	} catch {
+		// La copia local es una protección adicional para recargas rápidas.
+	}
+}
+
+export const clearStoredGameTime = (gameId: number) => {
+	try {
+		localStorage.removeItem(gameTimeKey(gameId))
+	} catch {
+		// La limpieza local es opcional.
+	}
+}
+
+export const persistGameTimeOnExit = (gameId: number, elapsedSeconds: number) => {
+	const token = getAuthToken()
+	void fetch(`${API_BASE_URL}/games/${gameId}/time`, {
+		method: 'PATCH',
+		keepalive: true,
+		headers: {
+			'Content-Type': 'application/json',
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
+		body: JSON.stringify({ elapsedSeconds }),
+	}).catch(() => undefined)
+}
+
+export const resetGame = (gameId: number) =>
+	request<GameSessionResponse>(`/games/${gameId}/reset`, {
 		method: 'POST',
 	})
 
@@ -217,11 +338,40 @@ export const login = (email: string, password: string) =>
 
 export const getCurrentUser = () => request<UserResponse>('/auth/me')
 
+export const changePassword = (currentPassword: string, newPassword: string) =>
+	request<void>('/auth/me/password', {
+		method: 'PATCH',
+		body: JSON.stringify({ currentPassword, newPassword }),
+	})
+
 export const getTodayDailySudoku = () => request<SudokuPuzzleResponse>('/daily-sudoku/today')
 
-export const startDailySudoku = (date: string, userId?: number) => {
+export const generateSudoku = (subgridSize: number, difficulty: Difficulty) =>
+	request<SudokuPuzzleResponse>('/sudokus/generate', {
+		method: 'POST',
+		body: JSON.stringify({ subgridSize, difficulty: difficultyToApi(difficulty) }),
+	})
+
+export const startDailySudoku = (
+	date: string,
+	options?: {
+		timerMode?: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled?: boolean
+	},
+	userId?: number
+) => {
 	const query = userId ? `?userId=${userId}` : ''
-	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, { method: 'POST' })
+	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, {
+		method: 'POST',
+		body: JSON.stringify({
+			timerMode: options?.timerMode ?? 'NORMAL',
+			countdownSeconds: options?.countdownSeconds,
+			maxErrors: options?.maxErrors,
+			errorWarningsEnabled: options?.errorWarningsEnabled ?? false,
+		}),
+	})
 }
 
 export const getDailySudokuResult = (date: string, userId?: number) => {
@@ -229,11 +379,15 @@ export const getDailySudokuResult = (date: string, userId?: number) => {
 	return request<GameSessionResponse>(`/daily-sudoku/${date}/result${query}`)
 }
 
-export const getUserStats = (userId: number) =>
-	request<UserStatsResponse>(`/users/${userId}/stats`)
+export const resetDailySudoku = (date: string, userId?: number) => {
+	const query = userId ? `?userId=${userId}` : ''
+	return request<GameSessionResponse>(`/daily-sudoku/${date}/reset${query}`, { method: 'POST' })
+}
+
+export const getUserStats = (userId: number) => request<UserStatsResponse>(`/users/${userId}/stats`)
 
 export const getUserCalendar = (userId: number, year: number, month: number) =>
-	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`)
+	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`, { cache: 'no-store' })
 
 export const getUserGames = (userId: number) =>
 	request<GameSessionResponse[]>(`/users/${userId}/games`)
@@ -241,9 +395,15 @@ export const getUserGames = (userId: number) =>
 export const getMyStats = () => request<UserStatsResponse>('/users/me/stats')
 
 export const getMyCalendar = (year: number, month: number) =>
-	request<CalendarDayResponse[]>(`/users/me/calendar?year=${year}&month=${month}`)
+	request<CalendarDayResponse[]>(`/users/me/calendar?year=${year}&month=${month}`, { cache: 'no-store' })
 
 export const getMyGames = () => request<GameSessionResponse[]>('/users/me/games')
+
+export const deleteMyGame = (sessionId: number) =>
+	request<void>(`/users/me/games/${sessionId}`, { method: 'DELETE' })
+
+export const getDailySudokuByDate = (date: string) =>
+	request<SudokuPuzzleResponse>(`/daily-sudoku/${date}`)
 
 export const generatePrintPack = (
 	quantity: number,

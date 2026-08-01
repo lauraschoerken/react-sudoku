@@ -8,10 +8,14 @@ import LcdDisplay from './LcdDisplay'
 export interface DigitalTimerProps {
 	mode: TimerMode
 	seconds?: number
+	initialSeconds?: number
 	autoStart?: boolean
 	running?: boolean
 	resetSignal?: number
 	onFinish?: () => void
+	onTick?: (shownSeconds: number) => void
+	onToggleRunning?: () => void
+	controlsDisabled?: boolean
 	forceHours?: boolean
 	className?: string
 	showControls?: boolean
@@ -27,15 +31,19 @@ export interface DigitalTimerProps {
 export default function DigitalTimer({
 	mode,
 	seconds,
+	initialSeconds,
 	autoStart,
 	running,
 	resetSignal,
 	onFinish,
+	onTick,
+	onToggleRunning,
+	controlsDisabled,
 	forceHours,
 	className,
 }: DigitalTimerProps) {
 	const { shownSeconds, isRunning, start, pause, resume, setShownSeconds, addSeconds } =
-		useDigitalTimer({ mode, seconds, autoStart, running, onFinish })
+		useDigitalTimer({ mode, seconds, initialSeconds, autoStart, running, onFinish, onTick })
 
 	// Sincroniza ejecución con `running`
 	useEffect(() => {
@@ -54,12 +62,16 @@ export default function DigitalTimer({
 		if (mode === 'countdown') {
 			setShownSeconds(seconds ?? 0)
 		} else {
-			setShownSeconds(0)
+			setShownSeconds(initialSeconds ?? 0)
 		}
 		pause() // queda pausado; el padre decide cuándo reanudar con `running`
-	}, [resetSignal, mode, seconds])
+	}, [resetSignal, mode, seconds, pause, setShownSeconds])
 
 	const toggleStartStop = () => {
+		if (running !== undefined && onToggleRunning) {
+			onToggleRunning()
+			return
+		}
 		if (isRunning) pause()
 		else {
 			if (shownSeconds === 0 && mode === 'normal') start()
@@ -83,6 +95,7 @@ export default function DigitalTimer({
 					onClear={clearAll}
 					onAddMinute={addMinute}
 					onAddSecond={addSecond}
+					controlsDisabled={controlsDisabled}
 				/>
 			)}
 		</div>

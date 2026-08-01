@@ -1,6 +1,7 @@
 import './ResultOverlayComponent.scss'
 
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type ResultOverlayProps = {
 	isOpen: boolean
@@ -68,6 +69,7 @@ export const ResultOverlay = ({
 	confettiColors,
 	particleCount = 150,
 }: ResultOverlayProps) => {
+	const { t } = useTranslation('common')
 	const defaults = useMemo(() => {
 		if (variant === 'lose') {
 			// Ajustes por motivo de derrota
@@ -75,8 +77,8 @@ export const ResultOverlay = ({
 			return {
 				title: byTime ? '¡Tiempo agotado!' : '¡Ánimo!',
 				message: byTime ? 'Se acabó el tiempo.' : 'Has alcanzado el límite de errores.',
-				closeLabel: 'Cerrar',
-				primaryLabel: 'Reintentar',
+				closeLabel: t('close'),
+				primaryLabel: t('retry'),
 				ariaLabel: byTime ? 'Partida perdida por tiempo' : 'Partida perdida por errores',
 				emoji: byTime ? '⏰' : '💀',
 				enableConfetti: false,
@@ -87,14 +89,14 @@ export const ResultOverlay = ({
 		return {
 			title: '¡Enhorabuena!',
 			message: 'Has completado el sudoku sin errores.',
-			closeLabel: 'Cerrar',
-			primaryLabel: 'Nueva partida',
+			closeLabel: t('close'),
+			primaryLabel: t('newGameAction'),
 			ariaLabel: 'Sudoku completado',
 			emoji: '🎉',
 			enableConfetti: true,
 			colors: WIN_COLORS as readonly string[],
 		}
-	}, [variant, loseReason])
+	}, [loseReason, t, variant])
 
 	const finalTitle = title ?? defaults.title
 	const finalMessage = message ?? defaults.message

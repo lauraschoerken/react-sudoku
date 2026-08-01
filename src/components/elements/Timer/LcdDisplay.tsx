@@ -15,6 +15,7 @@ interface LcdDisplayProps {
 	onClear?: () => void
 	onAddMinute?: () => void
 	onAddSecond?: () => void
+	controlsDisabled?: boolean
 }
 
 const two = (n: number) => n.toString().padStart(2, '0')
@@ -29,6 +30,7 @@ export default function LcdDisplay({
 	onClear,
 	onAddMinute,
 	onAddSecond,
+	controlsDisabled = false,
 }: LcdDisplayProps) {
 	const s = Math.max(0, Math.floor(seconds))
 	const hh = Math.floor(s / 3600)
@@ -60,17 +62,17 @@ export default function LcdDisplay({
 
 				{showButtonsLikeClock && (
 					<div className='lcd-buttons'>
-						<button type='button' className='lcd-btn ghost' onClick={onClear}>
+						<button type='button' className='lcd-btn ghost' disabled={controlsDisabled} onClick={onClear}>
 							CLEAR
 						</button>
-						<button type='button' className='lcd-btn ghost' onClick={onAddMinute}>
+						<button type='button' className='lcd-btn ghost' disabled={controlsDisabled} onClick={onAddMinute}>
 							M
 						</button>
-						<button type='button' className='lcd-btn ghost' onClick={onAddSecond}>
+						<button type='button' className='lcd-btn ghost' disabled={controlsDisabled} onClick={onAddSecond}>
 							S
 						</button>
-						<button type='button' className='lcd-btn ghost solid' onClick={onToggleStartStop}>
-							{running ? 'STOP' : 'START'}
+						<button type='button' className='lcd-btn ghost solid' disabled={controlsDisabled} onClick={onToggleStartStop}>
+							{running ? 'PAUSA' : 'SEGUIR'}
 						</button>
 					</div>
 				)}

@@ -6,19 +6,24 @@
 	flex-direction: column;
 	background: var(--bg);
 	color: var(--fg);
+	overflow-x: clip;
 }
 
 .header {
 	border-bottom: 1px solid var(--border);
 	background: var(--header);
+	position: sticky;
+	top: 0;
+	z-index: 10;
 }
 .header__inner {
-	height: 2rem;
+	width: 100%;
+	min-height: 3.25rem;
 	display: flex;
 	align-items: center;
-	justify-content: space-around;
+	justify-content: space-between;
 	gap: 1rem;
-	padding-block: 1rem;
+	padding: 0.75rem 1.25rem;
 }
 
 .container {
@@ -27,26 +32,82 @@
 }
 
 .nav {
+	min-width: 0;
 	display: flex;
-	gap: 1rem;
+	gap: 0.45rem;
 	align-items: center;
+	flex-wrap: wrap;
+	justify-content: flex-end;
 }
 
-.link {
+.link,
+.link-active,
+.nav-more summary {
 	text-decoration: none;
 	color: var(--fg);
+	border-radius: 8px;
+	cursor: pointer;
+	line-height: 1;
+	padding: 0.45rem 0.65rem;
 }
 
 .link-active {
-	text-decoration: underline;
 	font-weight: 600;
-	color: var(--fg);
+	background: color-mix(in oklch, var(--fg) 12%, transparent);
+}
+
+.brand {
+	flex: 0 0 auto;
+	font-weight: 800;
+	letter-spacing: 0;
+}
+
+.nav-more {
+	position: relative;
+}
+
+.nav-more > button {
+	list-style: none;
+}
+
+.nav-more__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.35rem);
+	z-index: 20;
+	min-width: 10rem;
+	display: grid;
+	padding: 0.4rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	box-shadow: var(--shadow-sm);
+}
+
+.user-menu {
+	position: relative;
+}
+
+
+.user-menu__menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.35rem);
+	z-index: 20;
+	min-width: 10rem;
+	display: grid;
+	padding: 0.4rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--bg);
+	box-shadow: var(--shadow-sm);
 }
 
 .main {
 	flex: 1;
 	background: var(--body-bg);
 	color: var(--fg);
+	overflow-x: clip;
 }
 
 .footer {
@@ -61,7 +122,13 @@
 
 //TODO hay que hacer un bocadillo para móvil
 @media (max-width: 520px) {
+	.header__inner {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
 	.nav {
+		width: 100%;
 		flex-wrap: nowrap;
 		overflow-x: auto;
 		gap: 0.75rem;
@@ -75,4 +142,29 @@
 		background: color-mix(in oklch, var(--fg) 25%, transparent);
 		border-radius: 999px;
 	}
+}
+
+// User avatar pill in nav
+.user-avatar {
+	appearance: none;
+	border: 0;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	background: var(--color2);
+	color: #fff;
+	font-weight: 700;
+	font-size: 0.85rem;
+	padding: 0 !important;
+	text-decoration: none;
+}
+
+// Small login button in nav
+.btn--sm {
+	padding: 0.4rem 0.75rem;
+	font-size: 0.85rem;
 }
