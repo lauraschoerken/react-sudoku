@@ -21,6 +21,7 @@ import {
 	updateCell,
 	updateNotes,
 	updateGameTime,
+	updateGameSettings,
 } from '@/services/sudokuApi'
 import type { GameStatus } from '@/services/sudokuApi'
 
@@ -533,6 +534,25 @@ export const useSudoku = (
 		[gameId, usingBackend]
 	)
 
+	const syncGameSettings = useCallback(
+		(settings: {
+			timerMode: 'NORMAL' | 'COUNTDOWN'
+			countdownSeconds?: number
+			maxErrors?: number
+			errorWarningsEnabled: boolean
+		}) => {
+			if (!usingBackend || gameId === null) return Promise.resolve(null)
+			return updateGameSettings(gameId, settings)
+				.then((game) => {
+					setBackendTimerMode(game.timerMode === 'COUNTDOWN' ? 'countdown' : 'normal')
+					setBackendCountdownSeconds(game.countdownSeconds ?? undefined)
+					return game
+				})
+				.catch(() => null)
+		},
+		[gameId, usingBackend]
+	)
+
 	const resumeGameValue = useCallback(() => {
 		if (!usingBackend || gameId === null) return
 
@@ -582,6 +602,7 @@ export const useSudoku = (
 		requestHint: requestHintValue,
 		finishGame: finishGameValue,
 		persistElapsedTime,
+		syncGameSettings,
 		pauseGame: pauseGameValue,
 		resumeGame: resumeGameValue,
 		resetGame: resetGameValue,

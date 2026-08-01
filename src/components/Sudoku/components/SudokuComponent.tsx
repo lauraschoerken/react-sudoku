@@ -88,6 +88,7 @@ export default function SudokuComponent({
 		resumeGame,
 		resetGame,
 		persistElapsedTime,
+		syncGameSettings,
 		gameId,
 		gameStatus,
 		isDailyGame,
@@ -127,6 +128,7 @@ export default function SudokuComponent({
 	const isPaused = gameStatus === 'PAUSED'
 	const timerElapsedRef = useRef(0)
 	const finishingPromiseRef = useRef<Promise<unknown> | null>(null)
+	const settingsSyncRef = useRef('')
 	useEffect(() => {
 		timerElapsedRef.current = timerElapsed
 		if (usingBackend && gameId !== null && !isEnded) storeGameTime(gameId, timerElapsed)
@@ -148,6 +150,35 @@ export default function SudokuComponent({
 			document.removeEventListener('visibilitychange', persistWhenHidden)
 		}
 	}, [gameId, isEnded, timerEnabled, usingBackend])
+
+	useEffect(() => {
+		if (!usingBackend || gameId === null || isEnded) return
+		const signature = [
+			gameId,
+			timerMode,
+			timerSeconds,
+			errorsActive,
+			errorsLimiterEnabled ? errorsLimit : 'none',
+		].join(':')
+		if (settingsSyncRef.current === signature) return
+		settingsSyncRef.current = signature
+		void syncGameSettings({
+			timerMode: timerMode === 'countdown' ? 'COUNTDOWN' : 'NORMAL',
+			countdownSeconds: timerMode === 'countdown' ? timerSeconds : undefined,
+			maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
+			errorWarningsEnabled: errorsActive,
+		})
+	}, [
+		errorsActive,
+		errorsLimit,
+		errorsLimiterEnabled,
+		gameId,
+		isEnded,
+		syncGameSettings,
+		timerMode,
+		timerSeconds,
+		usingBackend,
+	])
 
 	useEffect(() => {
 		if (!timerEnabled || !usingBackend || gameId === null || isEnded || isPaused) return
@@ -574,6 +605,8 @@ export default function SudokuComponent({
 								forceHours={effectiveTimerMode === 'normal'}
 								running={runFlag && !isEnded && !isPaused} // se para al terminar la partida
 								resetSignal={resetSignal}
+								onToggleRunning={isPaused ? resumeGame : () => pauseGame(timerElapsed)}
+								controlsDisabled={isEnded}
 								onFinish={() => {
 									if (!isEnded) {
 										setIsEnded(true)
@@ -610,7 +643,14 @@ export default function SudokuComponent({
 						: undefined
 				}
 				onClose={() => (isDailyGame ? navigate('/daily') : setShowWin(false))}
-				onPrimary={() => (isDailyGame ? navigate('/?new=1') : handleNewGame())}
+				onPrimary={() => {
+					if (isDailyGame) {
+						navigate('/?new=1')
+						return
+					}
+					setShowWin(false)
+					handleNewGame()
+				}}
 							primaryLabel={isDailyGame ? t('newNormalGame') : undefined}
 							closeLabel={isDailyGame ? t('reviewDaily') : undefined}
 			/>

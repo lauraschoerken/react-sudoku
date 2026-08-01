@@ -302,19 +302,48 @@
 
 .daily-board {
 	display: grid;
-	justify-content: start;
-	border: 2px solid var(--fg);
-	background: var(--fg);
-	gap: 1px;
+	width: min(21rem, 100%);
+	aspect-ratio: 1;
+	border: 2px solid color-mix(in oklch, var(--fg) 82%, var(--color2) 18%);
+	border-radius: 0.45rem;
+	background: var(--bg);
+	overflow: hidden;
+	box-shadow: 0 12px 32px color-mix(in oklch, #000 18%, transparent);
 }
 
 .daily-cell {
-	aspect-ratio: 1;
 	display: grid;
 	place-items: center;
-	border: 1px solid var(--border);
-	background: var(--bg);
+	min-width: 0;
+	border-left: 1px solid color-mix(in oklch, var(--fg) 20%, var(--bg) 80%);
+	border-top: 1px solid color-mix(in oklch, var(--fg) 20%, var(--bg) 80%);
+	background: color-mix(in oklch, var(--bg) 96%, var(--color2) 4%);
 	font-weight: 700;
+	font-size: clamp(0.72rem, 1.35vw, 1rem);
+	font-variant-numeric: tabular-nums;
+}
+
+.daily-cell--block-left {
+	border-left: 2px solid color-mix(in oklch, var(--fg) 82%, var(--color2) 18%);
+}
+
+.daily-cell--block-top {
+	border-top: 2px solid color-mix(in oklch, var(--fg) 82%, var(--color2) 18%);
+}
+
+.daily-cell--given {
+	color: var(--fg);
+}
+
+.daily-cell--solved {
+	background: color-mix(in oklch, var(--color2) 11%, var(--bg) 89%);
+	color: color-mix(in oklch, var(--color2) 82%, var(--fg) 18%);
+}
+
+.daily-board--completed {
+	box-shadow:
+		0 12px 32px color-mix(in oklch, #000 18%, transparent),
+		0 0 0 4px color-mix(in oklch, #31a66a 12%, transparent);
 }
 
 .daily-board-placeholder {
@@ -669,6 +698,18 @@
 	font-weight: 900;
 }
 
+.daily-cal-day__status.is-errors {
+	display: grid;
+	place-items: center;
+	width: 0.8rem;
+	height: 0.8rem;
+	border-radius: 50%;
+	background: #d94b4b;
+	color: #fff;
+	font-size: 0.58rem;
+	font-weight: 900;
+}
+
 .daily-cal-day:hover:not(:disabled) {
 	background: color-mix(in oklch, var(--fg) 10%, transparent);
 }
@@ -695,10 +736,49 @@
 	font-weight: 600;
 }
 
+.daily-cal-day--in-progress {
+	background: color-mix(in oklch, #f0ad22 38%, var(--bg) 62%);
+	border-color: #f0ad22;
+}
+
+.daily-cal-day--completed {
+	background: color-mix(in oklch, #31b66f 38%, var(--bg) 62%);
+	border-color: #31b66f;
+}
+
+.daily-cal-day--completed-errors {
+	background: color-mix(in oklch, #e25555 36%, var(--bg) 64%);
+	border-color: #e25555;
+}
+
 .daily-cal-day--selected.daily-cal-day {
+	box-shadow:
+		0 0 0 2px var(--bg),
+		0 0 0 4px var(--color2);
+}
+
+.daily-cal-day--selected.daily-cal-day--not-started {
 	background: var(--color2);
+	border-color: var(--color2);
 	color: #fff;
-	box-shadow: 0 0 0 2px color-mix(in oklch, var(--color2) 45%, transparent);
+}
+
+.daily-cal-day--selected.daily-cal-day--in-progress {
+	background: #d99512;
+	border-color: #ffc24a;
+	color: #111827;
+}
+
+.daily-cal-day--selected.daily-cal-day--completed {
+	background: #238e55;
+	border-color: #51d08a;
+	color: #fff;
+}
+
+.daily-cal-day--selected.daily-cal-day--completed-errors {
+	background: #c63f49;
+	border-color: #ff747b;
+	color: #fff;
 }
 
 .daily-calendar__legend {
@@ -727,7 +807,16 @@
 }
 
 .daily-calendar__legend .is-completed {
-	background: var(--color2);
+	background: #31a66a;
+}
+
+.daily-calendar__legend .is-empty {
+	border: 1px solid var(--border2);
+	background: transparent;
+}
+
+.daily-calendar__legend .is-errors {
+	background: #d94b4b;
 }
 
 .daily-cal-day--empty {
@@ -752,4 +841,77 @@
 
 .daily-content {
 	min-height: 20rem;
+}
+
+@media (min-width: 821px) {
+	.daily-page {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		min-height: calc(100dvh - 7rem);
+		padding-block: 1rem;
+	}
+
+	.daily-page .page-heading {
+		margin-bottom: 0.75rem;
+	}
+
+	.daily-workspace {
+		display: grid;
+		grid-template-columns: minmax(23rem, 0.82fr) minmax(27rem, 1.18fr);
+		gap: 1rem;
+		min-height: 0;
+	}
+
+	.daily-calendar {
+		align-self: stretch;
+		width: 100%;
+		max-width: none;
+		margin: 0;
+		padding: 0.8rem;
+	}
+
+	.daily-calendar__grid {
+		gap: 0.22rem;
+	}
+
+	.daily-cal-day {
+		min-height: 2.35rem;
+		aspect-ratio: auto;
+	}
+
+	.daily-calendar__legend {
+		flex-wrap: wrap;
+		gap: 0.5rem 0.9rem;
+	}
+
+	.daily-content {
+		min-height: 0;
+	}
+
+	.daily-card {
+		height: 100%;
+		grid-template-columns: minmax(0, 1fr);
+		align-content: center;
+		justify-items: center;
+		gap: 1rem;
+		text-align: center;
+	}
+
+	.daily-card__copy {
+		justify-items: center;
+	}
+
+	.daily-board {
+		justify-content: center;
+	}
+
+	.daily-cell {
+		width: auto;
+	}
+}
+
+@media (max-width: 820px) {
+	.daily-workspace {
+		display: grid;
+	}
 }

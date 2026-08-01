@@ -69,6 +69,8 @@ export interface CalendarDayResponse {
 	pendingGames: number
 	dailySudokuCompleted: boolean
 	dailySudokuStarted: boolean
+	dailySudokuStatus: GameStatus | null
+	dailySudokuMistakes: number
 }
 
 export interface SudokuPuzzleResponse {
@@ -261,6 +263,20 @@ export const updateGameTime = (gameId: number, elapsedSeconds: number) =>
 		body: JSON.stringify({ elapsedSeconds }),
 	})
 
+export const updateGameSettings = (
+	gameId: number,
+	settings: {
+		timerMode: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled: boolean
+	}
+) =>
+	request<GameSessionResponse>(`/games/${gameId}/settings`, {
+		method: 'PATCH',
+		body: JSON.stringify(settings),
+	})
+
 const gameTimeKey = (gameId: number) => `sudoku-game-time:${gameId}`
 
 export const readStoredGameTime = (gameId: number) => {
@@ -371,7 +387,7 @@ export const resetDailySudoku = (date: string, userId?: number) => {
 export const getUserStats = (userId: number) => request<UserStatsResponse>(`/users/${userId}/stats`)
 
 export const getUserCalendar = (userId: number, year: number, month: number) =>
-	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`)
+	request<CalendarDayResponse[]>(`/users/${userId}/calendar?year=${year}&month=${month}`, { cache: 'no-store' })
 
 export const getUserGames = (userId: number) =>
 	request<GameSessionResponse[]>(`/users/${userId}/games`)
@@ -379,7 +395,7 @@ export const getUserGames = (userId: number) =>
 export const getMyStats = () => request<UserStatsResponse>('/users/me/stats')
 
 export const getMyCalendar = (year: number, month: number) =>
-	request<CalendarDayResponse[]>(`/users/me/calendar?year=${year}&month=${month}`)
+	request<CalendarDayResponse[]>(`/users/me/calendar?year=${year}&month=${month}`, { cache: 'no-store' })
 
 export const getMyGames = () => request<GameSessionResponse[]>('/users/me/games')
 

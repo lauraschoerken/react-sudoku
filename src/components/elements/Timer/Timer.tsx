@@ -14,6 +14,8 @@ export interface DigitalTimerProps {
 	resetSignal?: number
 	onFinish?: () => void
 	onTick?: (shownSeconds: number) => void
+	onToggleRunning?: () => void
+	controlsDisabled?: boolean
 	forceHours?: boolean
 	className?: string
 	showControls?: boolean
@@ -35,6 +37,8 @@ export default function DigitalTimer({
 	resetSignal,
 	onFinish,
 	onTick,
+	onToggleRunning,
+	controlsDisabled,
 	forceHours,
 	className,
 }: DigitalTimerProps) {
@@ -64,6 +68,10 @@ export default function DigitalTimer({
 	}, [resetSignal, mode, seconds, pause, setShownSeconds])
 
 	const toggleStartStop = () => {
+		if (running !== undefined && onToggleRunning) {
+			onToggleRunning()
+			return
+		}
 		if (isRunning) pause()
 		else {
 			if (shownSeconds === 0 && mode === 'normal') start()
@@ -87,6 +95,7 @@ export default function DigitalTimer({
 					onClear={clearAll}
 					onAddMinute={addMinute}
 					onAddSecond={addSecond}
+					controlsDisabled={controlsDisabled}
 				/>
 			)}
 		</div>

@@ -1,6 +1,6 @@
 import '@/components/Auth/containers/AuthPage.scss'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
@@ -20,8 +20,13 @@ import { isBoardValidSolution, localTodayKey } from '@/utils/appHelpers'
 
 interface CalendarDay {
 	date: string
-	completed: boolean
-	started: boolean
+	status: 'not-started' | 'in-progress' | 'completed' | 'completed-errors'
+}
+
+const dailyStatusForGame = (game: GameSessionResponse): CalendarDay['status'] => {
+	if (game.status === 'LOST' || (game.status === 'WON' && game.mistakes > 0)) return 'completed-errors'
+	if (game.status === 'WON') return 'completed'
+	return 'in-progress'
 }
 
 const DailyCalendar = ({
@@ -95,34 +100,37 @@ const DailyCalendar = ({
 					const dateKey = dateKeyFor(day)
 					const isFuture = dateKey > todayKey
 					const info = calendarMap[dateKey]
+					const status = info?.status ?? 'not-started'
 					const className = [
 						'daily-cal-day',
 						dateKey === selectedDate ? 'daily-cal-day--selected' : '',
 						dateKey === todayKey ? 'daily-cal-day--today' : '',
-						info?.completed ? 'daily-cal-day--completed' : '',
-						info?.started ? 'daily-cal-day--started' : '',
+						`daily-cal-day--${status}`,
 					]
 						.filter(Boolean)
 						.join(' ')
 
 					return (
 						<button
-							aria-label={`${dateKey}${info?.completed ? ', diario completado' : info?.started ? ', diario iniciado' : ''}`}
+							aria-label={`${dateKey}, ${status === 'not-started' ? 'sin empezar' : status === 'in-progress' ? 'iniciado' : status === 'completed' ? 'completado sin errores' : 'completado con errores'}`}
 							className={className}
 							disabled={isFuture}
 							key={dateKey}
 							onClick={() => onSelect(dateKey)}
 							type='button'>
 							{day}
-							{info?.completed && <span className='daily-cal-day__status is-completed' aria-label='Completado'>✓</span>}
-							{info?.started && !info.completed && <span className='daily-cal-day__status is-started' aria-label='Iniciado' />}
+							{status === 'in-progress' && <span className='daily-cal-day__status is-started' aria-label='Iniciado' />}
+							{status === 'completed' && <span className='daily-cal-day__status is-completed' aria-label='Completado sin errores'>✓</span>}
+							{status === 'completed-errors' && <span className='daily-cal-day__status is-errors' aria-label='Completado con errores'>!</span>}
 						</button>
 					)
 				})}
 			</div>
 			<div className='daily-calendar__legend' aria-label='Estados del calendario'>
-				<span><i className='is-started' /> Iniciado</span>
-				<span><i className='is-completed' /> Completado</span>
+				<span><i className='is-empty' /> Sin empezar</span>
+				<span><i className='is-started' /> En curso</span>
+				<span><i className='is-completed' /> Sin errores</span>
+				<span><i className='is-errors' /> Con errores</span>
 			</div>
 		</div>
 	)
@@ -144,21 +152,38 @@ export const DailySudokuPage = () => {
 	const [starting, setStarting] = useState(false)
 	const [resetting, setResetting] = useState(false)
 	const [error, setError] = useState<string | null>(null)
+	const calendarRequestRef = useRef(0)
 
 	const loadCalendar = useCallback((year?: number, month?: number) => {
 		if (!user) return
+		const requestId = ++calendarRequestRef.current
 		const now = new Date()
 		void getMyCalendar(year ?? now.getFullYear(), month ?? now.getMonth() + 1)
-			.then((days) =>
+			.then((days) => {
+				if (requestId !== calendarRequestRef.current) return
 				setCalendarDays(
-					days.map((day) => ({
-						date: day.date,
-						completed: day.dailySudokuCompleted,
-						started: day.dailySudokuStarted,
-					}))
+						days.map((day) => {
+							const completedWithErrors =
+								day.dailySudokuStatus === 'LOST' ||
+								(day.dailySudokuStatus === 'WON' && day.dailySudokuMistakes > 0)
+							const completed = day.dailySudokuStatus === 'WON' || day.dailySudokuCompleted
+							const started = day.dailySudokuStatus != null || day.dailySudokuStarted
+							return {
+								date: day.date,
+								status: completedWithErrors
+									? 'completed-errors'
+									: completed
+										? 'completed'
+										: started
+											? 'in-progress'
+											: 'not-started',
+							} as CalendarDay
+						})
 				)
-			)
-			.catch(() => setCalendarDays([]))
+			})
+			.catch(() => {
+				if (requestId === calendarRequestRef.current) setCalendarDays([])
+			})
 	}, [user])
 
 	useEffect(() => {
@@ -187,6 +212,15 @@ export const DailySudokuPage = () => {
 				gameResult.reason instanceof SudokuApiError &&
 				gameResult.reason.status === 404
 			const nextGame = gameResult.status === 'fulfilled' ? gameResult.value : null
+			if (nextGame) {
+				setCalendarDays((current) => {
+					const nextStatus = dailyStatusForGame(nextGame)
+					const existing = current.find((day) => day.date === date)
+					if (existing?.status === nextStatus) return current
+					if (!existing) return [...current, { date, status: nextStatus }]
+					return current.map((day) => day.date === date ? { ...day, status: nextStatus } : day)
+				})
+			}
 
 			if (authFailed) {
 				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
@@ -209,12 +243,14 @@ export const DailySudokuPage = () => {
 		setStarting(true)
 		setError(null)
 		try {
-			const nextGame = await startDailySudoku(selectedDate, {
+			const nextGame = game?.status === 'LOST'
+				? await resetDailySudoku(selectedDate)
+				: await startDailySudoku(selectedDate, {
 				timerMode: timerMode === 'countdown' ? 'COUNTDOWN' : 'NORMAL',
 				countdownSeconds: timerMode === 'countdown' ? timerSeconds : undefined,
 				maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
 				errorWarningsEnabled: errorsActive,
-			})
+				})
 			setGame(nextGame)
 			navigate(`/?daily=${selectedDate}`)
 		} catch (requestError) {
@@ -259,7 +295,9 @@ export const DailySudokuPage = () => {
 	}
 
 	const ctaLabel = game
-		? game.status === 'WON'
+		? game.status === 'LOST'
+			? t('retry')
+			: game.status === 'WON'
 			? t('viewBoard')
 			: game.started
 				? t('continue')
@@ -267,9 +305,12 @@ export const DailySudokuPage = () => {
 		: t('playDaily')
 	const previewBoard = game?.currentBoard ?? puzzle?.puzzle ?? null
 	const previewSize = game?.gridSize ?? puzzle?.gridSize ?? 9
+	const previewSubgridSize = game?.subgridSize ?? puzzle?.subgridSize ?? 3
+	const previewInitialBoard = game?.initialBoard ?? puzzle?.puzzle ?? null
 	const completed =
 		game?.status === 'WON' && isBoardValidSolution(game.currentBoard, game.initialBoard, game.subgridSize)
 	const started = game?.started === true
+	const failed = game?.status === 'LOST'
 
 	return (
 		<div className='daily-page'>
@@ -281,6 +322,7 @@ export const DailySudokuPage = () => {
 				<span className='status-pill'>{selectedDate}</span>
 			</div>
 
+			<div className='daily-workspace'>
 			<DailyCalendar
 				calendarDays={calendarDays}
 				onMonthChange={loadCalendar}
@@ -303,10 +345,12 @@ export const DailySudokuPage = () => {
 			{!loading && (puzzle || game) && (
 				<div className='daily-card'>
 					<div className='daily-card__copy'>
-						<h2>{completed ? t('completed') : started ? t('inProgress') : t('available')}</h2>
+						<h2>{failed ? 'Completado con errores' : completed ? t('completed') : started ? t('inProgress') : t('available')}</h2>
 						<p className='muted'>
 							{game
-								? completed
+								? failed
+									? 'La partida terminó. Puedes reintentarlo desde cero cuando quieras.'
+									: completed
 									? 'Sudoku completado. Puedes ver el tablero o deshacerlo para repetirlo.'
 									: t('dailyInProgress')
 								: t('dailyAvailable', { date: selectedDate })}
@@ -327,13 +371,22 @@ export const DailySudokuPage = () => {
 					{previewBoard ? (
 						<div
 							aria-label='Vista previa del Sudoku diario'
-							className={`daily-board ${completed ? '' : 'daily-board--hidden'}`}
-							style={{ gridTemplateColumns: `repeat(${previewSize}, minmax(1.5rem, 2.2rem))` }}>
-							{previewBoard.flat().map((value, index) => (
-								<span className='daily-cell' key={index}>
+							className={`daily-board ${completed ? 'daily-board--completed' : 'daily-board--hidden'}`}
+							style={{ gridTemplateColumns: `repeat(${previewSize}, minmax(0, 1fr))` }}>
+							{previewBoard.flat().map((value, index) => {
+								const row = Math.floor(index / previewSize)
+								const column = index % previewSize
+								const given = previewInitialBoard?.[row]?.[column] !== 0
+								const cellClassName = [
+									'daily-cell',
+									given ? 'daily-cell--given' : 'daily-cell--solved',
+									column > 0 && column % previewSubgridSize === 0 ? 'daily-cell--block-left' : '',
+									row > 0 && row % previewSubgridSize === 0 ? 'daily-cell--block-top' : '',
+								].filter(Boolean).join(' ')
+								return <span className={cellClassName} key={index}>
 									{value || ''}
 								</span>
-							))}
+							})}
 						</div>
 					) : (
 						<div className='daily-board-placeholder'>
@@ -345,6 +398,7 @@ export const DailySudokuPage = () => {
 					)}
 				</div>
 			)}
+			</div>
 			</div>
 
 		</div>

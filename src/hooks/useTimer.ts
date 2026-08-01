@@ -96,6 +96,7 @@ export const useDigitalTimer = ({
 	}, [controlled])
 	const reset = () => {
 		setElapsed(0)
+		onTick?.(mode === 'countdown' ? (seconds as number) : 0)
 	}
 	const stop = () => {
 		setElapsed(0)
@@ -104,14 +105,20 @@ export const useDigitalTimer = ({
 
 	const setShownSeconds = useCallback((value: number) => {
 		if (mode === 'normal') {
-			setElapsed(Math.max(0, Math.floor(value)))
+			const normalized = Math.max(0, Math.floor(value))
+			setElapsed(normalized)
+			onTick?.(normalized)
 		} else {
 			setElapsed(Math.max(0, (seconds as number) - Math.floor(value)))
 		}
-	}, [mode, seconds])
+	}, [mode, onTick, seconds])
 	const addSeconds = (delta: number) => {
 		if (mode === 'normal') {
-			setElapsed((v) => Math.max(0, v + delta))
+			setElapsed((v) => {
+				const next = Math.max(0, v + delta)
+				onTick?.(next)
+				return next
+			})
 		}
 	}
 
