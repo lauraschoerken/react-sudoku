@@ -1,7 +1,8 @@
 import '../layout.scss'
 
 import { useTranslation } from 'react-i18next'
-import { Link, NavLink } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 
 import LanguageSelect from '@/components/elements/Languague/LanguagueSelect'
 import { ThemeToggle } from '@/components/elements/Theme/ThemeToggle'
@@ -12,6 +13,28 @@ export const Header = () => {
 	const active = 'link-active'
 	const { t } = useTranslation(['layout', 'common'])
 	const user = useAppSelector((s) => s.auth.user)
+	const location = useLocation()
+	const navRef = useRef<HTMLElement>(null)
+	const [openMenu, setOpenMenu] = useState<'tools' | 'user' | null>(null)
+
+	useEffect(() => {
+		setOpenMenu(null)
+	}, [location.pathname])
+
+	useEffect(() => {
+		const closeOutside = (event: PointerEvent) => {
+			if (!navRef.current?.contains(event.target as Node)) setOpenMenu(null)
+		}
+		const closeOnEscape = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') setOpenMenu(null)
+		}
+		document.addEventListener('pointerdown', closeOutside)
+		document.addEventListener('keydown', closeOnEscape)
+		return () => {
+			document.removeEventListener('pointerdown', closeOutside)
+			document.removeEventListener('keydown', closeOnEscape)
+		}
+	}, [])
 
 	return (
 		<header className='header'>
@@ -19,7 +42,7 @@ export const Header = () => {
 				<Link to='/' className='link brand'>
 					{APP_NAME}
 				</Link>
-				<nav className='nav'>
+				<nav className='nav' ref={navRef}>
 					<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('sudoku')}
 					</NavLink>
@@ -35,18 +58,32 @@ export const Header = () => {
 							<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>
 								{t('stats', { ns: 'common' })}
 							</NavLink>
-							<details className='nav-more'>
-								<summary className='btn'>{t('tools', { ns: 'common' })}</summary>
+							<div className='nav-more'>
+								<button
+									aria-expanded={openMenu === 'tools'}
+									className='btn'
+									onClick={() => setOpenMenu((current) => current === 'tools' ? null : 'tools')}
+									type='button'>
+									{t('tools', { ns: 'common' })}
+								</button>
+								{openMenu === 'tools' && (
 								<div className='nav-more__menu'>
 									<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>
 										{t('print', { ns: 'common' })}
 									</NavLink>
 								</div>
-							</details>
-							<details className='user-menu'>
-								<summary className='user-avatar' aria-label={t('account', { ns: 'common' })}>
+								)}
+							</div>
+							<div className='user-menu'>
+								<button
+									aria-expanded={openMenu === 'user'}
+									className='user-avatar'
+									onClick={() => setOpenMenu((current) => current === 'user' ? null : 'user')}
+									type='button'
+									aria-label={t('account', { ns: 'common' })}>
 									{user.avatar ?? user.username.slice(0, 1).toUpperCase()}
-								</summary>
+								</button>
+								{openMenu === 'user' && (
 								<div className='user-menu__menu'>
 									<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>
 										{t('account', { ns: 'common' })}
@@ -55,7 +92,8 @@ export const Header = () => {
 										{t('settings', { ns: 'layout' })}
 									</NavLink>
 								</div>
-							</details>
+								)}
+							</div>
 						</>
 					) : (
 						<NavLink

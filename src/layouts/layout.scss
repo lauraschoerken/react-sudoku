@@ -66,12 +66,8 @@
 	position: relative;
 }
 
-.nav-more summary {
+.nav-more > button {
 	list-style: none;
-}
-
-.nav-more summary::-webkit-details-marker {
-	display: none;
 }
 
 .nav-more__menu {
@@ -92,13 +88,6 @@
 	position: relative;
 }
 
-.user-menu summary {
-	list-style: none;
-}
-
-.user-menu summary::-webkit-details-marker {
-	display: none;
-}
 
 .user-menu__menu {
 	position: absolute;
@@ -157,6 +146,9 @@
 
 // User avatar pill in nav
 .user-avatar {
+	appearance: none;
+	border: 0;
+	cursor: pointer;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;

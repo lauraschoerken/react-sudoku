@@ -40,7 +40,7 @@ export const useDigitalTimer = ({
 	const controlled = typeof running === 'boolean'
 	const [isRunning, setIsRunning] = useState<boolean>(controlled ? !!running : autoStart)
 	const initialSecondsRef = useRef(Math.max(0, initialSeconds))
-	const [elapsed, setElapsed] = useState<number>(mode === 'normal' ? initialSecondsRef.current : 0)
+	const [elapsed, setElapsed] = useState<number>(initialSecondsRef.current)
 	const tickRef = useRef<number | null>(null)
 
 	useEffect(() => {
@@ -48,7 +48,7 @@ export const useDigitalTimer = ({
 	}, [controlled, running])
 
 	useEffect(() => {
-		setElapsed(mode === 'normal' ? initialSecondsRef.current : 0)
+		setElapsed(initialSecondsRef.current)
 		if (!controlled) setIsRunning(autoStart)
 	}, [mode, seconds, autoStart, controlled])
 
@@ -105,8 +105,10 @@ export const useDigitalTimer = ({
 	const setShownSeconds = useCallback((value: number) => {
 		if (mode === 'normal') {
 			setElapsed(Math.max(0, Math.floor(value)))
+		} else {
+			setElapsed(Math.max(0, (seconds as number) - Math.floor(value)))
 		}
-	}, [mode])
+	}, [mode, seconds])
 	const addSeconds = (delta: number) => {
 		if (mode === 'normal') {
 			setElapsed((v) => Math.max(0, v + delta))

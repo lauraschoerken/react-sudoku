@@ -21,7 +21,7 @@ import { isBoardValidSolution, localTodayKey } from '@/utils/appHelpers'
 interface CalendarDay {
 	date: string
 	completed: boolean
-	pending: boolean
+	started: boolean
 }
 
 const DailyCalendar = ({
@@ -100,23 +100,29 @@ const DailyCalendar = ({
 						dateKey === selectedDate ? 'daily-cal-day--selected' : '',
 						dateKey === todayKey ? 'daily-cal-day--today' : '',
 						info?.completed ? 'daily-cal-day--completed' : '',
-						info?.pending ? 'daily-cal-day--pending' : '',
+						info?.started ? 'daily-cal-day--started' : '',
 					]
 						.filter(Boolean)
 						.join(' ')
 
 					return (
 						<button
+							aria-label={`${dateKey}${info?.completed ? ', diario completado' : info?.started ? ', diario iniciado' : ''}`}
 							className={className}
 							disabled={isFuture}
 							key={dateKey}
 							onClick={() => onSelect(dateKey)}
 							type='button'>
 							{day}
-							{info?.completed && <span aria-label='Completado'>✓</span>}
+							{info?.completed && <span className='daily-cal-day__status is-completed' aria-label='Completado'>✓</span>}
+							{info?.started && !info.completed && <span className='daily-cal-day__status is-started' aria-label='Iniciado' />}
 						</button>
 					)
 				})}
+			</div>
+			<div className='daily-calendar__legend' aria-label='Estados del calendario'>
+				<span><i className='is-started' /> Iniciado</span>
+				<span><i className='is-completed' /> Completado</span>
 			</div>
 		</div>
 	)
@@ -126,6 +132,8 @@ export const DailySudokuPage = () => {
 	const navigate = useNavigate()
 	const { t } = useTranslation('common')
 	const user = useAppSelector((state) => state.auth.user)
+	const { errorsActive, errorsLimit, errorsLimiterEnabled, timerMode, timerSeconds } =
+		useAppSelector((state) => state.settings)
 	const todayKey = useMemo(() => localTodayKey(), [])
 
 	const [selectedDate, setSelectedDate] = useState(todayKey)
@@ -146,7 +154,7 @@ export const DailySudokuPage = () => {
 					days.map((day) => ({
 						date: day.date,
 						completed: day.dailySudokuCompleted,
-						pending: day.pendingGames > 0,
+						started: day.dailySudokuStarted,
 					}))
 				)
 			)
@@ -162,10 +170,15 @@ export const DailySudokuPage = () => {
 		setLoading(true)
 		setError(null)
 
-			const [puzzleResult, gameResult] = await Promise.allSettled([
-				getDailySudokuByDate(date),
-				user ? getDailySudokuResult(date) : Promise.resolve(null),
-			])
+			const puzzleRequest = getDailySudokuByDate(date)
+			const gameRequest = user
+				? getDailySudokuResult(date).catch(async (requestError) => {
+					if (!isAuthError(requestError)) throw requestError
+					await new Promise((resolve) => window.setTimeout(resolve, 250))
+					return getDailySudokuResult(date)
+				})
+				: Promise.resolve(null)
+			const [puzzleResult, gameResult] = await Promise.allSettled([puzzleRequest, gameRequest])
 
 			const nextPuzzle = puzzleResult.status === 'fulfilled' ? puzzleResult.value : null
 			const authFailed = gameResult.status === 'rejected' && isAuthError(gameResult.reason)
@@ -193,16 +206,17 @@ export const DailySudokuPage = () => {
 	}, [loadDaily, selectedDate])
 
 	const start = async () => {
-		if (game) {
-			navigate(`/?gameId=${game.id}&daily=1`)
-			return
-		}
 		setStarting(true)
 		setError(null)
 		try {
-			const nextGame = await startDailySudoku(selectedDate)
+			const nextGame = await startDailySudoku(selectedDate, {
+				timerMode: timerMode === 'countdown' ? 'COUNTDOWN' : 'NORMAL',
+				countdownSeconds: timerMode === 'countdown' ? timerSeconds : undefined,
+				maxErrors: errorsLimiterEnabled ? errorsLimit : undefined,
+				errorWarningsEnabled: errorsActive,
+			})
 			setGame(nextGame)
-			navigate(`/?gameId=${nextGame.id}&daily=1`)
+			navigate(`/?daily=${selectedDate}`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
 				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
@@ -221,7 +235,7 @@ export const DailySudokuPage = () => {
 		try {
 			const nextGame = await resetDailySudoku(selectedDate)
 			setGame(nextGame)
-			navigate(`/?gameId=${nextGame.id}&daily=1`)
+			navigate(`/?daily=${selectedDate}`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
 				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
@@ -274,6 +288,7 @@ export const DailySudokuPage = () => {
 				selectedDate={selectedDate}
 			/>
 
+			<div className='daily-content'>
 			{loading && <div className='panel state-panel'>{t('loadingDaily')}</div>}
 
 			{!loading && error && !puzzle && !game && (
@@ -330,6 +345,7 @@ export const DailySudokuPage = () => {
 					)}
 				</div>
 			)}
+			</div>
 
 		</div>
 	)

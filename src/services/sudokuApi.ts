@@ -13,6 +13,10 @@ export interface GameSessionResponse {
 	initialBoard: Board
 	currentBoard: Board
 	status: GameStatus
+	timerMode: 'NORMAL' | 'COUNTDOWN'
+	countdownSeconds: number | null
+	maxErrors: number | null
+	errorWarningsEnabled: boolean
 	notes: Record<string, number[]>
 	errorCells: string[]
 	hintedCells: string[]
@@ -64,6 +68,7 @@ export interface CalendarDayResponse {
 	completedGames: number
 	pendingGames: number
 	dailySudokuCompleted: boolean
+	dailySudokuStarted: boolean
 }
 
 export interface SudokuPuzzleResponse {
@@ -256,6 +261,48 @@ export const updateGameTime = (gameId: number, elapsedSeconds: number) =>
 		body: JSON.stringify({ elapsedSeconds }),
 	})
 
+const gameTimeKey = (gameId: number) => `sudoku-game-time:${gameId}`
+
+export const readStoredGameTime = (gameId: number) => {
+	try {
+		const rawValue = localStorage.getItem(gameTimeKey(gameId))
+		if (rawValue === null) return null
+		const value = Number(rawValue)
+		return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null
+	} catch {
+		return null
+	}
+}
+
+export const storeGameTime = (gameId: number, elapsedSeconds: number) => {
+	try {
+		localStorage.setItem(gameTimeKey(gameId), String(Math.max(0, Math.floor(elapsedSeconds))))
+	} catch {
+		// La copia local es una protección adicional para recargas rápidas.
+	}
+}
+
+export const clearStoredGameTime = (gameId: number) => {
+	try {
+		localStorage.removeItem(gameTimeKey(gameId))
+	} catch {
+		// La limpieza local es opcional.
+	}
+}
+
+export const persistGameTimeOnExit = (gameId: number, elapsedSeconds: number) => {
+	const token = getAuthToken()
+	void fetch(`${API_BASE_URL}/games/${gameId}/time`, {
+		method: 'PATCH',
+		keepalive: true,
+		headers: {
+			'Content-Type': 'application/json',
+			...(token ? { Authorization: `Bearer ${token}` } : {}),
+		},
+		body: JSON.stringify({ elapsedSeconds }),
+	}).catch(() => undefined)
+}
+
 export const resetGame = (gameId: number) =>
 	request<GameSessionResponse>(`/games/${gameId}/reset`, {
 		method: 'POST',
@@ -289,9 +336,26 @@ export const generateSudoku = (subgridSize: number, difficulty: Difficulty) =>
 		body: JSON.stringify({ subgridSize, difficulty: difficultyToApi(difficulty) }),
 	})
 
-export const startDailySudoku = (date: string, userId?: number) => {
+export const startDailySudoku = (
+	date: string,
+	options?: {
+		timerMode?: TimerMode
+		countdownSeconds?: number
+		maxErrors?: number
+		errorWarningsEnabled?: boolean
+	},
+	userId?: number
+) => {
 	const query = userId ? `?userId=${userId}` : ''
-	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, { method: 'POST' })
+	return request<GameSessionResponse>(`/daily-sudoku/${date}/start${query}`, {
+		method: 'POST',
+		body: JSON.stringify({
+			timerMode: options?.timerMode ?? 'NORMAL',
+			countdownSeconds: options?.countdownSeconds,
+			maxErrors: options?.maxErrors,
+			errorWarningsEnabled: options?.errorWarningsEnabled ?? false,
+		}),
+	})
 }
 
 export const getDailySudokuResult = (date: string, userId?: number) => {

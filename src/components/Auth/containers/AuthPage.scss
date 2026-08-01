@@ -637,6 +637,7 @@
 }
 
 .daily-cal-day {
+	position: relative;
 	aspect-ratio: 1;
 	display: grid;
 	place-items: center;
@@ -647,6 +648,25 @@
 	background: transparent;
 	color: var(--fg);
 	transition: background 0.12s;
+}
+
+.daily-cal-day__status {
+	position: absolute;
+	right: 0.28rem;
+	top: 0.22rem;
+}
+
+.daily-cal-day__status.is-started {
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	background: #f3b52b;
+	box-shadow: 0 0 0 2px color-mix(in oklch, var(--bg) 65%, transparent);
+}
+
+.daily-cal-day__status.is-completed {
+	font-size: 0.75rem;
+	font-weight: 900;
 }
 
 .daily-cal-day:hover:not(:disabled) {
@@ -669,6 +689,47 @@
 	font-weight: 600;
 }
 
+.daily-cal-day--started {
+	background: color-mix(in oklch, #e5a524 28%, var(--bg) 72%);
+	border-color: color-mix(in oklch, #e5a524 70%, var(--border) 30%);
+	font-weight: 600;
+}
+
+.daily-cal-day--selected.daily-cal-day {
+	background: var(--color2);
+	color: #fff;
+	box-shadow: 0 0 0 2px color-mix(in oklch, var(--color2) 45%, transparent);
+}
+
+.daily-calendar__legend {
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	margin-top: 0.65rem;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+.daily-calendar__legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.daily-calendar__legend i {
+	width: 0.65rem;
+	height: 0.65rem;
+	border-radius: 50%;
+}
+
+.daily-calendar__legend .is-started {
+	background: #e5a524;
+}
+
+.daily-calendar__legend .is-completed {
+	background: var(--color2);
+}
+
 .daily-cal-day--empty {
 	visibility: hidden;
 	pointer-events: none;
@@ -687,4 +748,8 @@
 .daily-cal-day:disabled {
 	opacity: 0.35;
 	cursor: default;
+}
+
+.daily-content {
+	min-height: 20rem;
 }

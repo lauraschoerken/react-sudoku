@@ -126,7 +126,7 @@ export const DashboardPage = () => {
 					</div>
 					<Link
 						className='btn primary'
-						to={`/?gameId=${lastActiveGame.id}${lastActiveGame.dailyGame ? '&daily=1' : ''}`}>
+						to={lastActiveGame.dailyGame ? '/daily' : `/?gameId=${lastActiveGame.id}`}>
 						{t('continue')}
 					</Link>
 				</div>
@@ -196,7 +196,11 @@ export const DashboardPage = () => {
 						<span className='calendar-day calendar-day--empty' key={`empty-${index}`} />
 					))}
 					{calendar.map((day) => {
-						const active = day.completedGames > 0 || day.pendingGames > 0 || day.dailySudokuCompleted
+						const active =
+							day.completedGames > 0 ||
+							day.pendingGames > 0 ||
+							day.dailySudokuCompleted ||
+							day.dailySudokuStarted
 						return (
 							<button
 								className={`calendar-day ${active ? 'has-activity' : ''} ${day.date === todayKey ? 'is-today' : ''}`}
@@ -207,6 +211,7 @@ export const DashboardPage = () => {
 								{day.completedGames > 0 && <span>{day.completedGames} fin.</span>}
 								{day.pendingGames > 0 && <span>{day.pendingGames} pend.</span>}
 								{day.dailySudokuCompleted && <span>Diario</span>}
+								{day.dailySudokuStarted && <span>Diario iniciado</span>}
 							</button>
 						)
 					})}
@@ -249,11 +254,11 @@ export const DashboardPage = () => {
 									{game.dailyGame ? t('viewDaily') : t('playAgain')}
 								</Link>
 							) : game.status === 'LOST' ? (
-								<Link className='btn compact' to={`/?gameId=${game.id}${game.dailyGame ? '&daily=1' : ''}`}>
+								<Link className='btn compact' to={game.dailyGame ? '/daily' : `/?gameId=${game.id}`}>
 									{t('retry')}
 								</Link>
 							) : (
-								<Link className='btn compact' to={`/?gameId=${game.id}${game.dailyGame ? '&daily=1' : ''}`}>
+								<Link className='btn compact' to={game.dailyGame ? '/daily' : `/?gameId=${game.id}`}>
 									{t('continue')}
 								</Link>
 							)}

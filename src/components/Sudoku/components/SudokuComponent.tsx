@@ -9,6 +9,7 @@ import { useSudoku } from '@/hooks/useSudoku'
 import { type Difficulty, DifficultyOptions } from '@/models/utils/Difficulty'
 import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
 import { useAppSelector } from '@/store/hooks'
+import { clearStoredGameTime, persistGameTimeOnExit, storeGameTime } from '@/services/sudokuApi'
 import { isBoardValidSolution } from '@/utils/appHelpers'
 
 import { ResultOverlay } from '../../elements/Result/ResultOverlayComponent'
@@ -17,6 +18,7 @@ type SudokuComponentProps = {
 	initialGameId?: number
 	skipActiveGameCheck?: boolean
 	dailyMode?: boolean
+	dailyDate?: string
 	onCompleted?: () => void
 }
 
@@ -24,6 +26,7 @@ export default function SudokuComponent({
 	initialGameId: initialGameIdProp,
 	skipActiveGameCheck,
 	dailyMode = false,
+	dailyDate,
 	onCompleted,
 }: SudokuComponentProps = {}) {
 	const navigate = useNavigate()
@@ -41,6 +44,7 @@ export default function SudokuComponent({
 	}, [initialGameIdProp, searchParams])
 	const sudokuOptions = useMemo(
 		() => ({
+			dailyDate,
 			initialGameId,
 			userId: authUser?.id,
 			errorWarningsEnabled: errorsActive,
@@ -50,6 +54,7 @@ export default function SudokuComponent({
 			skipActiveGameCheck: skipActiveGameCheck ?? false,
 		}),
 		[
+			dailyDate,
 			authUser?.id,
 			errorsActive,
 			errorsLimit,
@@ -74,6 +79,8 @@ export default function SudokuComponent({
 		gridSize,
 		backendMistakes,
 		elapsedSeconds,
+		backendTimerMode,
+		backendCountdownSeconds,
 		hintsUsed,
 		requestHint,
 		finishGame,
@@ -93,6 +100,10 @@ export default function SudokuComponent({
 	const [mistakes, setMistakes] = useState(0)
 	const [timerElapsed, setTimerElapsed] = useState(0)
 	const [notesMode, setNotesMode] = useState(false)
+	const effectiveTimerMode = usingBackend ? backendTimerMode : timerMode
+	const effectiveTimerSeconds = usingBackend
+		? (backendCountdownSeconds ?? timerSeconds)
+		: timerSeconds
 	const prevUserGridRef = useRef<number[][] | null>(null)
 	const puzzleSignature = useMemo(() => puzzle.map((row) => row.join(',')).join('|'), [puzzle])
 
@@ -115,9 +126,28 @@ export default function SudokuComponent({
 	const [runFlag, setRunFlag] = useState(true) // controla running en el Timer
 	const isPaused = gameStatus === 'PAUSED'
 	const timerElapsedRef = useRef(0)
+	const finishingPromiseRef = useRef<Promise<unknown> | null>(null)
 	useEffect(() => {
 		timerElapsedRef.current = timerElapsed
-	}, [timerElapsed])
+		if (usingBackend && gameId !== null && !isEnded) storeGameTime(gameId, timerElapsed)
+	}, [gameId, isEnded, timerElapsed, usingBackend])
+
+	useEffect(() => {
+		if (!timerEnabled || !usingBackend || gameId === null || isEnded) return
+		const persistBeforeExit = () => {
+			storeGameTime(gameId, timerElapsedRef.current)
+			persistGameTimeOnExit(gameId, timerElapsedRef.current)
+		}
+		const persistWhenHidden = () => {
+			if (document.visibilityState === 'hidden') persistBeforeExit()
+		}
+		window.addEventListener('pagehide', persistBeforeExit)
+		document.addEventListener('visibilitychange', persistWhenHidden)
+		return () => {
+			window.removeEventListener('pagehide', persistBeforeExit)
+			document.removeEventListener('visibilitychange', persistWhenHidden)
+		}
+	}, [gameId, isEnded, timerEnabled, usingBackend])
 
 	useEffect(() => {
 		if (!timerEnabled || !usingBackend || gameId === null || isEnded || isPaused) return
@@ -149,6 +179,10 @@ export default function SudokuComponent({
 		setLoseReason(null)
 	}, [puzzleSignature])
 
+	useEffect(() => {
+		if (gameId !== null && isEnded) clearStoredGameTime(gameId)
+	}, [gameId, isEnded])
+
 	const displayMistakes = usingBackend ? backendMistakes : mistakes
 	const limitReached = errorsLimiterEnabled && displayMistakes >= errorsLimit
 	const isDailyView = dailyMode || isDailyGame
@@ -164,12 +198,19 @@ export default function SudokuComponent({
 		if (gameStatus === 'LOST') {
 			setIsEnded(true)
 			setShowLose(true)
+			setLoseReason(
+				backendTimerMode === 'countdown' &&
+				backendCountdownSeconds !== undefined &&
+				elapsedSeconds >= backendCountdownSeconds
+					? 'time'
+					: 'errors'
+			)
 			return
 		}
 		if (gameStatus === 'ABANDONED' && !isDailyGame) {
 			void resumeGame()
 		}
-	}, [gameStatus, isDailyGame, resumeGame])
+	}, [backendCountdownSeconds, backendTimerMode, elapsedSeconds, gameStatus, isDailyGame, resumeGame])
 
 	useEffect(() => {
 		const prev = prevUserGridRef.current
@@ -201,7 +242,7 @@ export default function SudokuComponent({
 			setIsEnded(true)
 			setShowLose(true)
 			setLoseReason('errors')
-			void finishGame('LOST', timerElapsed)
+			finishingPromiseRef.current = finishGame('LOST', timerElapsed)
 		}
 	}, [finishGame, limitReached, isEnded])
 
@@ -285,9 +326,14 @@ export default function SudokuComponent({
 	}
 
 	// Reintentar el mismo puzzle + reiniciar reloj
-	const handleRetrySame = () => {
+	const handleRetrySame = async () => {
 		if (!usingBackend || resetting) return
 		setResetting(true)
+		try {
+			await finishingPromiseRef.current
+		} catch {
+			// El reinicio sigue siendo posible aunque fallase la sincronización final.
+		}
 		void resetGame()
 			.then((game) => {
 				if (!game) throw new Error('No se pudo reiniciar la partida')
@@ -339,10 +385,12 @@ export default function SudokuComponent({
 					Estas jugando sin iniciar sesión. Tu progreso no se guardará al cerrar o recargar la página.
 				</div>
 			)}
-			{!isDailyView && <div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
-				<button className='btn primary' onClick={handleNewGame}>
-					{t('newGame')}
-				</button>
+			<div className='sudoku-toolbar' role='toolbar' aria-label='Controles de sudoku'>
+				{!isDailyView && (
+					<button className='btn primary' onClick={handleNewGame}>
+						{t('newGame')}
+					</button>
+				)}
 
 				<button className='btn' onClick={requestHint} disabled={isEnded || isPaused}>
 					{t('hint')}{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
@@ -362,7 +410,7 @@ export default function SudokuComponent({
 					{isPaused ? t('resume') : t('pause')}
 				</button>
 
-				<details className='sudoku-more'>
+				{!isDailyView && <details className='sudoku-more'>
 					<summary className='btn' aria-label='Más opciones' title='Más opciones'>...</summary>
 					<div className='sudoku-more__menu'>
 						<Link className='btn compact' to='/print'>
@@ -375,7 +423,7 @@ export default function SudokuComponent({
 							Ajustes rápidos
 						</Link>
 					</div>
-				</details>
+				</details>}
 
 				{errorsActive && (
 					<div
@@ -395,7 +443,7 @@ export default function SudokuComponent({
 						)}
 					</div>
 				)}
-			</div>}
+			</div>
 
 			{showNewModal && (
 				<div className='sudoku-modal-overlay' role='dialog' aria-modal='true' aria-label='Nuevo sudoku'>
@@ -513,11 +561,17 @@ export default function SudokuComponent({
 						<div className='sudoku-timer-stick'>
 							<DigitalTimer
 								key={resetSignal}
-								mode={timerMode}
-								seconds={timerSeconds} // 👈 usa los segundos desde Redux
+								mode={effectiveTimerMode}
+								seconds={effectiveTimerSeconds}
 								initialSeconds={elapsedSeconds}
-															onTick={setTimerElapsed}
-								forceHours={timerMode === 'normal'}
+								onTick={(shownSeconds) =>
+									setTimerElapsed(
+										effectiveTimerMode === 'countdown'
+											? Math.max(0, effectiveTimerSeconds - shownSeconds)
+											: shownSeconds
+									)
+								}
+								forceHours={effectiveTimerMode === 'normal'}
 								running={runFlag && !isEnded && !isPaused} // se para al terminar la partida
 								resetSignal={resetSignal}
 								onFinish={() => {
@@ -525,7 +579,10 @@ export default function SudokuComponent({
 										setIsEnded(true)
 										setShowLose(true)
 										setLoseReason('time')
-										finishGame('LOST', timerMode === 'countdown' ? timerSeconds : timerElapsed)
+										finishingPromiseRef.current = finishGame(
+											'LOST',
+											effectiveTimerMode === 'countdown' ? effectiveTimerSeconds : timerElapsed
+										)
 									}
 								}}
 							/>

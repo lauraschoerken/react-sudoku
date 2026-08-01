@@ -6,13 +6,8 @@ $border-radius: 0.5rem;
 	display: block;
 	margin-inline: auto;
 	border-radius: 100%;
-	padding: 0.35rem;
-	background: color-mix(in oklch, var(--bg-clock) 82%, var(--color2) 18%);
-	border: 1px solid color-mix(in oklch, var(--fg-clock) 35%, transparent 65%);
-	box-shadow:
-		0 6px 18px color-mix(in oklch, var(--bg) 70%, black 30%),
-		inset 0 0 0 1px color-mix(in oklch, var(--fg-clock) 12%, transparent 88%),
-		0 0 0 0.35rem color-mix(in oklch, var(--bg-clock) 76%, transparent 24%);
+	background: color-mix(in oklch, var(--bg-clock) 94%, var(--color2) 6%);
+	box-shadow: 0 8px 24px color-mix(in oklch, var(--bg) 82%, black 18%);
 }
 .timer-dial svg {
 	display: block;
@@ -25,38 +20,41 @@ $border-radius: 0.5rem;
 	font-family:
 		ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
 		monospace;
-	font-weight: 700;
-	font-size: 1.1rem;
-	padding: 0.35rem 0.65rem;
-	border: 1px solid color-mix(in oklch, var(--fg-clock) 25%, transparent 75%);
-	border-radius: 999px;
-	background: color-mix(in oklch, var(--bg-clock) 82%, transparent 18%);
+	display: grid;
+	gap: 0.12rem;
+	text-align: center;
 	color: var(--fg-clock);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-/* ===== Countdown Dial SVG colors ===== */
-.dial-bezel {
-	fill: var(--fg-clock);
 }
 
-.dial-face {
-	fill: color-mix(in oklch, var(--bg-clock) 88%, var(--color2) 12%);
+.timer-dial__label span {
+	font-family: inherit;
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	opacity: 0.62;
 }
 
-.dial-warning {
-	fill: var(--color2);
-	opacity: 0.88;
+.timer-dial__label strong {
+	font-size: 1.05rem;
 }
 
-.dial-tick {
-	stroke: var(--fg-clock);
-	stroke-width: 2.5;
+.dial-track,
+.dial-progress {
+	fill: none;
+	stroke-width: 7;
+}
+
+.dial-track {
+	stroke: color-mix(in oklch, var(--fg-clock) 14%, transparent);
+}
+
+.dial-progress {
+	stroke: var(--color2);
 	stroke-linecap: round;
-	opacity: 0.85;
-}
-
-.dial-center {
-	fill: var(--fg-clock);
+	transform: rotate(-90deg);
+	transform-origin: 50% 50%;
+	transition: stroke-dashoffset 0.35s linear;
 }
 
 /* ===== LCD (digital) ===== */

@@ -7,6 +7,7 @@ import { createEmptyErrorGrid, validateCell } from '@/utils/Sudoku'
 import {
 	createGame,
 	createGameFromPuzzle,
+	clearStoredGameTime,
 	finishGame,
 	generateSudoku,
 	getActiveGame,
@@ -14,7 +15,9 @@ import {
 	pauseGame,
 	resetGame,
 	requestHint,
+	readStoredGameTime,
 	resumeGame,
+	startDailySudoku,
 	updateCell,
 	updateNotes,
 	updateGameTime,
@@ -22,6 +25,7 @@ import {
 import type { GameStatus } from '@/services/sudokuApi'
 
 interface UseSudokuOptions {
+	dailyDate?: string
 	initialGameId?: number
 	userId?: number
 	errorWarningsEnabled?: boolean
@@ -70,6 +74,8 @@ export const useSudoku = (
 	const [usingBackend, setUsingBackend] = useState(false)
 	const [backendMistakes, setBackendMistakes] = useState(0)
 	const [elapsedSeconds, setElapsedSeconds] = useState(0)
+	const [backendTimerMode, setBackendTimerMode] = useState<'normal' | 'countdown'>('normal')
+	const [backendCountdownSeconds, setBackendCountdownSeconds] = useState<number | undefined>()
 	const [hintsUsed, setHintsUsed] = useState(0)
 	const [notes, setNotes] = useState<Record<string, number[]>>({})
 	const [hintedCells, setHintedCells] = useState<Set<string>>(new Set())
@@ -84,6 +90,16 @@ export const useSudoku = (
 	)
 
 	const applyBackendGame = useCallback((game: Awaited<ReturnType<typeof getGame>>) => {
+		const storedElapsed = readStoredGameTime(game.id)
+		const canRestoreLocalTime =
+			game.started && (game.status === 'IN_PROGRESS' || game.status === 'PAUSED')
+		const restoredElapsed = canRestoreLocalTime
+			? Math.max(game.elapsedSeconds, storedElapsed ?? 0)
+			: game.elapsedSeconds
+		if (!canRestoreLocalTime) clearStoredGameTime(game.id)
+		if (restoredElapsed > game.elapsedSeconds) {
+			void updateGameTime(game.id, restoredElapsed).catch(() => undefined)
+		}
 		suppressNextRegenerateRef.current = true
 		setGameId(game.id)
 		setServerPuzzleId(game.puzzleId)
@@ -95,7 +111,9 @@ export const useSudoku = (
 		setPlayerGrid(game.currentBoard)
 		setErrorGrid(errorGridFromCells(game.errorCells, game.currentBoard.length))
 		setBackendMistakes(game.mistakes)
-		setElapsedSeconds(game.elapsedSeconds)
+		setElapsedSeconds(restoredElapsed)
+		setBackendTimerMode(game.timerMode === 'COUNTDOWN' ? 'countdown' : 'normal')
+		setBackendCountdownSeconds(game.countdownSeconds ?? undefined)
 		setHintsUsed(game.hintsUsed)
 		setNotes(game.notes ?? {})
 		setHintedCells(new Set(game.hintedCells ?? []))
@@ -150,6 +168,8 @@ export const useSudoku = (
 		setErrorGrid(createEmptyErrorGrid(generated.puzzle))
 		setBackendMistakes(0)
 		setElapsedSeconds(0)
+		setBackendTimerMode(options.timerMode ?? 'normal')
+		setBackendCountdownSeconds(options.countdownSeconds)
 		setHintsUsed(0)
 		setNotes({})
 		setHintedCells(new Set())
@@ -162,6 +182,25 @@ export const useSudoku = (
 	const loadInitialGrids = useCallback(() => {
 		if (suppressNextRegenerateRef.current) {
 			suppressNextRegenerateRef.current = false
+			return
+		}
+
+		if (
+			options.dailyDate
+		) {
+			setGameLoading(true)
+			setGameError(null)
+			void startDailySudoku(options.dailyDate, {
+						timerMode: options.timerMode === 'countdown' ? 'COUNTDOWN' : 'NORMAL',
+						countdownSeconds: options.countdownSeconds,
+						maxErrors: options.maxErrors,
+						errorWarningsEnabled: options.errorWarningsEnabled,
+					})
+				.then(applyBackendGame)
+				.catch(() => {
+					setGameLoading(false)
+					setGameError('No se pudo cargar el Sudoku diario de esta fecha.')
+				})
 			return
 		}
 
@@ -208,8 +247,13 @@ export const useSudoku = (
 			})
 	}, [
 		options.userId,
+		options.dailyDate,
 		options.initialGameId,
 		options.skipActiveGameCheck,
+		options.timerMode,
+		options.countdownSeconds,
+		options.maxErrors,
+		options.errorWarningsEnabled,
 		applyBackendGame,
 		applyGeneratedPuzzle,
 		difficulty,
@@ -436,6 +480,7 @@ export const useSudoku = (
 
 			return finishGame(gameId, status, elapsedSeconds)
 				.then((game) => {
+					clearStoredGameTime(game.id)
 					setPlayerGrid(game.currentBoard)
 					setBackendMistakes(game.mistakes)
 					setHintsUsed(game.hintsUsed)
@@ -531,6 +576,8 @@ export const useSudoku = (
 		isDailyGame,
 		backendMistakes,
 		elapsedSeconds,
+		backendTimerMode,
+		backendCountdownSeconds,
 		hintsUsed,
 		requestHint: requestHintValue,
 		finishGame: finishGameValue,

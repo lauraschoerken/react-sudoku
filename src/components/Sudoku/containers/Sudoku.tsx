@@ -11,13 +11,17 @@ import { translateDifficulty, formatDuration } from '@/utils/appHelpers'
 export const Sudoku = () => {
 	const user = useAppSelector((s) => s.auth.user)
 	const [searchParams] = useSearchParams()
+	const dailyDate = useMemo(() => {
+		const value = searchParams.get('daily')
+		return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined
+	}, [searchParams])
 	const requestedGameId = useMemo(() => {
 		const raw = searchParams.get('gameId')
 		if (!raw) return undefined
 		const parsed = Number(raw)
 		return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 	}, [searchParams])
-	const dailyMode = searchParams.get('daily') === '1'
+	const dailyMode = dailyDate !== undefined
 	const newGameRequested = searchParams.get('new') === '1'
 	const [resumeGameId, setResumeGameId] = useState<number | null>(null)
 	const [resumeInfo, setResumeInfo] = useState<{
@@ -29,10 +33,12 @@ export const Sudoku = () => {
 	const [showModal, setShowModal] = useState(false)
 	const [activeGameId, setActiveGameId] = useState<number | undefined>(undefined)
 	const [skipActiveCheck, setSkipActiveCheck] = useState(false)
-	const [checked, setChecked] = useState(!user || requestedGameId !== undefined || newGameRequested)
+	const [checked, setChecked] = useState(
+		!user || requestedGameId !== undefined || dailyMode || newGameRequested
+	)
 
 	useEffect(() => {
-		if (!user || requestedGameId !== undefined || newGameRequested) {
+		if (!user || requestedGameId !== undefined || dailyMode || newGameRequested) {
 			setChecked(true)
 			return
 		}
@@ -57,7 +63,7 @@ export const Sudoku = () => {
 			.finally(() => setChecked(true))
 		// Only run once when user changes
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [newGameRequested, requestedGameId, user?.id])
+	}, [dailyMode, newGameRequested, requestedGameId, user?.id])
 
 	const handleResume = () => {
 		if (resumeGameId) setActiveGameId(resumeGameId)
@@ -104,6 +110,7 @@ export const Sudoku = () => {
 
 			{!showModal && (
 				<SudokuComponent
+					dailyDate={dailyDate}
 					dailyMode={dailyMode}
 					initialGameId={requestedGameId ?? activeGameId}
 					skipActiveGameCheck={skipActiveCheck || newGameRequested}
