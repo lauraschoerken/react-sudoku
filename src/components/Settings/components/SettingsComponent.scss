@@ -297,4 +297,22 @@
 	.mode-picker {
 		grid-template-columns: 1fr;
 	}
+
+	.settings-appearance {
+		grid-template-columns: 1fr;
+	}
+
+	.settings-top {
+		grid-column: auto;
+		justify-content: flex-start;
+		flex-wrap: wrap;
+	}
+
+	.number-field {
+		grid-template-columns: 1fr;
+	}
+
+	.switch-row {
+		align-items: flex-start;
+	}
 }

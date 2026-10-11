@@ -40,6 +40,18 @@
 	justify-content: flex-end;
 }
 
+.nav__desktop,
+.nav__utilities {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.mobile-nav-toggle,
+.mobile-nav-panel {
+	display: none;
+}
+
 .link,
 .link-active,
 .nav-more summary {
@@ -120,27 +132,110 @@
 	opacity: 0.8;
 }
 
-//TODO hay que hacer un bocadillo para móvil
-@media (max-width: 520px) {
+@media (max-width: 760px) {
 	.header__inner {
-		align-items: flex-start;
-		flex-direction: column;
+		min-height: 3.5rem;
+		padding: 0.5rem 0.6rem;
+		gap: 0.45rem;
 	}
 
 	.nav {
-		width: 100%;
+		width: auto;
+		flex: 1 1 auto;
 		flex-wrap: nowrap;
-		overflow-x: auto;
-		gap: 0.75rem;
-		padding-bottom: 0.25rem;
-		-webkit-overflow-scrolling: touch;
+		justify-content: flex-end;
+		overflow: visible;
+		gap: 0.3rem;
 	}
-	.nav::-webkit-scrollbar {
-		height: 6px;
+
+	.nav__desktop {
+		display: none;
 	}
-	.nav::-webkit-scrollbar-thumb {
-		background: color-mix(in oklch, var(--fg) 25%, transparent);
-		border-radius: 999px;
+
+	.brand {
+		padding-inline: 0.25rem;
+		font-size: 0.95rem;
+	}
+
+	.nav .cselect__button {
+		width: 2.75rem;
+		height: 2.75rem;
+		min-height: 2.75rem;
+		justify-content: center;
+		padding: 0;
+	}
+
+	.nav .cselect__icon {
+		margin: 0;
+	}
+
+	.nav .cselect__value,
+	.nav .cselect__chevron {
+		display: none;
+	}
+
+	.nav .cselect__list {
+		left: auto;
+		right: 0;
+		width: max-content;
+		min-width: 8rem;
+	}
+
+	.nav .theme-toggle {
+		width: 2.75rem;
+		height: 2.75rem;
+	}
+
+	.mobile-nav-toggle {
+		display: grid;
+		place-items: center;
+		width: 2.75rem;
+		height: 2.75rem;
+		padding: 0;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--header);
+		color: var(--fg);
+		font: inherit;
+		font-size: 1.35rem;
+		cursor: pointer;
+	}
+
+	.mobile-nav-panel {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 100%;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.4rem;
+		padding: 0.6rem;
+		border-top: 1px solid var(--border);
+		border-bottom: 1px solid var(--border);
+		background: var(--header);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.mobile-nav-panel .link,
+	.mobile-nav-panel .link-active {
+		display: flex;
+		align-items: center;
+		min-height: 2.75rem;
+		padding: 0.65rem 0.75rem;
+		line-height: 1.2;
+	}
+}
+
+@media (max-width: 360px) {
+	.brand {
+		max-width: 5.5rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.nav__utilities {
+		gap: 0.25rem;
 	}
 }
 

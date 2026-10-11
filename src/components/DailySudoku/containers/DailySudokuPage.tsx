@@ -223,7 +223,7 @@ export const DailySudokuPage = () => {
 			}
 
 			if (authFailed) {
-				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
+				setError('La sesión ha caducado. Vuelve a iniciar sesión.')
 			} else if (!nextPuzzle && !nextGame && !notStarted) {
 				setError('No se pudo cargar el Sudoku diario. Revisa la conexion e intentalo de nuevo.')
 			}
@@ -255,7 +255,7 @@ export const DailySudokuPage = () => {
 			navigate(`/?daily=${selectedDate}`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
-				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
+				setError('La sesión ha caducado. Vuelve a iniciar sesión.')
 				return
 			}
 			setError('No se pudo iniciar el Sudoku diario.')
@@ -274,7 +274,7 @@ export const DailySudokuPage = () => {
 			navigate(`/?daily=${selectedDate}`)
 		} catch (requestError) {
 			if (isAuthError(requestError)) {
-				setError('El servidor no ha podido validar la sesión. Tu usuario sigue conectado.')
+				setError('La sesión ha caducado. Vuelve a iniciar sesión.')
 				return
 			}
 			setError('No se pudo reiniciar el Sudoku diario.')

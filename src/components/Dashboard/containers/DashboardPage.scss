@@ -33,6 +33,10 @@
 	background: color-mix(in oklch, var(--fg) 7%, var(--bg) 93%);
 }
 
+.stats-period-tabs > button {
+	min-width: 0;
+}
+
 .stats-period-tabs button {
 	padding: 0.55rem 0.85rem;
 	border: 0;
@@ -432,6 +436,13 @@
 }
 
 @media (max-width: 650px) {
+	.stats-hero,
+	.stats-chart-card > header,
+	.stats-history > header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
 	.stats-filter,
 	.stats-date-range { align-items: stretch; flex-direction: column; }
 	.stats-period-nav { width: 100%; min-width: 0; grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem; }
@@ -440,4 +451,51 @@
 	.stats-period-tabs button { flex: 1; }
 	.stats-history-row { grid-template-columns: minmax(0, 1fr) auto; gap: 0.6rem; }
 	.history-status { display: none; }
+	.chart-legend { justify-content: flex-start; }
+	.stats-period-nav button,
+	.history-delete {
+		width: 2.75rem;
+		height: 2.75rem;
+	}
+}
+
+@media (max-width: 480px) {
+	.stats-period-tabs {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		width: 100%;
+	}
+
+	.stats-period-tabs button,
+	.stats-period-nav button,
+	.history-actions .btn {
+		min-height: 2.75rem;
+	}
+
+	.stats-metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.success-card {
+		grid-template-columns: 1fr;
+		justify-items: center;
+		text-align: center;
+	}
+
+	.stats-history-row {
+		grid-template-columns: 1fr;
+	}
+
+	.history-actions {
+		width: 100%;
+		grid-template-columns: minmax(0, 1fr) 2.75rem;
+	}
+
+	.activity-chart--month {
+		overflow-x: auto;
+	}
+
+	.activity-chart--month .activity-column {
+		flex: 0 0 1.2rem;
+	}
 }

@@ -16,17 +16,25 @@ export const Header = () => {
 	const location = useLocation()
 	const navRef = useRef<HTMLElement>(null)
 	const [openMenu, setOpenMenu] = useState<'tools' | 'user' | null>(null)
+	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
 	useEffect(() => {
 		setOpenMenu(null)
+		setMobileMenuOpen(false)
 	}, [location.pathname])
 
 	useEffect(() => {
 		const closeOutside = (event: PointerEvent) => {
-			if (!navRef.current?.contains(event.target as Node)) setOpenMenu(null)
+			if (!navRef.current?.contains(event.target as Node)) {
+				setOpenMenu(null)
+				setMobileMenuOpen(false)
+			}
 		}
 		const closeOnEscape = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') setOpenMenu(null)
+			if (event.key === 'Escape') {
+				setOpenMenu(null)
+				setMobileMenuOpen(false)
+			}
 		}
 		document.addEventListener('pointerdown', closeOutside)
 		document.addEventListener('keydown', closeOnEscape)
@@ -43,6 +51,7 @@ export const Header = () => {
 					{APP_NAME}
 				</Link>
 				<nav className='nav' ref={navRef}>
+					<div className='nav__desktop'>
 					<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>
 						{t('sudoku')}
 					</NavLink>
@@ -102,9 +111,34 @@ export const Header = () => {
 							Iniciar sesión
 						</NavLink>
 					)}
+					</div>
 
-					<ThemeToggle />
-					<LanguageSelect />
+					<div className='nav__utilities'>
+						<ThemeToggle />
+						<LanguageSelect />
+						<button
+							aria-expanded={mobileMenuOpen}
+							aria-label={mobileMenuOpen ? 'Cerrar navegación' : 'Abrir navegación'}
+							className='mobile-nav-toggle'
+							onClick={() => setMobileMenuOpen((current) => !current)}
+							type='button'>
+							<span aria-hidden='true'>{mobileMenuOpen ? '×' : '☰'}</span>
+						</button>
+					</div>
+
+					{mobileMenuOpen && (
+						<div className='mobile-nav-panel'>
+							<NavLink to='/' end className={({ isActive }) => (isActive ? active : 'link')}>{t('sudoku')}</NavLink>
+							<NavLink to='/explication' className={({ isActive }) => (isActive ? active : 'link')}>{t('explication')}</NavLink>
+							{user ? <>
+								<NavLink to='/daily' className={({ isActive }) => (isActive ? active : 'link')}>{t('daily', { ns: 'common' })}</NavLink>
+								<NavLink to='/dashboard' className={({ isActive }) => (isActive ? active : 'link')}>{t('stats', { ns: 'common' })}</NavLink>
+								<NavLink to='/print' className={({ isActive }) => (isActive ? active : 'link')}>{t('print', { ns: 'common' })}</NavLink>
+								<NavLink to='/settings' className={({ isActive }) => (isActive ? active : 'link')}>{t('settings', { ns: 'layout' })}</NavLink>
+								<NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>{t('account', { ns: 'common' })}</NavLink>
+							</> : <NavLink to='/account' className={({ isActive }) => (isActive ? active : 'link')}>Iniciar sesión</NavLink>}
+						</div>
+					)}
 				</nav>
 			</div>
 		</header>

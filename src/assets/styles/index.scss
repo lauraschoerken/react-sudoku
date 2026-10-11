@@ -26,6 +26,40 @@ body {
 	overflow-x: hidden;
 }
 
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+	max-width: 100%;
+}
+
+:where(p, h1, h2, h3, a, button, label, span) {
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+	input,
+	select,
+	textarea {
+		font-size: 1rem;
+	}
+}
+
+@media (pointer: coarse) {
+	button,
+	[role='button'],
+	a {
+		-webkit-tap-highlight-color: transparent;
+	}
+}
+
 body {
 	background: var(--bg);
 	color: var(--fg);

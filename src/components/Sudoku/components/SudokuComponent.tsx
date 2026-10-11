@@ -115,6 +115,7 @@ export default function SudokuComponent({
 	const [showWin, setShowWin] = useState(false)
 	const [showLose, setShowLose] = useState(false)
 	const [loseReason, setLoseReason] = useState<'time' | 'errors' | null>(null)
+	const [retryError, setRetryError] = useState<string | null>(null)
 	const [resetting, setResetting] = useState(false)
 	const [abandoningDaily, setAbandoningDaily] = useState(false)
 	const [showNewModal, setShowNewModal] = useState(false)
@@ -129,6 +130,9 @@ export default function SudokuComponent({
 	const timerElapsedRef = useRef(0)
 	const finishingPromiseRef = useRef<Promise<unknown> | null>(null)
 	const settingsSyncRef = useRef('')
+	useEffect(() => {
+		if (!timerEnabled && isPaused) resumeGame()
+	}, [isPaused, resumeGame, timerEnabled])
 	useEffect(() => {
 		timerElapsedRef.current = timerElapsed
 		if (usingBackend && gameId !== null && !isEnded) storeGameTime(gameId, timerElapsed)
@@ -208,6 +212,7 @@ export default function SudokuComponent({
 		setShowWin(false)
 		setShowLose(false)
 		setLoseReason(null)
+		setRetryError(null)
 	}, [puzzleSignature])
 
 	useEffect(() => {
@@ -284,13 +289,80 @@ export default function SudokuComponent({
 		rowIndex: null,
 		colIndex: null,
 	})
+	const [heldNumber, setHeldNumber] = useState<number | null>(null)
+	const [isCoarsePointer, setIsCoarsePointer] = useState(false)
+	const longPressTimerRef = useRef<number | null>(null)
+	const longPressTriggeredRef = useRef(false)
+
+	useEffect(() => {
+		const media = window.matchMedia('(pointer: coarse)')
+		const updatePointer = () => setIsCoarsePointer(media.matches)
+		updatePointer()
+		media.addEventListener('change', updatePointer)
+		return () => media.removeEventListener('change', updatePointer)
+	}, [])
+
+	useEffect(() => {
+		setHeldNumber(null)
+	}, [puzzleSignature])
 
 	const selectedValue = useMemo(() => {
+		if (heldNumber !== null) return heldNumber
 		if (selectedCell.rowIndex === null || selectedCell.colIndex === null) return 0
 		const r = selectedCell.rowIndex
 		const c = selectedCell.colIndex
 		return puzzle[r][c] !== 0 ? puzzle[r][c] : userGrid[r][c] || 0
-	}, [selectedCell, puzzle, userGrid])
+	}, [heldNumber, selectedCell, puzzle, userGrid])
+
+	const applyNumberToCell = useCallback((rowIndex: number, colIndex: number, value: number | null) => {
+		if (isEnded || isPaused || limitReached) return
+		if (puzzle[rowIndex][colIndex] !== 0 || hintedCells.has(`${rowIndex}:${colIndex}`)) return
+		if (value === null) {
+			setCell(rowIndex, colIndex, null, timerElapsed)
+			return
+		}
+		if (notesMode) toggleNote(rowIndex, colIndex, value)
+		else setCell(rowIndex, colIndex, value, timerElapsed)
+	}, [hintedCells, isEnded, isPaused, limitReached, notesMode, puzzle, setCell, timerElapsed, toggleNote])
+
+	const selectCell = useCallback((rowIndex: number, colIndex: number) => {
+		setSelectedCell({ rowIndex, colIndex })
+		if (heldNumber !== null) applyNumberToCell(rowIndex, colIndex, heldNumber)
+	}, [applyNumberToCell, heldNumber])
+
+	const clearLongPressTimer = useCallback(() => {
+		if (longPressTimerRef.current !== null) window.clearTimeout(longPressTimerRef.current)
+		longPressTimerRef.current = null
+	}, [])
+
+	useEffect(() => () => clearLongPressTimer(), [clearLongPressTimer])
+
+	const beginNumberPress = useCallback((value: number) => {
+		longPressTriggeredRef.current = false
+		clearLongPressTimer()
+		longPressTimerRef.current = window.setTimeout(() => {
+			longPressTriggeredRef.current = true
+			setHeldNumber((current) => current === value ? null : value)
+			if ('vibrate' in navigator) navigator.vibrate(25)
+		}, 450)
+	}, [clearLongPressTimer])
+
+	const tapNumber = useCallback((value: number) => {
+		clearLongPressTimer()
+		if (longPressTriggeredRef.current) {
+			longPressTriggeredRef.current = false
+			return
+		}
+		setHeldNumber(null)
+		if (selectedCell.rowIndex === null || selectedCell.colIndex === null) return
+		applyNumberToCell(selectedCell.rowIndex, selectedCell.colIndex, value)
+	}, [applyNumberToCell, clearLongPressTimer, selectedCell])
+
+	const eraseSelectedCell = useCallback(() => {
+		setHeldNumber(null)
+		if (selectedCell.rowIndex === null || selectedCell.colIndex === null) return
+		applyNumberToCell(selectedCell.rowIndex, selectedCell.colIndex, null)
+	}, [applyNumberToCell, selectedCell])
 
 	const handleCellChange = useCallback(
 		(rowIndex: number, colIndex: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,20 +371,15 @@ export default function SudokuComponent({
 
 			const raw = e.target.value
 			if (raw === '') {
-				setCell(rowIndex, colIndex, null, timerElapsed)
+				applyNumberToCell(rowIndex, colIndex, null)
 				return
 			}
 			const n = Number(raw)
 			if (!Number.isInteger(n)) return
 			if (n < 1 || n > gridSize) return
-			if (notesMode) {
-				toggleNote(rowIndex, colIndex, n)
-				e.currentTarget.value = ''
-				return
-			}
-			setCell(rowIndex, colIndex, n, timerElapsed)
+			applyNumberToCell(rowIndex, colIndex, n)
 		},
-		[setCell, gridSize, limitReached, isEnded, isPaused, notesMode, toggleNote, timerElapsed]
+		[applyNumberToCell, gridSize, limitReached, isEnded, isPaused]
 	)
 
 	// Detectar victoria → finalizar partida y abrir overlay
@@ -358,16 +425,17 @@ export default function SudokuComponent({
 
 	// Reintentar el mismo puzzle + reiniciar reloj
 	const handleRetrySame = async () => {
-		if (!usingBackend || resetting) return
+		if (resetting) return
 		setResetting(true)
+		setRetryError(null)
 		try {
 			await finishingPromiseRef.current
 		} catch {
 			// El reinicio sigue siendo posible aunque fallase la sincronización final.
 		}
 		void resetGame()
-			.then((game) => {
-				if (!game) throw new Error('No se pudo reiniciar la partida')
+			.then((resetSuccessful) => {
+				if (!resetSuccessful) throw new Error('No se pudo reiniciar la partida')
 				setMistakes(0)
 				setSelectedCell({ rowIndex: null, colIndex: null })
 				setIsEnded(false)
@@ -376,7 +444,10 @@ export default function SudokuComponent({
 				setLoseReason(null)
 				restartTimer()
 			})
-			.catch(() => setShowLose(true))
+			.catch(() => {
+				setRetryError('No se pudo reiniciar la partida. Comprueba tu sesión y vuelve a intentarlo.')
+				setShowLose(true)
+			})
 			.finally(() => setResetting(false))
 	}
 
@@ -434,12 +505,12 @@ export default function SudokuComponent({
 					{t('notes')}
 				</button>
 
-				<button
+				{timerEnabled && <button
 					className={`btn ${isPaused ? 'active' : ''}`}
 					onClick={isPaused ? resumeGame : () => pauseGame(timerElapsed)}
 					disabled={isEnded}>
 					{isPaused ? t('resume') : t('pause')}
-				</button>
+				</button>}
 
 				{!isDailyView && <details className='sudoku-more'>
 					<summary className='btn' aria-label='Más opciones' title='Más opciones'>...</summary>
@@ -513,7 +584,7 @@ export default function SudokuComponent({
 			<div className={`sudoku-stage ${isPaused ? 'sudoku-stage--paused' : ''}`}>
 				<div className='sudoku-boardbox'>
 					<div className='sudoku-wrap'>
-						<table className='sudoku' data-subgrid={subgridSize}>
+						<table className='sudoku' data-subgrid={subgridSize} style={{ '--grid-size': gridSize } as React.CSSProperties}>
 							<tbody>
 								{puzzle.map((row, rowIndex) => (
 									<tr key={rowIndex}>
@@ -531,6 +602,7 @@ export default function SudokuComponent({
 												(rowIndex === selectedCell.rowIndex || colIndex === selectedCell.colIndex)
 
 											const isSameNumberHighlighted = selectedValue && cellValue === selectedValue
+											const isSelected = rowIndex === selectedCell.rowIndex && colIndex === selectedCell.colIndex
 
 											const cellClass = [
 												isGiven ? 'given' : '',
@@ -538,6 +610,7 @@ export default function SudokuComponent({
 												notesMode ? 'notes-mode' : '',
 												isInSameRowOrCol ? 'in-plus' : '',
 												isSameNumberHighlighted ? 'same-number' : '',
+												isSelected ? 'selected-cell' : '',
 											]
 												.filter(Boolean)
 												.join(' ')
@@ -545,8 +618,17 @@ export default function SudokuComponent({
 											return (
 												<td
 													key={colIndex}
-													onClick={() => setSelectedCell({ rowIndex, colIndex })}
+													onClick={() => selectCell(rowIndex, colIndex)}
+												onContextMenu={(event) => {
+													if (cellValue) event.preventDefault()
+												}}
 													onFocus={() => setSelectedCell({ rowIndex, colIndex })}
+												onPointerCancel={clearLongPressTimer}
+												onPointerDown={() => {
+													if (cellValue) beginNumberPress(cellValue)
+												}}
+												onPointerLeave={clearLongPressTimer}
+												onPointerUp={clearLongPressTimer}
 													tabIndex={0}
 													className={cellClass}>
 													{isGiven ? (
@@ -568,12 +650,13 @@ export default function SudokuComponent({
 															)}
 															<input
 																aria-label={`fila ${rowIndex + 1}, columna ${colIndex + 1}`}
-																inputMode='numeric'
+																inputMode={isCoarsePointer ? 'none' : 'numeric'}
 																type='number'
 																min={1}
 																max={gridSize}
-										value={playerValue === 0 ? '' : playerValue}
+																value={playerValue === 0 ? '' : playerValue}
 																onChange={handleCellChange(rowIndex, colIndex)}
+																readOnly={isCoarsePointer}
 																className={hasError ? 'input-error' : undefined}
 																disabled={isEnded || isPaused} // bloqueado si la partida terminó
 															/>
@@ -586,6 +669,34 @@ export default function SudokuComponent({
 								))}
 							</tbody>
 						</table>
+					</div>
+
+					<div className={`sudoku-keypad ${heldNumber !== null ? 'has-held-number' : ''}`} aria-label='Teclado numérico del Sudoku'>
+						<div className='sudoku-keypad__numbers' data-grid-size={gridSize} style={{ gridTemplateColumns: `repeat(${gridSize > 9 ? 8 : gridSize}, minmax(0, 1fr))` }}>
+							{Array.from({ length: gridSize }, (_, index) => index + 1).map((value) => (
+								<button
+									aria-label={heldNumber === value ? `${value} fijado. Mantén pulsado para soltarlo` : `Número ${value}. Mantén pulsado para fijarlo`}
+									aria-pressed={heldNumber === value}
+									className={heldNumber === value ? 'is-held' : ''}
+									disabled={isEnded || isPaused}
+									key={value}
+									onClick={() => tapNumber(value)}
+									onContextMenu={(event) => event.preventDefault()}
+									onPointerCancel={clearLongPressTimer}
+									onPointerDown={(event) => {
+										event.currentTarget.setPointerCapture(event.pointerId)
+										beginNumberPress(value)
+									}}
+									onPointerUp={clearLongPressTimer}
+									type='button'>
+									{value}
+								</button>
+							))}
+						</div>
+						<button className='sudoku-keypad__erase' disabled={isEnded || isPaused} onClick={eraseSelectedCell} type='button' aria-label='Borrar casilla seleccionada'>⌫</button>
+						<div className='sudoku-keypad__status' role='status'>
+							{heldNumber !== null ? <><strong>{heldNumber} en la mano</strong><span>Toca las casillas para añadirlo.</span><button onClick={() => setHeldNumber(null)} type='button'>Soltar</button></> : <span>Mantén pulsado un número del tablero o del teclado para llevarlo.</span>}
+						</div>
 					</div>
 
 					{timerEnabled && (
@@ -660,8 +771,11 @@ export default function SudokuComponent({
 				isOpen={showLose}
 				variant='lose'
 				loseReason={loseReason ?? undefined}
+				message={retryError ?? undefined}
 				onClose={() => setShowLose(false)}
 				onPrimary={handleRetrySame}
+				primaryDisabled={resetting}
+				primaryLabel={resetting ? 'Reiniciando...' : undefined}
 			/>
 		</div>
 	)

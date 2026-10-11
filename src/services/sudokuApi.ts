@@ -33,6 +33,7 @@ export interface UserResponse {
 	id: number
 	username: string
 	email: string
+	avatar?: string | null
 }
 
 export interface AuthResponse {
@@ -101,6 +102,7 @@ export interface ValidateCellResponse {
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
+export const AUTH_INVALID_EVENT = 'sudoku:auth-invalid'
 
 let runtimeAuthToken: string | null | undefined
 
@@ -151,7 +153,11 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
 	})
 
 	if (!response.ok) {
-		throw new SudokuApiError(response.status)
+		const error = new SudokuApiError(response.status)
+		if (token && isAuthError(error) && typeof window !== 'undefined') {
+			window.dispatchEvent(new CustomEvent(AUTH_INVALID_EVENT, { detail: { status: response.status } }))
+		}
+		throw error
 	}
 	if (response.status === 204) return undefined as T
 
@@ -342,6 +348,12 @@ export const changePassword = (currentPassword: string, newPassword: string) =>
 	request<void>('/auth/me/password', {
 		method: 'PATCH',
 		body: JSON.stringify({ currentPassword, newPassword }),
+	})
+
+export const updateProfile = (username: string, email: string, avatar?: string | null) =>
+	request<AuthResponse>('/auth/me/profile', {
+		method: 'PATCH',
+		body: JSON.stringify({ username, email, avatar }),
 	})
 
 export const getTodayDailySudoku = () => request<SudokuPuzzleResponse>('/daily-sudoku/today')

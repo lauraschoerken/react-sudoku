@@ -8,15 +8,21 @@ import { type SubgridSize, SubgridSizeOptions } from '@/models/utils/Size'
 import type { SudokuPuzzleResponse } from '@/services/sudokuApi'
 import { generatePrintPack } from '@/services/sudokuApi'
 
-const PrintableBoard = ({ board, title }: { board: number[][]; title: string }) => {
+const PrintableBoard = ({ board, subgridSize, title }: { board: number[][]; subgridSize: number; title: string }) => {
 	const size = board.length
 	return (
 		<div className='print-card'>
 			<h3>{title}</h3>
 			<div className='print-board' style={{ gridTemplateColumns: `repeat(${size}, 1fr)` }}>
-				{board.flat().map((value, index) => (
-					<span key={index}>{value !== 0 ? value : ''}</span>
-				))}
+				{board.flat().map((value, index) => {
+					const row = Math.floor(index / size)
+					const column = index % size
+					const className = [
+						column > 0 && column % subgridSize === 0 ? 'print-cell--block-left' : '',
+						row > 0 && row % subgridSize === 0 ? 'print-cell--block-top' : '',
+					].filter(Boolean).join(' ')
+					return <span className={className} key={index}>{value !== 0 ? value : ''}</span>
+				})}
 			</div>
 		</div>
 	)
@@ -130,15 +136,29 @@ export const PrintPage = () => {
 				</div>
 			)}
 
-			<div className='print-pack'>
-				{pack.map((puzzle, index) => (
-					<div className='print-sheet' key={puzzle.id}>
-						<PrintableBoard board={puzzle.puzzle} title={`Sudoku ${index + 1}`} />
-						{puzzle.solution && (
-							<PrintableBoard board={puzzle.solution} title={`Solución ${index + 1}`} />
-						)}
+			<div className='print-document'>
+				{pack.length > 0 && <section className='print-group' aria-label='Sudokus para imprimir'>
+					<h2 className='print-group__title no-print'>Sudokus</h2>
+					<div className='print-pack'>
+						{pack.map((puzzle, index) => (
+							<article className='print-sheet' key={`puzzle-${puzzle.id}`}>
+								<span className='print-sheet__kind'>Sudoku</span>
+								<PrintableBoard board={puzzle.puzzle} subgridSize={puzzle.subgridSize} title={`Sudoku ${index + 1}`} />
+							</article>
+						))}
 					</div>
-				))}
+				</section>}
+				{includeSolutions && pack.some((puzzle) => puzzle.solution) && <section className='print-group print-group--solutions' aria-label='Soluciones para imprimir'>
+					<h2 className='print-group__title no-print'>Soluciones</h2>
+					<div className='print-pack'>
+						{pack.map((puzzle, index) => puzzle.solution && (
+							<article className='print-sheet print-sheet--solution' key={`solution-${puzzle.id}`}>
+								<span className='print-sheet__kind'>Solución</span>
+								<PrintableBoard board={puzzle.solution} subgridSize={puzzle.subgridSize} title={`Solución ${index + 1}`} />
+							</article>
+						))}
+					</div>
+				</section>}
 			</div>
 		</div>
 	)

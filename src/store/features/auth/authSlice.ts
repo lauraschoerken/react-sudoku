@@ -5,7 +5,7 @@ export interface AuthUser {
 	id: number
 	username: string
 	email: string
-	avatar?: string
+	avatar?: string | null
 }
 
 interface AuthState {

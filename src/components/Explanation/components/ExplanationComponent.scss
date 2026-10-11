@@ -1,7 +1,7 @@
 .explanation {
 	max-width: 72rem;
 	margin: 0 auto;
-	padding: 1.5rem;
+	padding: clamp(0.75rem, 2.5vw, 1.5rem);
 	color: var(--fg);
 }
 
@@ -107,5 +107,26 @@
 	.explanation-hero,
 	.explanation-grid {
 		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 420px) {
+	.explanation-hero {
+		gap: 1rem;
+		padding-top: 0.25rem;
+	}
+
+	.explanation-hero h1 {
+		font-size: clamp(1.6rem, 9vw, 2rem);
+	}
+
+	.example-board--9 {
+		grid-template-columns: repeat(9, minmax(0, 1fr));
+		width: 100%;
+	}
+
+	.explanation-card,
+	.explanation-section {
+		padding: 0.9rem;
 	}
 }

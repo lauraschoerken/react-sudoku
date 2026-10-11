@@ -6,13 +6,16 @@
 	align-items: center;
 	justify-content: center;
 	z-index: 1000;
+	padding: 1rem;
 
 	.result-card {
 		background: var(--bg);
 		border-radius: 1rem;
 		padding: 2rem 2.5rem;
 		max-width: 400px;
-		width: 90%;
+		width: min(100%, 400px);
+		max-height: calc(100dvh - 2rem);
+		overflow-y: auto;
 		text-align: center;
 		box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.4);
 		animation: pop-in 0.3s ease;
@@ -81,6 +84,21 @@
 				}
 			}
 		}
+	}
+}
+
+@media (max-width: 420px) {
+	.result-overlay .result-card {
+		padding: 1.25rem 1rem;
+	}
+
+	.result-overlay .result-actions {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.result-overlay .result-actions .btn {
+		min-height: 2.75rem;
 	}
 }
 

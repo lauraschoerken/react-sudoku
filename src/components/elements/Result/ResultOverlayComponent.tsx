@@ -19,6 +19,7 @@ export type ResultOverlayProps = {
 	message?: string
 	closeLabel?: string
 	primaryLabel?: string
+	primaryDisabled?: boolean
 	ariaLabel?: string
 	emoji?: string
 
@@ -62,6 +63,7 @@ export const ResultOverlay = ({
 	message,
 	closeLabel,
 	primaryLabel,
+	primaryDisabled = false,
 	ariaLabel,
 	emoji,
 
@@ -176,7 +178,7 @@ export const ResultOverlay = ({
 					<button className='btn' onClick={onClose}>
 						{finalCloseLabel}
 					</button>
-					<button className='btn primary' onClick={onPrimary}>
+					<button className='btn primary' disabled={primaryDisabled} onClick={onPrimary}>
 						{finalPrimaryLabel}
 					</button>
 				</div>

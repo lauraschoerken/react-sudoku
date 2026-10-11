@@ -1,11 +1,11 @@
 import './AuthPage.scss'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { changePassword, getCurrentUser, login, register } from '@/services/sudokuApi'
-import { setAvatar, setSession, clearSession } from '@/store/features/auth/authSlice'
+import { changePassword, getCurrentUser, login, register, updateProfile } from '@/services/sudokuApi'
+import { setSession, clearSession } from '@/store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
 export const AuthPage = () => {
@@ -26,6 +26,17 @@ export const AuthPage = () => {
 	const [changingPassword, setChangingPassword] = useState(false)
 	const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
 	const accountUser = session.user
+	const [profileUsername, setProfileUsername] = useState(accountUser?.username ?? '')
+	const [profileEmail, setProfileEmail] = useState(accountUser?.email ?? '')
+	const [profileAvatar, setProfileAvatar] = useState<string | null>(accountUser?.avatar ?? null)
+	const [savingProfile, setSavingProfile] = useState(false)
+	const [profileSuccess, setProfileSuccess] = useState<string | null>(null)
+
+	useEffect(() => {
+		setProfileUsername(accountUser?.username ?? '')
+		setProfileEmail(accountUser?.email ?? '')
+		setProfileAvatar(accountUser?.avatar ?? null)
+	}, [accountUser])
 
 	const onLogin = async (event: FormEvent) => {
 		event.preventDefault()
@@ -83,6 +94,22 @@ export const AuthPage = () => {
 		}
 	}
 
+	const onUpdateProfile = async (event: FormEvent) => {
+		event.preventDefault()
+		setError(null)
+		setProfileSuccess(null)
+		setSavingProfile(true)
+		try {
+			dispatch(setSession(await updateProfile(profileUsername, profileEmail, profileAvatar)))
+			setProfileSuccess('Perfil guardado correctamente.')
+		} catch (requestError) {
+			const status = (requestError as { status?: number }).status
+			setError(status === 409 ? 'El usuario o el correo ya están en uso.' : 'No se pudo guardar el perfil.')
+		} finally {
+			setSavingProfile(false)
+		}
+	}
+
 	return (
 		<div className='auth-page'>
 			<h1 className='page-title'>{t('account')}</h1>
@@ -100,30 +127,33 @@ export const AuthPage = () => {
 					<button className='btn' disabled={checkingSession} onClick={onValidateSession}>
 						{checkingSession ? 'Validando...' : 'Validar sesión'}
 					</button>
-					<div className='avatar-picker'>
-						<strong>Icono de cuenta</strong>
-						<div className='avatar-picker__options'>
-							{avatarOptions.map((avatar) => (
-								<button
-									className={`user-avatar ${accountUser.avatar === avatar ? 'is-selected' : ''}`}
-									onClick={() => dispatch(setAvatar(avatar))}
-									type='button'
-									key={avatar}>
-									{avatar}
-								</button>
-							))}
-						</div>
-					</div>
 				</div>
-				<form className='panel form-stack' onSubmit={onChangePassword}>
-					<h2>Cambiar contraseña</h2>
-					<label>Contraseña actual<input type='password' value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
-					<label>Nueva contraseña<input type='password' minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
-					<label>Repetir contraseña<input type='password' minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label>
-					<button className='btn primary' disabled={changingPassword} type='submit'>
-						{changingPassword ? 'Actualizando...' : 'Actualizar contraseña'}
-					</button>
-				</form>
+				<div className='account-forms'>
+					<form className='panel form-stack' onSubmit={onUpdateProfile}>
+						<h2>Editar perfil</h2>
+						<label>Usuario<input maxLength={50} value={profileUsername} onChange={(event) => setProfileUsername(event.target.value)} required /></label>
+						<label>Correo electrónico<input maxLength={120} type='email' value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} required /></label>
+						<div className='avatar-picker'>
+							<strong>Icono de cuenta</strong>
+							<div className='avatar-picker__options'>
+								{avatarOptions.map((avatar) => (
+									<button aria-label={`Usar icono ${avatar}`} className={`user-avatar ${profileAvatar === avatar ? 'is-selected' : ''}`} onClick={() => setProfileAvatar(avatar)} type='button' key={avatar}>{avatar}</button>
+								))}
+							</div>
+						</div>
+						<button className='btn primary' disabled={savingProfile} type='submit'>{savingProfile ? 'Guardando...' : 'Guardar perfil'}</button>
+						{profileSuccess && <p className='success-text'>{profileSuccess}</p>}
+					</form>
+					<form className='panel form-stack' onSubmit={onChangePassword}>
+						<h2>Cambiar contraseña</h2>
+						<label>Contraseña actual<input type='password' value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
+						<label>Nueva contraseña<input type='password' minLength={8} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
+						<label>Repetir contraseña<input type='password' minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label>
+						<button className='btn primary' disabled={changingPassword} type='submit'>
+							{changingPassword ? 'Actualizando...' : 'Actualizar contraseña'}
+						</button>
+					</form>
+				</div>
 				</div>
 			)}
 

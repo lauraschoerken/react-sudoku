@@ -6,13 +6,19 @@ import { useEffect } from 'react'
 import { useThemeSync } from './hooks/settings/useThemeSync'
 import { I18nProvider } from './i18n/I18nProvider'
 import { router } from './navigation/routes'
-import { getCurrentUser } from './services/sudokuApi'
-import { setSession } from './store/features/auth/authSlice'
+import { AUTH_INVALID_EVENT, getCurrentUser, isAuthError } from './services/sudokuApi'
+import { clearSession, setSession } from './store/features/auth/authSlice'
 import { useAppDispatch, useAppSelector } from './store/hooks'
 
 const SessionGuard = () => {
 	const dispatch = useAppDispatch()
 	const token = useAppSelector((state) => state.auth.token)
+
+	useEffect(() => {
+		const clearInvalidSession = () => dispatch(clearSession())
+		window.addEventListener(AUTH_INVALID_EVENT, clearInvalidSession)
+		return () => window.removeEventListener(AUTH_INVALID_EVENT, clearInvalidSession)
+	}, [dispatch])
 
 	useEffect(() => {
 		if (!token) return
@@ -21,7 +27,9 @@ const SessionGuard = () => {
 			.then((user) => {
 				if (!cancelled) dispatch(setSession({ token, user }))
 			})
-			.catch(() => undefined)
+			.catch((error) => {
+				if (!cancelled && isAuthError(error)) dispatch(clearSession())
+			})
 		return () => {
 			cancelled = true
 		}

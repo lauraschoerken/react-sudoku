@@ -567,12 +567,22 @@ export const useSudoku = (
 	}, [gameId, usingBackend])
 
 	const resetGameValue = useCallback(() => {
-		if (!usingBackend || gameId === null) return Promise.resolve(null)
+		if (!usingBackend || gameId === null) {
+			setPlayerGrid(puzzleGrid.map((row) => row.slice()))
+			setErrorGrid(createEmptyErrorGrid(puzzleGrid))
+			setBackendMistakes(0)
+			setElapsedSeconds(0)
+			setHintsUsed(0)
+			setNotes({})
+			setHintedCells(new Set())
+			setGameStatus('IN_PROGRESS')
+			return Promise.resolve(true)
+		}
 		return resetGame(gameId).then((game) => {
 			applyBackendGame(game)
-			return game
+			return true
 		})
-	}, [applyBackendGame, gameId, usingBackend])
+	}, [applyBackendGame, gameId, puzzleGrid, usingBackend])
 
 	return {
 		puzzle: puzzleGrid,

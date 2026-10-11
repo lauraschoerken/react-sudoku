@@ -40,8 +40,15 @@ export const useDigitalTimer = ({
 	const controlled = typeof running === 'boolean'
 	const [isRunning, setIsRunning] = useState<boolean>(controlled ? !!running : autoStart)
 	const initialSecondsRef = useRef(Math.max(0, initialSeconds))
+	const onFinishRef = useRef(onFinish)
+	const onTickRef = useRef(onTick)
 	const [elapsed, setElapsed] = useState<number>(initialSecondsRef.current)
 	const tickRef = useRef<number | null>(null)
+
+	useEffect(() => {
+		onFinishRef.current = onFinish
+		onTickRef.current = onTick
+	}, [onFinish, onTick])
 
 	useEffect(() => {
 		if (controlled) setIsRunning(!!running)
@@ -62,7 +69,7 @@ export const useDigitalTimer = ({
 			setElapsed((v) => {
 				const nextElapsed = v + 1
 				const nextShown = mode === 'countdown' ? Math.max(0, (seconds as number) - nextElapsed) : nextElapsed
-				onTick?.(nextShown)
+				onTickRef.current?.(nextShown)
 				return nextElapsed
 			})
 		}, 1000) as unknown as number
@@ -71,7 +78,7 @@ export const useDigitalTimer = ({
 			if (tickRef.current) clearInterval(tickRef.current)
 			tickRef.current = null
 		}
-	}, [isRunning, mode, onTick, seconds])
+	}, [isRunning, mode, seconds])
 
 	const shownSeconds = useMemo(
 		() => (mode === 'countdown' ? Math.max(0, (seconds as number) - elapsed) : elapsed),
@@ -80,10 +87,10 @@ export const useDigitalTimer = ({
 
 	useEffect(() => {
 		if (mode === 'countdown' && shownSeconds <= 0 && isRunning) {
-			onFinish?.()
+			onFinishRef.current?.()
 			if (!controlled) setIsRunning(false)
 		}
-	}, [shownSeconds, isRunning, mode, onFinish, controlled])
+	}, [shownSeconds, isRunning, mode, controlled])
 
 	const start = useCallback(() => {
 		if (!controlled) setIsRunning(true)
@@ -96,7 +103,7 @@ export const useDigitalTimer = ({
 	}, [controlled])
 	const reset = () => {
 		setElapsed(0)
-		onTick?.(mode === 'countdown' ? (seconds as number) : 0)
+		onTickRef.current?.(mode === 'countdown' ? (seconds as number) : 0)
 	}
 	const stop = () => {
 		setElapsed(0)
@@ -107,16 +114,16 @@ export const useDigitalTimer = ({
 		if (mode === 'normal') {
 			const normalized = Math.max(0, Math.floor(value))
 			setElapsed(normalized)
-			onTick?.(normalized)
+			onTickRef.current?.(normalized)
 		} else {
 			setElapsed(Math.max(0, (seconds as number) - Math.floor(value)))
 		}
-	}, [mode, onTick, seconds])
+	}, [mode, seconds])
 	const addSeconds = (delta: number) => {
 		if (mode === 'normal') {
 			setElapsed((v) => {
 				const next = Math.max(0, v + delta)
-				onTick?.(next)
+				onTickRef.current?.(next)
 				return next
 			})
 		}
